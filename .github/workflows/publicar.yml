@@ -1,0 +1,49 @@
+# Publica Jara App en GitHub Pages cada vez que cambia la rama main.
+name: Publicar Jara App
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      # La app queda en https://<cuenta>.github.io/<repositorio>/
+      VITE_BASE: /${{ github.event.repository.name }}/
+      # Datos públicos del proyecto Supabase del club. La clave "publishable"
+      # está hecha para ir en el navegador; los datos los protege la base.
+      VITE_SUPABASE_URL: https://pzzkrbnzguqtjrlwgtiy.supabase.co
+      VITE_SUPABASE_KEY: sb_publishable_Wy5oEjC-SXRUJdNkREM7Qw_b9xRl9zu
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:db
+      - run: npm run test:pedidos
+      - run: npm run build
+      # GitHub Pages no conoce las rutas internas (/pedido/..., /partidos):
+      # con esta copia, cualquier dirección abre la app y ella decide qué mostrar.
+      - run: cp dist/index.html dist/404.html
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v5
