@@ -1,0 +1,25 @@
+{
+  "name": "jara-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:db": "node supabase/tests/run.mjs",
+    "test:pedidos": "node supabase/tests/pedidos.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.6"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@vitejs/plugin-react": "^6.1.1",
+    "vite": "^8.3.2",
+    "vite-plugin-pwa": "^1.3.0"
+  }
+}
