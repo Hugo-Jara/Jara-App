@@ -22,7 +22,7 @@ await db.exec(`
   create function auth.jwt() returns jsonb language sql stable as $$ select '{}'::jsonb $$;
   grant usage on schema auth, public to anon, authenticated;
 `);
-for (const f of ['0001_base.sql', '0002_cotizaciones.sql', '0004_funciones_de_trigger_privadas.sql', '0005_pedidos_de_compra.sql']) {
+for (const f of ['0001_base.sql', '0002_cotizaciones.sql', '0004_funciones_de_trigger_privadas.sql', '0005_pedidos_de_compra.sql', '0007_comprobante_de_transferencia.sql', '0008_hacienda_edita_y_elimina.sql']) {
   await db.exec(mig(f));
 }
 await db.exec(`
@@ -111,6 +111,82 @@ ok('Quien compró sube la boleta y queda respaldado', !r.error && (await ver('to
 r = await db.query(`select string_agg(a_estado || '/' || por, ' > ' order by id) as camino from pedido_item_eventos where item_id = $1`, [carne]);
 ok('El historial guarda cada paso y quién lo hizo',
    r.rows[0].camino === 'pendiente/solicitante > aprobado/hacienda > entregado/hacienda > respaldado/solicitante', r.rows[0].camino);
+
+console.log('\nComprobante de transferencia');
+const comprobante = (token, item, ruta) =>
+  anon(`select pedido_comprobante($1, $2, $3, 'transferencia.jpg')`, [token, item, ruta]);
+const item = async (token, id) => (await ver(token)).items.find((i) => i.id === id);
+r = await comprobante('tok-pedir', parlantes, 'carpeta1/t1.jpg');
+ok('Con el link de pedir no se sube el comprobante', /Solo Hacienda/.test(r.error ?? ''), r.error);
+r = await comprobante('tok-hacienda', parlantes, 'carpeta1/t1.jpg');
+ok('No se sube comprobante de una compra sin aprobar', /aprobada/.test(r.error ?? ''), r.error);
+await revisar('tok-hacienda', parlantes, 'aprobar');
+r = await comprobante('tok-hacienda', parlantes, 'carpeta2/t1.jpg');
+ok('No se acepta un comprobante guardado en otro pedido', /Falta el archivo/.test(r.error ?? ''), r.error);
+r = await comprobante('tok-otro-h', parlantes, 'carpeta2/t1.jpg');
+ok('Hacienda de otro pedido no puede subirlo', /no está en este pedido/.test(r.error ?? ''), r.error);
+r = await comprobante('tok-hacienda', parlantes, 'carpeta1/t1.jpg');
+let c = await item('tok-hacienda', parlantes);
+ok('Al subir el comprobante la plata queda entregada', !r.error && c.estado === 'entregado', r.error);
+ok('Hacienda puede abrir el comprobante', c.con_comprobante === true && c.comprobante_ruta === 'carpeta1/t1.jpg' && c.comprobante_nombre === 'transferencia.jpg');
+c = await item('tok-pedir', parlantes);
+ok('Quien pidió ve que hay comprobante, pero no el archivo', c.con_comprobante === true && c.comprobante_ruta === null && !JSON.stringify(c).includes('t1.jpg'));
+r = await comprobante('tok-hacienda', parlantes, 'carpeta1/t2.jpg');
+ok('El comprobante se puede reemplazar', !r.error && (await item('tok-hacienda', parlantes)).comprobante_ruta === 'carpeta1/t2.jpg', r.error);
+ok('La compra entregada sin comprobante lo dice', (await item('tok-pedir', carne)).con_comprobante === false);
+r = await comprobante('tok-hacienda', carne, 'carpeta1/t3.jpg');
+c = await item('tok-hacienda', carne);
+ok('Se puede agregar después, sin cambiar el estado', !r.error && c.estado === 'respaldado' && c.comprobante_ruta === 'carpeta1/t3.jpg', r.error);
+r = await anon(`select pedido_boleta($1, $2, 'carpeta1/z2-boleta.jpg', 'boleta.jpg')`, ['tok-pedir', parlantes]);
+ok('La boleta se sube igual después del comprobante', !r.error && (await item('tok-pedir', parlantes)).estado === 'respaldado', r.error);
+r = await db.query(`select string_agg(comentario, ' > ' order by id) as c from pedido_item_eventos where item_id = $1 and por = 'hacienda' and comentario like 'Comprobante%'`, [parlantes]);
+ok('El historial registra el comprobante y su reemplazo', r.rows[0].c === 'Comprobante de transferencia adjunto > Comprobante de transferencia reemplazado', r.rows[0].c);
+
+console.log('\nHacienda edita y elimina');
+const editar = (token, id, quien, que, monto) =>
+  anon('select pedido_editar($1, $2, $3, $4, $5)', [token, id, quien, que, monto]);
+const eliminar = (token, id) => anon('select pedido_eliminar($1, $2)', [token, id]);
+r = await editar('tok-pedir', carne, 'Pancho', 'Carne y carbón', 200000);
+ok('Con el link de pedir no se edita', /Solo Hacienda/.test(r.error ?? ''), r.error);
+r = await editar('tok-otro-h', carne, 'Pancho', 'Carne y carbón', 200000);
+ok('Hacienda de otro pedido tampoco', /no está en este pedido/.test(r.error ?? ''), r.error);
+r = await editar('tok-hacienda', carne, 'Pancho', '  ', 200000);
+ok('No se deja la glosa vacía', /qué se compra/.test(r.error ?? ''), r.error);
+r = await editar('tok-hacienda', carne, 'Pancho', 'Carne', 0);
+ok('…ni el monto en cero', /monto/.test(r.error ?? ''), r.error);
+r = await editar('tok-hacienda', carne, 'Pancho', 'Carne y carbón', 200000);
+c = await item('tok-pedir', carne);
+ok('Hacienda cambia glosa y monto sin tocar el estado ni los respaldos',
+   !r.error && c.que === 'Carne y carbón' && c.monto === 200000 && c.estado === 'respaldado' && c.boleta_ruta === 'carpeta1/z-boleta.jpg', r.error);
+r = await db.query(`select comentario from pedido_item_eventos where item_id = $1 order by id desc limit 1`, [carne]);
+ok('El historial guarda el valor anterior', r.rows[0].comentario === 'Editado por Hacienda · glosa: Carne → Carne y carbón · monto: 187500 → 200000', r.rows[0].comentario);
+let n = (await db.query(`select count(*)::int n from pedido_item_eventos where item_id = $1`, [carne])).rows[0].n;
+await editar('tok-hacienda', carne, 'Pancho', 'Carne y carbón', 200000);
+ok('Guardar sin cambios no anota nada', (await db.query(`select count(*)::int n from pedido_item_eventos where item_id = $1`, [carne])).rows[0].n === n);
+
+r = await agregar('tok-pedir', 'Tito', 'Compra de prueba', 9990, 'carpeta1/p-cot.pdf', 'x', null);
+const prueba = r.rows[0]?.id;
+r = await eliminar('tok-pedir', prueba);
+ok('Con el link de pedir no se elimina', /Solo Hacienda/.test(r.error ?? ''), r.error);
+r = await eliminar('tok-otro-h', prueba);
+ok('Hacienda de otro pedido tampoco', /no está en este pedido/.test(r.error ?? ''), r.error);
+r = await eliminar('tok-hacienda', prueba);
+ok('Hacienda elimina una compra', !r.error, r.error);
+ok('…y deja de verse en los dos links', !(await item('tok-pedir', prueba)) && !(await item('tok-hacienda', prueba)) && (await ver('tok-pedir')).items.length === 2);
+r = await db.query(`select estado, cotizacion_ruta from pedido_items where id = $1`, [prueba]);
+ok('…pero sigue guardada en la base con su respaldo', r.rows[0]?.estado === 'eliminado' && r.rows[0].cotizacion_ruta === 'carpeta1/p-cot.pdf');
+r = await revisar('tok-hacienda', prueba, 'aprobar');
+ok('Una compra eliminada no se puede aprobar', !!r.error);
+r = await editar('tok-hacienda', prueba, 'Tito', 'Otra cosa', 100);
+ok('…ni editar', /no está en este pedido/.test(r.error ?? ''), r.error);
+r = await comprobante('tok-hacienda', prueba, 'carpeta1/t9.jpg');
+ok('…ni recibir comprobante', !!r.error);
+r = await eliminar('tok-hacienda', prueba);
+ok('…ni eliminar dos veces', /no está en este pedido/.test(r.error ?? ''), r.error);
+r = await eliminar('tok-hacienda', parlantes);
+ok('También se elimina una compra con la plata ya entregada', !r.error && (await ver('tok-pedir')).items.length === 1, r.error);
+r = await db.query(`select de_estado || ' > ' || a_estado as paso from pedido_item_eventos where item_id = $1 order by id desc limit 1`, [parlantes]);
+ok('El historial dice desde qué estado se eliminó', r.rows[0].paso === 'respaldado > eliminado', r.rows[0].paso);
 
 await db.exec(`update pedidos set abierto = false where token = 'tok-pedir'`);
 r = await agregar('tok-pedir', 'Tito', 'Hielo', 5000, 'carpeta1/h.pdf', 'x', null);

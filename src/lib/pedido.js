@@ -39,6 +39,10 @@ const desdeFila = (f) => ({
   cotizacion: archivo(f.cotizacion_ruta, f.cotizacion_nombre),
   referenciaArchivo: archivo(f.referencia_ruta, f.referencia_nombre),
   boleta: archivo(f.boleta_ruta, f.boleta_nombre),
+  // El archivo del comprobante solo llega con el link de Hacienda; el resto
+  // solo sabe si existe.
+  comprobante: archivo(f.comprobante_ruta, f.comprobante_nombre),
+  conComprobante: !!f.con_comprobante,
   estado: f.estado, comentario: f.comentario,
 });
 
@@ -105,6 +109,19 @@ function usePedidoReal(token) {
       await llamar('pedido_boleta', { p_token: token, p_item: id, p_ruta: b.ruta, p_nombre: b.nombre });
       await cargar();
     },
+    // Hacienda corrige nombre, glosa o monto; el valor anterior queda en el historial.
+    editar: async (id, d) => {
+      await llamar('pedido_editar', { p_token: token, p_item: id, p_quien: d.quien, p_que: d.que, p_monto: d.monto });
+      await cargar();
+    },
+    // Deja de verse y de sumar, pero no se borra de la base.
+    eliminar: async (id) => { await llamar('pedido_eliminar', { p_token: token, p_item: id }); await cargar(); },
+    // Hacienda: en una compra aprobada además la deja como plata entregada.
+    subirComprobante: async (id, file) => {
+      const c = await subir(carpeta, file);
+      await llamar('pedido_comprobante', { p_token: token, p_item: id, p_ruta: c.ruta, p_nombre: c.nombre });
+      await cargar();
+    },
   };
 }
 
@@ -140,6 +157,12 @@ function usePedidoDemo(esHacienda) {
     revisar: async (id, accion, comentario) =>
       cambiar(id, { estado: { aprobar: 'aprobado', devolver: 'devuelto', entregar: 'entregado' }[accion], comentario }),
     subirBoleta: async (id, file) => cambiar(id, { estado: 'respaldado', boleta: local(file) }),
+    editar: async (id, d) => cambiar(id, { quien: d.quien, que: d.que, monto: d.monto }),
+    eliminar: async (id) => guardar(p.items.filter((i) => i.id !== id)),
+    subirComprobante: async (id, file) => {
+      const actual = p.items.find((i) => i.id === id).estado;
+      cambiar(id, { estado: actual === 'aprobado' ? 'entregado' : actual, comprobante: local(file), conComprobante: true });
+    },
   };
 }
 

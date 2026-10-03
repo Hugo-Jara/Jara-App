@@ -171,6 +171,7 @@ a.btn { text-decoration: none; }
 
 /* Publicar */
 .ayuda { margin: 0 0 4px; font-size: 14px; color: var(--text-dim); }
+.ayuda.abajo { margin: 12px 0 0; font-size: 13px; }
 .bloque { border: 1px solid var(--border); border-radius: 14px; padding: 4px 14px 14px; margin: 18px 0; }
 .bloque legend { padding: 0 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); }
 .bloque .enlace { margin-top: 12px; font-size: 13px; }
@@ -234,7 +235,9 @@ textarea { resize: vertical; line-height: 1.45; }
 .estado.pendiente { color: var(--gold); }
 .estado.aprobado, .estado.entregado, .estado.respaldado { color: var(--green); }
 .estado.devuelto { color: var(--rose); }
-.botones.chicos { margin-top: 12px; }
+.botones.chicos { margin-top: 12px; flex-wrap: wrap; }
+.item-links.correcciones { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); }
+.item-links.correcciones .enlace { color: var(--text-dim); }
 .botones.chicos .btn { flex: none; }
 .foto-agregar.boleta { aspect-ratio: auto; display: inline-grid; padding: 10px 16px; margin-top: 12px; }
 .casilla.tenue { color: var(--text-dim); font-size: 13px; }

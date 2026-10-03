@@ -24,6 +24,8 @@ Las migraciones están en `supabase/migrations/` y se aplican en orden:
 | `0004_funciones_de_trigger_privadas.sql` | Quita el acceso por la API a las funciones de trigger |
 | `0005_pedidos_de_compra.sql` | Pedidos de compra por link, sin cuenta: tablas y funciones |
 | `0006_storage_pedidos.sql` | Bucket de archivos de los pedidos |
+| `0007_comprobante_de_transferencia.sql` | Hacienda adjunta el comprobante al entregar la plata; el archivo solo se abre con el link de Hacienda |
+| `0008_hacienda_edita_y_elimina.sql` | Hacienda edita nombre, glosa y monto, y elimina compras (quedan guardadas como `eliminado`) |
 
 `npm run test:db` y `npm run test:pedidos` aplican las migraciones en un Postgres en memoria y prueban los permisos, el flujo de cotizaciones y los pedidos por link.
 

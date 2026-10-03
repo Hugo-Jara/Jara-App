@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { usePedido, totales, pesos, ESTADOS } from '../lib/pedido.js';
 import { esDemo } from '../lib/supabase.js';
@@ -19,6 +19,20 @@ function Adjunto({ archivo, texto }) {
   return archivo.url
     ? <a className="enlace" href={archivo.url} target="_blank" rel="noreferrer">{texto}</a>
     : <span className="tenue">{texto}: {archivo.nombre}</span>;
+}
+
+// Botón que abre el selector de archivos del teléfono o del computador.
+function BotonArchivo({ className, disabled, onArchivo, children }) {
+  const entrada = useRef(null);
+  return (
+    <>
+      <button type="button" className={className} disabled={disabled} onClick={() => entrada.current.click()}>
+        {children}
+      </button>
+      <input ref={entrada} type="file" accept="image/*,application/pdf" hidden
+             onChange={(e) => { const f = e.target.files[0]; e.target.value = ''; if (f) onArchivo(f); }} />
+    </>
+  );
 }
 
 // Sirve para agregar una compra y para corregir una devuelta (`inicial`).
@@ -91,9 +105,48 @@ function Formulario({ inicial, onGuardar, onCancelar }) {
   );
 }
 
+// Hacienda corrige el nombre, la glosa o el monto de una compra ya ingresada.
+function Edicion({ item, onGuardar, onCancelar }) {
+  const [d, setD] = useState({ quien: item.quien, que: item.que, monto: String(item.monto) });
+  const [error, setError] = useState('');
+  const [guardando, setGuardando] = useState(false);
+  const set = (campo) => (e) => setD({ ...d, [campo]: e.target.value });
+
+  const enviar = async (e) => {
+    e.preventDefault();
+    const monto = Number(d.monto.replace(/\D/g, ''));
+    if (!monto) return setError('Escribe el monto en pesos, solo números.');
+    setError(''); setGuardando(true);
+    try {
+      await onGuardar({ quien: d.quien.trim(), que: d.que.trim(), monto });
+    } catch (err) {
+      setError(err.message);
+      setGuardando(false);
+    }
+  };
+
+  return (
+    <form className="card" onSubmit={enviar}>
+      <div className="sobretitulo">Editar compra</div>
+      <label htmlFor={`eq${item.id}`}>Quién compra</label>
+      <input id={`eq${item.id}`} required value={d.quien} onChange={set('quien')} />
+      <label htmlFor={`eg${item.id}`}>Glosa (qué se compra)</label>
+      <input id={`eg${item.id}`} required value={d.que} onChange={set('que')} />
+      <label htmlFor={`em${item.id}`}>Monto (en pesos)</label>
+      <input id={`em${item.id}`} required inputMode="numeric" value={d.monto} onChange={set('monto')} />
+      <p className="ayuda abajo">Los archivos y el estado de la compra no cambian.</p>
+      {error && <p className="error" role="alert">{error}</p>}
+      <div className="botones">
+        <button className="btn" disabled={guardando}>{guardando ? 'Guardando…' : 'Guardar'}</button>
+        <button type="button" className="btn secundario" onClick={onCancelar} disabled={guardando}>Cancelar</button>
+      </div>
+    </form>
+  );
+}
+
 function Item({ item, hacienda, acciones }) {
   const [comentario, setComentario] = useState('');
-  const [modo, setModo] = useState(null); // 'devolver' | 'corregir'
+  const [modo, setModo] = useState(null); // 'devolver' | 'corregir' | 'editar' | 'eliminar'
   const [error, setError] = useState('');
   const [ocupado, setOcupado] = useState(false);
 
@@ -111,6 +164,15 @@ function Item({ item, hacienda, acciones }) {
       </li>
     );
   }
+  if (modo === 'editar') {
+    return (
+      <li className="item">
+        <Edicion item={item} onCancelar={() => setModo(null)}
+                 onGuardar={async (d) => { await acciones.editar(item.id, d); setModo(null); }} />
+      </li>
+    );
+  }
+  const conPlata = ['entregado', 'respaldado'].includes(item.estado);
   return (
     <li className="item">
       <div className="item-cabeza">
@@ -127,16 +189,25 @@ function Item({ item, hacienda, acciones }) {
           ? <a className="enlace" href={item.referencia} target="_blank" rel="noreferrer">Ver referencia</a>
           : <span className="tenue">{item.referencia}</span>)}
         <Adjunto archivo={item.referenciaArchivo} texto="Ver archivo de referencia" />
+        {hacienda
+          ? <Adjunto archivo={item.comprobante} texto="Ver comprobante" />
+          : item.conComprobante && <span className="tenue">Transferencia con comprobante</span>}
         <Adjunto archivo={item.boleta} texto="Ver boleta" />
       </div>
 
-      {hacienda && ['pendiente', 'aprobado'].includes(item.estado) && modo !== 'devolver' && (
+      {hacienda && ['pendiente', 'aprobado'].includes(item.estado) && !modo && (
         <div className="botones chicos">
           {item.estado === 'pendiente' && (
             <button className="btn chico" disabled={ocupado} onClick={() => hacer(() => acciones.revisar(item.id, 'aprobar'))}>Aprobar</button>
           )}
           {item.estado === 'aprobado' && (
-            <button className="btn chico" disabled={ocupado} onClick={() => hacer(() => acciones.revisar(item.id, 'entregar'))}>Marcar plata entregada</button>
+            <>
+              <BotonArchivo className="btn chico" disabled={ocupado}
+                            onArchivo={(f) => hacer(() => acciones.subirComprobante(item.id, f))}>
+                {ocupado ? 'Subiendo…' : 'Entregar con comprobante'}
+              </BotonArchivo>
+              <button className="btn chico secundario" disabled={ocupado} onClick={() => hacer(() => acciones.revisar(item.id, 'entregar'))}>Entregar sin comprobante</button>
+            </>
           )}
           <button className="btn chico secundario" disabled={ocupado} onClick={() => setModo('devolver')}>Devolver</button>
         </div>
@@ -150,6 +221,39 @@ function Item({ item, hacienda, acciones }) {
             <button type="button" className="btn chico secundario" onClick={() => setModo(null)}>Cancelar</button>
           </div>
         </form>
+      )}
+      {hacienda && conPlata && !item.conComprobante && !modo && (
+        <div className="botones chicos">
+          <BotonArchivo className="btn chico secundario" disabled={ocupado}
+                        onArchivo={(f) => hacer(() => acciones.subirComprobante(item.id, f))}>
+            {ocupado ? 'Subiendo…' : 'Agregar comprobante'}
+          </BotonArchivo>
+        </div>
+      )}
+      {/* Correcciones de Hacienda: enlaces discretos, aparte de las acciones del flujo. */}
+      {hacienda && !modo && (
+        <div className="item-links correcciones">
+          {conPlata && item.conComprobante && (
+            <BotonArchivo className="enlace" disabled={ocupado}
+                          onArchivo={(f) => hacer(() => acciones.subirComprobante(item.id, f))}>
+              {ocupado ? 'Subiendo…' : 'Cambiar comprobante'}
+            </BotonArchivo>
+          )}
+          <button type="button" className="enlace" disabled={ocupado} onClick={() => setModo('editar')}>Editar</button>
+          <button type="button" className="enlace" disabled={ocupado} onClick={() => setModo('eliminar')}>Eliminar</button>
+        </div>
+      )}
+      {hacienda && modo === 'eliminar' && (
+        <div className="item-comentario">
+          ¿Eliminar esta compra? Deja de verse y de sumar en el pedido.
+          {conPlata && <strong> Ojo: ya tiene plata entregada.</strong>}
+          <div className="botones chicos">
+            <button className="btn chico" disabled={ocupado} onClick={() => hacer(() => acciones.eliminar(item.id))}>
+              {ocupado ? 'Eliminando…' : 'Sí, eliminar'}
+            </button>
+            <button type="button" className="btn chico secundario" disabled={ocupado} onClick={() => setModo(null)}>Cancelar</button>
+          </div>
+        </div>
       )}
       {!hacienda && item.estado === 'devuelto' && (
         <div className="botones chicos">
