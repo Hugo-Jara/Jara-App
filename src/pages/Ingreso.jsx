@@ -52,7 +52,7 @@ export default function Ingreso() {
           </p>
         ) : (
           <form onSubmit={conCorreo}>
-            <label htmlFor="correo">Correo con el que estás en la nómina</label>
+            <label htmlFor="correo">Tu correo</label>
             <input id="correo" type="email" inputMode="email" autoComplete="email" required
                    placeholder="nombre@correo.cl" value={email} onChange={(e) => setEmail(e.target.value)} />
             <button className="btn secundario" style={{ marginTop: 14 }} disabled={enviando}>
@@ -64,7 +64,8 @@ export default function Ingreso() {
       </div>
 
       <p className="nota">
-        Entra con el mismo correo que le diste al club. No hay contraseña que recordar.
+        La primera vez vas a buscar tu nombre en la nómina del club y un encargado de tu plantel te
+        da el pase. No hay contraseña que recordar.
       </p>
     </div>
   );

@@ -26,8 +26,11 @@ Las migraciones están en `supabase/migrations/` y se aplican en orden:
 | `0006_storage_pedidos.sql` | Bucket de archivos de los pedidos |
 | `0007_comprobante_de_transferencia.sql` | Hacienda adjunta el comprobante al entregar la plata; el archivo solo se abre con el link de Hacienda |
 | `0008_hacienda_edita_y_elimina.sql` | Hacienda edita nombre, glosa y monto, y elimina compras (quedan guardadas como `eliminado`) |
+| `0009_ingreso_por_nombre.sql` | Cada jugador elige su nombre de la nómina y un encargado de su plantel lo aprueba |
+| `0010_partidos.sql` | Partidos por plantel y asistencia (voy, duda, baja) |
+| `0011_entrenamientos.sql` | Listas de entrenamiento con cupos, pago por sesión y deudas |
 
-`npm run test:db` y `npm run test:pedidos` aplican las migraciones en un Postgres en memoria y prueban los permisos, el flujo de cotizaciones y los pedidos por link.
+`npm run test:db` y `npm run test:pedidos` aplican las migraciones en un Postgres en memoria y prueban los permisos, el flujo de cotizaciones, el ingreso por nombre, los partidos, los entrenamientos y los pedidos por link.
 
 ## Pedidos de compra
 

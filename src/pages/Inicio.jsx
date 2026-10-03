@@ -1,46 +1,67 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { useInicio } from '../lib/inicio.js';
-import { useListas, porEstado, sinResponder } from '../lib/listas.js';
+import { usePartidos, porEstado, sinResponder } from '../lib/partidos.js';
+import { useEntrenamiento, horario } from '../lib/entrenamiento.js';
+import { useSolicitudes } from '../lib/ingreso.js';
 import { useNoticias, TIPOS } from '../lib/noticias.js';
+import { fechaLarga } from '../lib/fechas.js';
+import { pesos } from '../lib/pedido.js';
+import { plural } from '../lib/texto.js';
 import Icono from '../components/Icono.jsx';
 
-function ProximoPartido({ partido, miRespuesta, responder }) {
-  if (!partido) {
-    return (
-      <section className="card accion">
-        <div className="sobretitulo">Tu próximo partido</div>
-        <p className="vacio">Todavía no hay un partido programado para tu equipo.</p>
-      </section>
-    );
-  }
-  const texto = { voy: 'Confirmaste que vas.', duda: 'Quedaste en duda.', baja: 'Avisaste que no vas.' };
+const TEXTO_RESPUESTA = { voy: 'Confirmaste que vas.', duda: 'Quedaste en duda.', baja: 'Avisaste que no vas.' };
+
+// Una tarjeta por cada partido que le toca: quien juega en dos planteles ve los dos.
+function ProximoPartido({ partido, destacado, responder }) {
+  const [error, setError] = useState('');
+  const rapido = async (respuesta) => {
+    setError('');
+    try { await responder(partido.id, respuesta); } catch (e) { setError(e.message); }
+  };
   return (
-    <section className="card accion destacada">
+    <section className={`card accion ${destacado ? 'destacada' : ''}`}>
       <div className="sobretitulo">Tu próximo partido · {partido.equipo}</div>
       <h2 className="accion-titulo display">vs {partido.rival}</h2>
-      <p className="accion-dato">{partido.fecha} · citación {partido.citacion}</p>
-      <p className="accion-dato tenue">{partido.cancha}{partido.tercerTiempo ? ` · ${partido.tercerTiempo}` : ''}</p>
-      {miRespuesta ? (
+      <p className="accion-dato">{fechaLarga(partido.fecha)}{partido.citacion ? ` · citación ${partido.citacion}` : ''}</p>
+      <p className="accion-dato tenue">{[partido.cancha, partido.tercerTiempo].filter(Boolean).join(' · ')}</p>
+      {partido.miRespuesta ? (
         <p className="respuesta" role="status">
-          {texto[miRespuesta.estado]} <Link className="enlace" to="/partidos">Cambiar</Link>
+          {TEXTO_RESPUESTA[partido.miRespuesta.estado]} <Link className="enlace" to={`/partidos/${partido.id}`}>Cambiar</Link>
         </p>
       ) : (
         <div className="botones">
-          <button className="btn" onClick={() => responder({ estado: 'voy', asado: !!partido.tercerTiempo })}>Voy</button>
-          <button className="btn secundario" onClick={() => responder({ estado: 'baja' })}>No puedo</button>
+          <button className="btn" onClick={() => rapido({ estado: 'voy', asado: !!partido.tercerTiempo })}>Voy</button>
+          <button className="btn secundario" onClick={() => rapido({ estado: 'baja' })}>No puedo</button>
         </div>
       )}
+      {error && <p className="error" role="alert">{error}</p>}
       <p className="conteo">
         {porEstado(partido, 'voy').length} van, {porEstado(partido, 'duda').length} en duda, {sinResponder(partido).length} sin responder.{' '}
-        <Link className="enlace" to="/partidos">Ver la lista</Link>
+        <Link className="enlace" to={`/partidos/${partido.id}`}>Ver la lista</Link>
       </p>
     </section>
   );
 }
 
-function Entrenamiento({ entrenamiento, inscrito, inscribirme }) {
-  if (!entrenamiento) {
+function SinPartido({ equipos }) {
+  return (
+    <section className="card accion">
+      <div className="sobretitulo">Tu próximo partido</div>
+      <p className="vacio">
+        {equipos.length
+          ? `Todavía no hay un partido programado para ${equipos.map((e) => e.nombre).join(' ni ')}.`
+          : 'No estás en ningún plantel, así que no tienes partidos por confirmar.'}{' '}
+        <Link className="enlace" to="/partidos">Ver los partidos del club</Link>
+      </p>
+    </section>
+  );
+}
+
+function Entrenamiento({ e, miInscripcion, libres, inscribirme }) {
+  const [error, setError] = useState('');
+  if (!e) {
     return (
       <section className="card accion">
         <div className="sobretitulo">Entrenamiento</div>
@@ -48,26 +69,44 @@ function Entrenamiento({ entrenamiento, inscrito, inscribirme }) {
       </section>
     );
   }
-  const libres = entrenamiento.cupo - entrenamiento.inscritos.length;
   return (
     <section className="card accion">
       <div className="sobretitulo">Entrenamiento</div>
-      <h2 className="accion-titulo">{entrenamiento.fecha} · {entrenamiento.hora}</h2>
-      <p className="accion-dato tenue">{entrenamiento.lugar}</p>
-      {inscrito ? (
+      <h2 className="accion-titulo">{fechaLarga(e.fecha)}{horario(e) ? ` · ${horario(e)}` : ''}</h2>
+      <p className="accion-dato tenue">{e.lugar}</p>
+      {miInscripcion ? (
         <p className="respuesta" role="status">
           Estás inscrito. <Link className="enlace" to="/entrenar">Ver la lista</Link>
         </p>
       ) : (
         <div className="botones">
-          <button className="btn" onClick={inscribirme} disabled={libres <= 0}>Me inscribo</button>
+          <button className="btn" disabled={libres <= 0}
+                  onClick={() => { setError(''); inscribirme().catch((x) => setError(x.message)); }}>
+            {libres > 0 ? `Me inscribo · ${pesos(e.miPrecio)}` : 'Lista completa'}
+          </button>
         </div>
       )}
+      {error && <p className="error" role="alert">{error}</p>}
       <p className="conteo">
-        {entrenamiento.inscritos.length} inscritos, quedan {libres} cupos.{' '}
-        {!inscrito && <Link className="enlace" to="/entrenar">Ver la lista</Link>}
+        {plural(e.inscritos.length, 'inscrito', 'inscritos')}, {libres === 1 ? 'queda 1 cupo' : `quedan ${libres} cupos`}.{' '}
+        {!miInscripcion && <Link className="enlace" to="/entrenar">Ver la lista</Link>}
       </p>
     </section>
+  );
+}
+
+// Solo para encargados: gente que pidió entrar y espera su pase.
+function PasesPendientes() {
+  const { solicitudes } = useSolicitudes();
+  if (!solicitudes.length) return null;
+  return (
+    <Link to="/ingresos" className="card accion aviso">
+      <div className="sobretitulo">Te toca aprobar</div>
+      <p className="accion-dato">
+        {solicitudes.length === 1 ? '1 persona pidió entrar a la app.' : `${solicitudes.length} personas pidieron entrar a la app.`}
+      </p>
+      <span className="ver-mas">Revisar <Icono nombre="flecha" size={16} /></span>
+    </Link>
   );
 }
 
@@ -132,13 +171,21 @@ export default function Inicio() {
   const { ultimoPartido } = useInicio();
   const noticias = useNoticias().publicaciones.slice(0, 3);
   const nombre = persona.nombre.split(' ')[0];
-  const listas = useListas(nombre);
+  const partidos = usePartidos(persona);
+  const entreno = useEntrenamiento(persona);
   return (
     <>
       <h1 className="titulo display">Hola, {nombre}</h1>
       <p className="subtitulo">Esto es lo que viene en el Jara.</p>
-      <ProximoPartido partido={listas.partido} miRespuesta={listas.miRespuesta} responder={listas.responder} />
-      <Entrenamiento entrenamiento={listas.entrenamiento} inscrito={listas.inscrito} inscribirme={listas.inscribirme} />
+      {persona.esEncargado && <PasesPendientes />}
+      {partidos.cargando
+        ? <section className="card accion"><p className="vacio">Cargando tus partidos…</p></section>
+        : partidos.mios.length
+          ? partidos.mios.map((p, i) => <ProximoPartido key={p.id} partido={p} destacado={i === 0} responder={partidos.responder} />)
+          : <SinPartido equipos={persona.equipos} />}
+      {!entreno.cargando && (
+        <Entrenamiento e={entreno.entrenamiento} miInscripcion={entreno.miInscripcion} libres={entreno.libres} inscribirme={entreno.inscribirme} />
+      )}
       <UltimoPartido partido={ultimoPartido} />
       <Noticias noticias={noticias} />
     </>

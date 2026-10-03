@@ -5,10 +5,10 @@ insert into public.clubes (nombre, slug, etiqueta_area)
 values ('Club Deportivo Hugo Jara', 'hugo-jara', 'Ministerio')
 on conflict (slug) do nothing;
 
-insert into public.equipos (club_id, nombre, orden)
-select c.id, e.nombre, e.orden
+insert into public.equipos (club_id, nombre, orden, categoria)
+select c.id, e.nombre, e.orden, e.categoria
   from public.clubes c,
-       (values ('Senior Jueves', 1), ('Senior Sábado', 2), ('Junior Sábado', 3)) as e(nombre, orden)
+       (values ('Senior Jueves', 1, 'senior'), ('Senior Sábado', 2, 'senior'), ('Junior Sábado', 3, 'junior')) as e(nombre, orden, categoria)
  where c.slug = 'hugo-jara'
 on conflict (club_id, nombre) do nothing;
 

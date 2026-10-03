@@ -244,3 +244,22 @@ textarea { resize: vertical; line-height: 1.45; }
 input[type='file'] { padding: 10px; font-size: 14px; }
 .item .card { margin: 0; }
 .bloque .ayuda { margin: 8px 0 0; font-size: 13px; }
+
+/* Elegir tu nombre en la nómina */
+.opciones { list-style: none; margin: 12px 0 0; padding: 0; }
+.opcion { width: 100%; text-align: left; background: none; border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-top: 8px; color: var(--text); cursor: pointer; display: flex; flex-direction: column; gap: 3px; min-height: 48px; }
+.opcion:active { background: var(--bg-card-alt); }
+.opcion-nombre { font-weight: 700; font-size: 15px; }
+.opcion-detalle { font-size: 12.5px; color: var(--text-dim); }
+.accion.aviso { border-color: var(--gold-dim); }
+.ingreso .item-comentario { text-align: center; }
+
+/* Listas con acciones: marcar pagos, bajar a alguien */
+.pago.boton { background: none; border: 1px solid currentColor; border-radius: 100px; padding: 5px 12px; min-height: 32px; cursor: pointer; font-family: inherit; }
+.pago.boton.si { background: rgba(92, 138, 108, 0.18); }
+.enlace.quitar { font-size: 12.5px; color: var(--text-dim); }
+.dos { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+select:disabled, input:disabled { opacity: 0.6; }
+.estado.voy { color: var(--green); }
+.estado.duda { color: var(--gold); }
+.estado.baja { color: var(--rose); }

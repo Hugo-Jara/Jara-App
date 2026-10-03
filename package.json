@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:db": "node supabase/tests/run.mjs",
+    "test:db": "node supabase/tests/run.mjs && node supabase/tests/club.mjs",
+    "test:club": "node supabase/tests/club.mjs",
     "test:pedidos": "node supabase/tests/pedidos.mjs"
   },
   "dependencies": {

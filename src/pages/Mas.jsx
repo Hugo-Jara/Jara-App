@@ -12,6 +12,10 @@ export default function Mas() {
     { a: '/club', icono: 'asambleas', nombre: 'Asambleas', desc: 'Tabla, link al Meet y actas' },
     { a: '/club', icono: 'club', nombre: `${area}s`, desc: 'Quién es quién y qué hace cada uno' },
   ];
+  // Solo para encargados y administradores.
+  if (persona.esEncargado) {
+    FILAS.unshift({ a: '/ingresos', icono: 'club', nombre: 'Pases de ingreso', desc: 'Aprobar a quienes pidieron entrar a la app' });
+  }
   return (
     <>
       <h1 className="titulo display">Más</h1>
