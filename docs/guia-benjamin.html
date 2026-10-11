@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guía de Benjamín · Jara App Comunicaciones</title>
+<meta name="theme-color" content="#120E0D">
+<style>
+  :root { color-scheme: dark; --fondo:#120E0D; --tarjeta:#1d1614; --borde:#33271f; --texto:#efe8e1; --suave:#a89d94; --rojo:#c6362b; --dorado:#c6a15b; --verde:#5fae7a; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--fondo); color: var(--texto); font: 16px/1.55 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 0 16px 80px; }
+  header { text-align: center; padding: 36px 0 18px; }
+  header img { width: 92px; height: 92px; mix-blend-mode: lighten; }
+  h1 { font-size: 1.55rem; margin-top: 8px; letter-spacing: .01em; }
+  .sub { color: var(--suave); font-size: .95rem; margin-top: 4px; }
+
+  .progreso { position: sticky; top: 0; z-index: 5; background: rgba(18,14,13,.94); backdrop-filter: blur(6px); padding: 12px 0 10px; border-bottom: 1px solid var(--borde); margin-bottom: 18px; }
+  .progreso-fila { display: flex; justify-content: space-between; align-items: baseline; font-size: .85rem; color: var(--suave); margin-bottom: 6px; }
+  .progreso-fila strong { color: var(--texto); font-size: 1rem; }
+  .barra { height: 10px; background: #2a201c; border-radius: 99px; overflow: hidden; }
+  .barra i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--rojo), var(--dorado)); border-radius: 99px; transition: width .35s ease; }
+
+  .flujo { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 6px 0 24px; text-align: center; }
+  .flujo div { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 12px 6px; font-size: .78rem; color: var(--suave); position: relative; }
+  .flujo div b { display: block; color: var(--texto); font-size: .9rem; margin: 4px 0 2px; }
+  .flujo div span.ico { font-size: 1.4rem; }
+  .flujo div:not(:last-child)::after { content: "›"; position: absolute; right: -9px; top: 50%; transform: translateY(-50%); color: var(--dorado); font-size: 1.3rem; z-index: 1; }
+
+  .etapa { margin: 28px 0 10px; display: flex; align-items: center; gap: 12px; }
+  .etapa .num { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--rojo); color: #fff; display: grid; place-items: center; font-weight: 800; }
+  .etapa h2 { font-size: 1.15rem; }
+  .etapa small { display: block; color: var(--suave); font-weight: 400; font-size: .85rem; }
+
+  .paso { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 14px; padding: 14px 14px 14px 12px; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; transition: border-color .2s, opacity .2s; }
+  .paso.hecho { border-color: #2f4a3a; opacity: .62; }
+  .paso.hecho .titulo { text-decoration: line-through; text-decoration-color: var(--suave); }
+  .paso input[type=checkbox] { flex: none; appearance: none; width: 26px; height: 26px; border: 2px solid var(--dorado); border-radius: 8px; background: transparent; cursor: pointer; margin-top: 1px; display: grid; place-content: center; }
+  .paso input[type=checkbox]:checked { background: var(--verde); border-color: var(--verde); }
+  .paso input[type=checkbox]:checked::after { content: "✓"; color: #0e1a13; font-weight: 900; font-size: 17px; line-height: 1; }
+  .paso input[type=checkbox]:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  .cuerpo { flex: 1; min-width: 0; }
+  .titulo { font-weight: 700; }
+  .cuerpo p { color: var(--suave); font-size: .92rem; margin-top: 4px; }
+  .cuerpo p b, .cuerpo li b { color: var(--texto); }
+  .cuerpo ol { margin: 6px 0 0; padding-left: 20px; color: var(--suave); font-size: .92rem; }
+  .cuerpo li { margin-bottom: 3px; }
+  a { color: #e8695d; }
+  .copiable { margin-top: 10px; background: #130f0d; border: 1px dashed #4a3a30; border-radius: 10px; padding: 10px 12px 10px; font-size: .88rem; color: #e6ddd4; white-space: pre-wrap; word-break: break-word; }
+  button.copiar { margin-top: 8px; background: transparent; color: var(--dorado); border: 1px solid var(--dorado); border-radius: 99px; padding: 6px 14px; font-size: .82rem; font-weight: 600; cursor: pointer; }
+  button.copiar:hover { background: rgba(198,161,91,.12); }
+  .tag { display: inline-block; font-size: .7rem; padding: 2px 8px; border-radius: 99px; background: #2a201c; color: var(--dorado); margin-left: 6px; font-weight: 600; letter-spacing: .03em; vertical-align: middle; }
+
+  .caja { border-radius: 14px; padding: 14px 16px; margin: 14px 0; border: 1px solid; }
+  .caja h3 { font-size: 1rem; margin-bottom: 6px; }
+  .caja ul { padding-left: 20px; }
+  .caja li { margin-bottom: 4px; font-size: .93rem; }
+  .alto { background: #2a1210; border-color: #6b2620; } .alto h3 { color: #ff8a7d; }
+  .info { background: #1b1814; border-color: var(--borde); } .info h3 { color: var(--dorado); }
+
+  .ias { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+  .ias div { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 12px; font-size: .84rem; color: var(--suave); }
+  .ias div b { display: block; color: var(--texto); margin-bottom: 4px; font-size: .92rem; }
+  .ias div em { display: inline-block; font-style: normal; font-size: .72rem; color: var(--dorado); margin-bottom: 4px; }
+
+  .fin { display: none; text-align: center; margin: 30px 0; padding: 22px; border: 1px solid #2f4a3a; border-radius: 16px; background: #14211a; }
+  .fin.visible { display: block; }
+  .fin h3 { color: var(--verde); font-size: 1.2rem; }
+  footer { text-align: center; margin-top: 36px; color: var(--suave); font-size: .82rem; }
+  footer button { background: none; border: none; color: var(--suave); text-decoration: underline; cursor: pointer; font-size: .82rem; }
+  @media (max-width: 560px) {
+    .flujo { grid-template-columns: repeat(2, 1fr); } .flujo div::after { display: none; }
+    .ias { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="data:image/jpeg;base64,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" alt="Club Deportivo Hugo Jara">
+    <h1>Guía de Benjamín</h1>
+    <p class="sub">Jara App · Comunicaciones · tu checklist de trabajo</p>
+  </header>
+
+  <div class="progreso" aria-live="polite">
+    <div class="progreso-fila"><span>Tu avance</span><span><strong id="hechos">0</strong> de <span id="total">0</span> listos</span></div>
+    <div class="barra"><i id="barra"></i></div>
+  </div>
+
+  <div class="caja info">
+    <h3>Tu carril: Noticias y boletín</h3>
+    <p style="color:var(--suave);font-size:.93rem">Tu parte es lo que se ve y lo que se dice: el boletín <b style="color:var(--texto)">"El Jara Informa"</b>, las entrevistas <b style="color:var(--texto)">"Cortita y al pie"</b> y los avisos. Hoy es una maqueta (se ve, pero no guarda nada). La base de datos la hace Seba, para no arriesgar los datos de los socios.</p>
+  </div>
+
+  <h3 style="margin:20px 0 8px;font-size:1rem">Cómo viaja cada cambio</h3>
+  <div class="flujo">
+    <div><span class="ico">💬</span><b>Tú + tu IA</b>piden y arman el cambio</div>
+    <div><span class="ico">🌿</span><b>Rama en GitHub</b>lo subes como propuesta</div>
+    <div><span class="ico">🔎</span><b>Seba revisa</b>mira qué cambió</div>
+    <div><span class="ico">🚀</span><b>Publicado</b>lo ven los socios</div>
+  </div>
+
+  <h3 style="margin:20px 0 8px;font-size:1rem">Qué herramienta para qué</h3>
+  <div class="ias">
+    <div><em>PAGADA</em><b>ChatGPT</b>Tu herramienta principal: textos, pantallas y cambios del módulo.</div>
+    <div><em>GRATIS</em><b>Claude</b>Consultas puntuales o segunda opinión. Tiene límite diario bajo.</div>
+    <div><em>EQUIPO</em><b>Seba</b>Base de datos, permisos y pagos. Revisa tus propuestas.</div>
+  </div>
+
+  <!-- ETAPA 1 -->
+  <div class="etapa"><div class="num">1</div><h2>Prepárate<small>Una sola vez · unos 15 minutos</small></h2></div>
+
+  <label class="paso"><input type="checkbox" data-id="p1"><div class="cuerpo"><div class="titulo">Crea tu cuenta de GitHub y mándale tu usuario a Seba</div>
+    <p>Entra a <a href="https://github.com/signup" target="_blank" rel="noopener">github.com/signup</a>. Si ya tienes cuenta, solo manda el usuario.</p></div></label>
+
+  <label class="paso"><input type="checkbox" data-id="p2"><div class="cuerpo"><div class="titulo">Acepta la invitación al repositorio</div>
+    <p>Te llega un correo de GitHub. Haz clic en <b>View invitation</b> → <b>Accept invitation</b>.</p></div></label>
+
+  <label class="paso"><input type="checkbox" data-id="p3"><div class="cuerpo"><div class="titulo">Descarga el proyecto</div>
+    <ol><li>Entra a <a href="https://github.com/hugo-jara/Jara-App" target="_blank" rel="noopener">github.com/hugo-jara/Jara-App</a>.</li>
+    <li>Botón verde <b>Code</b> → <b>Download ZIP</b>.</li>
+    <li>Descomprime la carpeta (clic derecho → <b>Extraer todo</b>).</li></ol></div></label>
+
+  <!-- ETAPA 2 -->
+  <div class="etapa"><div class="num">2</div><h2>Conoce el proyecto con tu IA<small>Primero entender, después cambiar</small></h2></div>
+
+  <label class="paso"><input type="checkbox" data-id="p4"><div class="cuerpo"><div class="titulo">Abre un chat nuevo en ChatGPT y pega el archivo de contexto</div>
+    <p>En la carpeta que descargaste, abre <b>CLAUDE.md</b> con el Bloc de notas, selecciona todo (<b>Ctrl + A</b>), copia (<b>Ctrl + C</b>) y pégalo en el chat. Ese archivo le explica a la IA qué es la app y cuáles son las reglas.</p></div></label>
+
+  <label class="paso"><input type="checkbox" data-id="p5"><div class="cuerpo"><div class="titulo">Sube los 6 archivos de tu módulo</div>
+    <p>Usa el clip del chat y adjunta estos archivos de la carpeta del proyecto:</p>
+    <ol><li><b>src/lib/noticias.js</b></li><li><b>src/pages/Noticias.jsx</b></li><li><b>src/pages/Publicar.jsx</b></li><li><b>src/pages/Publicacion.jsx</b></li><li><b>src/components/Carrusel.jsx</b></li><li><b>src/styles.css</b></li></ol></div></label>
+
+  <label class="paso"><input type="checkbox" data-id="p6"><div class="cuerpo"><div class="titulo">Hazle la primera pregunta <span class="tag">SOLO ENTENDER</span></div>
+    <p>Todavía no pidas cambios. Copia y pega este mensaje:</p>
+    <div class="copiable">Lee el archivo de contexto que te pegué. Después explícame en simple, como si yo no supiera programar, cómo funciona hoy la sección de Noticias de esta app y qué le falta para que se vea como un boletín de verdad. No cambies nada todavía.</div>
+    <button class="copiar" type="button">Copiar mensaje</button></div></label>
+
+  <!-- ETAPA 3 -->
+  <div class="etapa"><div class="num">3</div><h2>Tu primer cambio<small>Chico, de a uno, y como propuesta</small></h2></div>
+
+  <label class="paso"><input type="checkbox" data-id="p7"><div class="cuerpo"><div class="titulo">Pídele un ajuste chico</div>
+    <p>Por ejemplo, un texto o el orden de algo en la portada del boletín. Cambia lo que está entre [corchetes]:</p>
+    <div class="copiable">Quiero cambiar solo esto: [describe el cambio, por ejemplo: que el título de cada edición se vea más grande]. Antes de hacerlo, explícame qué archivos vas a modificar y por qué. Cuando lo hagas, entrégame los archivos COMPLETOS que cambiaron, con su ruta, y dime qué líneas cambiaron.</div>
+    <button class="copiar" type="button">Copiar mensaje</button></div></label>
+
+  <label class="paso"><input type="checkbox" data-id="p8"><div class="cuerpo"><div class="titulo">Revisa lo que te entregó</div>
+    <p>Guarda los archivos <b>con el mismo nombre y en la misma carpeta</b> de tu proyecto. Revisa que haya tocado solo lo que pediste. Si cambió cosas de más, dile: <i>"Solo cambia lo que te pedí"</i>.</p></div></label>
+
+  <label class="paso"><input type="checkbox" data-id="p9"><div class="cuerpo"><div class="titulo">Súbelo como propuesta (nunca como cambio final)</div>
+    <ol><li>En GitHub, entra a la carpeta donde va el archivo.</li>
+    <li><b>Add file</b> → <b>Upload files</b> → arrastra tu archivo.</li>
+    <li>Abajo elige <b>Create a new branch for this commit</b> y ponle un nombre, por ejemplo <b>comunicaciones/primer-cambio</b>.</li>
+    <li>Haz clic en <b>Propose changes</b> y luego en <b>Create pull request</b>.</li></ol></div></label>
+
+  <label class="paso"><input type="checkbox" data-id="p10"><div class="cuerpo"><div class="titulo">Avísale a Seba</div>
+    <p>Cuéntale qué cambiaste y por qué. Él revisa la propuesta y la publica. Si algo no lo entiendes, pregúntale a la IA: <i>"explícamelo como si no supiera programar"</i>.</p></div></label>
+
+  <!-- ETAPA 4 -->
+  <div class="etapa"><div class="num">4</div><h2>Tus tareas de Comunicaciones<small>De más fácil a más difícil</small></h2></div>
+
+  <label class="paso"><input type="checkbox" data-id="t1"><div class="cuerpo"><div class="titulo">Revisar las preguntas de "Cortita y al pie"</div>
+    <p>¿Son las que el club usa hoy? Corrígelas y mándaselas a la IA para que actualice la plantilla.</p></div></label>
+
+  <label class="paso"><input type="checkbox" data-id="t2"><div class="cuerpo"><div class="titulo">Mejorar la portada de cada edición del boletín</div>
+    <p>Títulos, fotos y orden. Pruébalo en el celular (es donde lo van a ver los socios).</p></div></label>
+
+  <label class="paso"><input type="checkbox" data-id="t3"><div class="cuerpo"><div class="titulo">Escribirle a Seba cómo se arma una edición <span class="tag">SIN CÓDIGO</span></div>
+    <p>En un documento corto: quién escribe cada nota, quién aprueba, cuánto demora y cada cuánto sale. Es lo que Seba necesita para diseñar la base de datos.</p></div></label>
+
+  <label class="paso"><input type="checkbox" data-id="t4"><div class="cuerpo"><div class="titulo">Pensar la galería de fotos del último partido <span class="tag">SOLO DISEÑO</span></div>
+    <p>Qué se ve, quién sube las fotos y qué pueden hacer los socios. Pídele a la IA que te ayude a bocetarlo, y mándale a Seba el resultado.</p></div></label>
+
+  <div class="caja alto">
+    <h3>Reglas que no se negocian</h3>
+    <ul>
+      <li><b>No toques</b> la carpeta <b>supabase/</b>, el archivo <b>src/lib/sesion.jsx</b> ni nada de pagos, cuotas o compras. Si la IA te lo propone, dile que no y avísale a Seba.</li>
+      <li><b>Nunca pegues</b> claves, RUT, cuentas bancarias ni datos reales de socios en el chat de la IA, aunque te los pida.</li>
+      <li><b>Siempre pide los archivos completos</b> y revisa qué cambió antes de subir.</li>
+      <li><b>Un cambio a la vez</b>, siempre como propuesta en una rama, nunca directo a la versión publicada.</li>
+    </ul>
+  </div>
+
+  <div class="fin" id="fin"><h3>Todo listo, crack 🙌</h3><p style="color:var(--suave)">Completaste tu checklist. Avísale a Seba para definir las próximas tareas.</p></div>
+
+  <footer>Club Deportivo Hugo Jara · Todos juegan<br><button type="button" id="reiniciar">Reiniciar checklist</button></footer>
+</main>
+
+<script>
+(function () {
+  var KEY = 'jara-guia-benjamin-v1';
+  var checks = Array.prototype.slice.call(document.querySelectorAll('.paso input[type=checkbox]'));
+  var estado = {};
+  try { estado = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { estado = {}; }
+  function guardar() { try { localStorage.setItem(KEY, JSON.stringify(estado)); } catch (e) {} }
+  function pintar() {
+    var n = 0;
+    checks.forEach(function (c) {
+      c.checked = !!estado[c.dataset.id];
+      c.closest('.paso').classList.toggle('hecho', c.checked);
+      if (c.checked) n++;
+    });
+    document.getElementById('hechos').textContent = n;
+    document.getElementById('total').textContent = checks.length;
+    document.getElementById('barra').style.width = (checks.length ? (n / checks.length * 100) : 0) + '%';
+    document.getElementById('fin').classList.toggle('visible', n === checks.length && n > 0);
+  }
+  checks.forEach(function (c) {
+    c.addEventListener('change', function () { estado[c.dataset.id] = c.checked; guardar(); pintar(); });
+  });
+  document.querySelectorAll('button.copiar').forEach(function (b) {
+    b.addEventListener('click', function (ev) {
+      ev.preventDefault(); ev.stopPropagation();
+      var texto = b.previousElementSibling.textContent.trim();
+      var ok = function () { var t = b.textContent; b.textContent = '¡Copiado!'; setTimeout(function () { b.textContent = t; }, 1600); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto).then(ok, function () { fallback(texto, ok); });
+      } else { fallback(texto, ok); }
+    });
+  });
+  function fallback(texto, ok) {
+    var ta = document.createElement('textarea'); ta.value = texto; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); ok(); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+  document.getElementById('reiniciar').addEventListener('click', function () {
+    if (confirm('¿Borrar todas las marcas del checklist?')) { estado = {}; guardar(); pintar(); }
+  });
+  pintar();
+})();
+</script>
+</body>
+</html>
