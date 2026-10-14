@@ -109,7 +109,9 @@ export default function Partido() {
       <dl className="datos">
         <div><dt>Día</dt><dd>{fechaLarga(partido.fecha)}</dd></div>
         {partido.citacion && <div><dt>Citación</dt><dd>{partido.citacion}</dd></div>}
-        {partido.cancha && <div><dt>Cancha</dt><dd>{partido.cancha}</dd></div>}
+        {partido.cancha && (
+          <div><dt>Cancha</dt><dd>{complejo ? <EsquemaCanchas esquema={complejo.esquema} cancha={partido.cancha} /> : partido.cancha}</dd></div>
+        )}
         {partido.tercerTiempo && <div><dt>Tercer tiempo</dt><dd>{partido.tercerTiempo}</dd></div>}
         {complejo && (
           <div style={{ gridColumn: '1 / -1' }}>
@@ -126,8 +128,6 @@ export default function Partido() {
           </div>
         )}
       </dl>
-
-      {complejo && partido.cancha && <EsquemaCanchas esquema={complejo.esquema} cancha={partido.cancha} />}
 
       <div className="card">
         <div className="sobretitulo">¿Vas?</div>

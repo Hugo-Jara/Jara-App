@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 // Un esquema simple del complejo, visto desde arriba (norte hacia arriba), con la
 // cancha del partido resaltada. Está dibujado a partir de la vista satelital de
 // cada complejo: no es un plano a escala, solo sirve para ubicarse al llegar.
@@ -43,7 +45,7 @@ const ESQUEMAS = {
   },
 };
 
-export default function EsquemaCanchas({ esquema, cancha }) {
+function Esquema({ esquema, cancha }) {
   const e = ESQUEMAS[esquema];
   if (!e) return null;
   const n = Number(String(cancha ?? '').match(/\d+/)?.[0]);
@@ -51,7 +53,7 @@ export default function EsquemaCanchas({ esquema, cancha }) {
   const nombreCancha = Number.isFinite(n) ? `cancha ${n}` : 'la cancha';
 
   return (
-    <div className="card esquema">
+    <div className="esquema">
       <div className="sobretitulo">Dónde queda {nombreCancha}</div>
       <svg viewBox={`0 0 ${ancho} ${e.alto}`} role="img"
            aria-label={`Esquema del complejo con ${nombreCancha} resaltada`}>
@@ -91,5 +93,31 @@ export default function EsquemaCanchas({ esquema, cancha }) {
       </svg>
       <p className="conteo">{e.pista(n)} Norte hacia arriba.</p>
     </div>
+  );
+}
+
+// El valor de "Cancha" como botón: al tocarlo se abre el plano en una ventana.
+export default function EsquemaCanchas({ esquema, cancha }) {
+  const [abierto, setAbierto] = useState(false);
+  useEffect(() => {
+    if (!abierto) return undefined;
+    const alTecla = (e) => { if (e.key === 'Escape') setAbierto(false); };
+    window.addEventListener('keydown', alTecla);
+    return () => window.removeEventListener('keydown', alTecla);
+  }, [abierto]);
+  if (!ESQUEMAS[esquema]) return <>{cancha}</>;
+  return (
+    <>
+      <button type="button" className="enlace" onClick={() => setAbierto(true)}>{cancha} · ver plano</button>
+      {abierto && (
+        <div className="ventana-fondo" onClick={() => setAbierto(false)}>
+          <div className="ventana card" role="dialog" aria-modal="true" aria-label="Plano del complejo"
+               onClick={(e) => e.stopPropagation()}>
+            <Esquema esquema={esquema} cancha={cancha} />
+            <button type="button" className="btn secundario" style={{ marginTop: 12 }} onClick={() => setAbierto(false)}>Cerrar</button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
