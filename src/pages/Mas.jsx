@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import Icono from '../components/Icono.jsx';
+import { puedeVerTesoreria } from './Tesoreria.jsx';
 
 // Lo administrativo del club vive acá, fuera de la pantalla de inicio.
 export default function Mas() {
@@ -15,6 +16,10 @@ export default function Mas() {
   // Solo para encargados y administradores.
   if (persona.esEncargado) {
     FILAS.unshift({ a: '/ingresos', icono: 'club', nombre: 'Pases de ingreso', desc: 'Aprobar a quienes pidieron entrar a la app' });
+  }
+  // Solo para administradores y tesoreros.
+  if (puedeVerTesoreria(persona)) {
+    FILAS.unshift({ a: '/tesoreria', icono: 'cuota', nombre: 'Tesorería', desc: 'Caja, quién pagó y cuánto falta (prototipo)' });
   }
   return (
     <>

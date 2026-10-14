@@ -4,6 +4,8 @@ import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos, porEstado, sinResponder, recordatorioPartido } from '../lib/partidos.js';
 import { fechaLarga } from '../lib/fechas.js';
 import RecordarPorWhatsApp from '../components/RecordarPorWhatsApp.jsx';
+import { complejoDe } from '../lib/complejos.js';
+import EsquemaCanchas from '../components/EsquemaCanchas.jsx';
 
 const OPCIONES = [['voy', 'Voy'], ['duda', 'Duda'], ['baja', 'No voy']];
 const TEXTO = { voy: 'Confirmaste que vas.', duda: 'Quedaste en duda.', baja: 'Avisaste que no vas.' };
@@ -98,6 +100,7 @@ export default function Partido() {
     );
   }
   const voy = porEstado(partido, 'voy');
+  const complejo = complejoDe(partido.equipo);
   return (
     <>
       <Link to="/partidos" className="volver">‹ Partidos</Link>
@@ -108,7 +111,23 @@ export default function Partido() {
         {partido.citacion && <div><dt>Citación</dt><dd>{partido.citacion}</dd></div>}
         {partido.cancha && <div><dt>Cancha</dt><dd>{partido.cancha}</dd></div>}
         {partido.tercerTiempo && <div><dt>Tercer tiempo</dt><dd>{partido.tercerTiempo}</dd></div>}
+        {complejo && (
+          <div style={{ gridColumn: '1 / -1' }}>
+            <dt>Cómo llegar</dt>
+            <dd>
+              {complejo.waze && (
+                <>
+                  <a className="enlace" href={complejo.waze} target="_blank" rel="noreferrer">Waze</a>
+                  {' · '}
+                </>
+              )}
+              <a className="enlace" href={complejo.mapas} target="_blank" rel="noreferrer">Google Maps</a>
+            </dd>
+          </div>
+        )}
       </dl>
+
+      {complejo && partido.cancha && <EsquemaCanchas esquema={complejo.esquema} cancha={partido.cancha} />}
 
       <div className="card">
         <div className="sobretitulo">¿Vas?</div>

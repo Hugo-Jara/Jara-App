@@ -263,3 +263,37 @@ select:disabled, input:disabled { opacity: 0.6; }
 .estado.voy { color: var(--green); }
 .estado.duda { color: var(--gold); }
 .estado.baja { color: var(--rose); }
+
+/* Tesorería (prototipo) */
+.selector-plantel { grid-template-columns: repeat(2, 1fr); margin-bottom: 14px; }
+.selector-plantel .segmento { font-size: 14px; }
+.kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.kpi { background: linear-gradient(160deg, var(--bg-card), var(--bg-card-alt)); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+.kpi-etiqueta { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); }
+.kpi-valor { margin-top: 6px; font-size: 22px; font-weight: 800; }
+.kpi-valor.negativo { color: var(--rose); }
+.kpi-nota { margin-top: 4px; font-size: 12px; color: var(--text-dim); }
+.progreso-texto { font-size: 15px; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.progreso-texto span { margin-left: auto; font-weight: 700; color: var(--gold); }
+.progreso { margin-top: 10px; height: 10px; border-radius: 100px; background: var(--bg); border: 1px solid var(--border); overflow: hidden; }
+.progreso > div { height: 100%; background: var(--green); border-radius: 100px; }
+.movimientos { list-style: none; margin: 0; padding: 0; }
+.movimientos li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
+.movimientos li:last-child { border-bottom: none; }
+.mov-texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mov-monto { flex: none; font-weight: 700; }
+.mov-monto.entra { color: var(--green); }
+.mov-monto.sale { color: var(--rose); }
+
+/* Esquema de canchas */
+.esquema svg { width: 100%; height: auto; display: block; margin-top: 4px; }
+.esq-calle { fill: var(--bg); stroke: var(--border); }
+.esq-zona { fill: rgba(168, 155, 147, 0.12); stroke: var(--text-dim); stroke-dasharray: 4 3; }
+.esq-cancha { fill: rgba(92, 138, 108, 0.22); stroke: var(--green); stroke-width: 1.5; }
+.esq-linea { stroke: var(--green); stroke-opacity: 0.5; }
+.esq-numero { fill: var(--text); font-size: 26px; font-weight: 800; }
+.esq-texto { fill: var(--text-dim); font-size: 10.5px; }
+.esq-etiqueta { fill: var(--gold); font-weight: 700; font-size: 11px; }
+.esq-entrada { fill: var(--gold); }
+.esq-activa .esq-cancha { fill: rgba(198, 54, 43, 0.35); stroke: var(--red); stroke-width: 3; }
+.esq-activa .esq-numero { fill: #fff; }

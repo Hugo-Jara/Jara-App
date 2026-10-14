@@ -11,6 +11,7 @@ import EntrenamientoForm from './pages/EntrenamientoForm.jsx';
 import Ingresos from './pages/Ingresos.jsx';
 import Cuota from './pages/Cuota.jsx';
 import Compras from './pages/Compras.jsx';
+import Tesoreria from './pages/Tesoreria.jsx';
 import Club from './pages/Club.jsx';
 import Entrenar from './pages/Entrenar.jsx';
 import Noticias from './pages/Noticias.jsx';
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/mas" element={<Mas />} />
         <Route path="/cuota" element={<Cuota />} />
         <Route path="/compras" element={<Compras />} />
+        <Route path="/tesoreria" element={<Tesoreria />} />
         <Route path="/club" element={<Club />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
