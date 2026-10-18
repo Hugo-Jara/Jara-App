@@ -26,7 +26,8 @@ await db.exec(`
   grant usage on schema auth, public to anon, authenticated;
 `);
 for (const f of ['0001_base.sql', '0002_cotizaciones.sql', '0004_funciones_de_trigger_privadas.sql',
-                 '0009_ingreso_por_nombre.sql', '0010_partidos.sql', '0011_entrenamientos.sql', '0012_resultado_y_estadisticas.sql']) {
+                 '0009_ingreso_por_nombre.sql', '0010_partidos.sql', '0011_entrenamientos.sql', '0012_resultado_y_estadisticas.sql',
+                 '0013_administra_entrenamientos.sql']) {
   await db.exec(mig(f));
 }
 
@@ -204,7 +205,7 @@ console.log('\nEntrenamientos');
 const abrir = (quien, fecha, cupo = 3, id = null) =>
   como(quien, `select entrenamiento_guardar($1, $2, '20:00', '22:00', 'Cancha de ejemplo', $3, 2000, 4000, 5000, 1000) as id`, [id, fecha, cupo]);
 r = await abrir('doble', manana);
-ok('Un jugador no abre listas de entrenamiento', /Solo los encargados/.test(r.error ?? ''), r.error);
+ok('Un jugador no abre listas de entrenamiento', /Solo quienes administran/.test(r.error ?? ''), r.error);
 x = await uno('doble', 'select entrenamiento_actual()');
 ok('Sin lista abierta, no hay entrenamiento', x.entrenamiento === null && x.puedo_administrar === false);
 r = await abrir('capi', manana);
@@ -270,6 +271,32 @@ r = await como('teso', 'select entrenamiento_pago($1, true)', [x.deben[0].id]);
 ok('Al pagar, sale de "Deben"', !r.error && (await uno('doble', 'select entrenamiento_actual()')).deben.length === 0, r.error);
 r = await como('doble', 'select count(*) from entrenamiento_inscritos');
 ok('Las tablas no se leen directamente', !!r.error);
+
+// Permiso de administrar entrenamientos (0013): abre listas, baja gente y cobra sin ser encargado ni tesorero.
+const diaLista = await dia(3);
+await db.query(`update personas set administra_entrenamientos = false where id = $1`, [P.doble]);
+r = await abrir('doble', diaLista);
+ok('Sin el permiso, un jugador sigue sin abrir listas', /Solo quienes administran/.test(r.error ?? ''), r.error);
+await db.query(`update personas set administra_entrenamientos = true where id = $1`, [P.doble]);
+r = await abrir('doble', diaLista);
+const ent2 = r.rows[0]?.id;
+ok('Con el permiso, un jugador abre la lista', !!ent2, r.error);
+x = await uno('doble', 'select entrenamiento_actual()');
+ok('…y la app le muestra que puede administrar y cobrar', x.puedo_administrar === true && x.puedo_cobrar === true, JSON.stringify(x.puedo_administrar));
+r = await como('capi', 'select entrenamiento_inscribirme($1)', [ent2]);
+x = (await uno('doble', 'select entrenamiento_actual()')).entrenamiento;
+const deCapi2 = x.inscritos.find((i) => i.persona_id === P.capi);
+r = await como('doble', 'select entrenamiento_bajar($1)', [deCapi2.id]);
+ok('Con el permiso, baja a otra persona de la lista', !r.error, r.error);
+r = await como('capi', 'select entrenamiento_inscribirme($1)', [ent2]);
+x = (await uno('doble', 'select entrenamiento_actual()')).entrenamiento;
+r = await como('doble', 'select entrenamiento_pago($1, true)', [x.inscritos.find((i) => i.persona_id === P.capi).id]);
+ok('Con el permiso, marca pagos', !r.error, r.error);
+r = await como('doble', 'select entrenamiento_eliminar($1)', [ent2]);
+ok('Con el permiso, elimina la lista', !r.error && (await db.query('select 1 from entrenamientos where id = $1', [ent2])).rows.length === 0, r.error);
+await db.query(`update personas set administra_entrenamientos = false where id = $1`, [P.doble]);
+r = await abrir('doble', diaLista);
+ok('Al quitarle el permiso, deja de poder', /Solo quienes administran/.test(r.error ?? ''), r.error);
 
 // --- Resultado y estadísticas (0012) -------------------------------------------
 const viejo = (await db.query(`select id from partidos where rival = 'Partido viejo'`)).rows[0].id;
