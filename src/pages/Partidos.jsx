@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos, porEstado, sinResponder, tieneResultado, textoResultado } from '../lib/partidos.js';
@@ -48,10 +49,23 @@ function TarjetaJugada({ p }) {
   );
 }
 
+const DE_A_POCOS = 5;
+
 export default function Partidos() {
   const { persona } = useSesion();
   const { cargando, error, partidos, mios, jugados } = usePartidos(persona);
   const otros = partidos.filter((p) => !p.esMio);
+
+  // Ya jugados: se filtra por plantel y se muestran de a pocos. Si la persona está
+  // en un solo plantel, parte filtrado en ese. (Más adelante: filtro por campeonato.)
+  const planteles = [...new Map(jugados.map((p) => [p.equipoId, p.equipo])).entries()];
+  const [elegido, setElegido] = useState(null);
+  const [cuantos, setCuantos] = useState(DE_A_POCOS);
+  const propio = persona.equipos.length === 1 && planteles.some(([id]) => id === persona.equipos[0].id)
+    ? persona.equipos[0].id : '';
+  const filtro = elegido ?? propio;
+  const visibles = jugados.filter((p) => !filtro || p.equipoId === filtro);
+  const elegir = (id) => { setElegido(id); setCuantos(DE_A_POCOS); };
 
   return (
     <>
@@ -71,7 +85,20 @@ export default function Partidos() {
           {otros.length > 0 && <h2 className="seccion">Otros planteles</h2>}
           {otros.map((p) => <Tarjeta key={p.id} p={p} />)}
           {jugados.length > 0 && <h2 className="seccion">Ya jugados</h2>}
-          {jugados.map((p) => <TarjetaJugada key={p.id} p={p} />)}
+          {planteles.length > 1 && (
+            <div className="chips" style={{ marginTop: 0, marginBottom: 12 }}>
+              <button type="button" className={`chip${!filtro ? ' activo' : ''}`} onClick={() => elegir('')}>Todos</button>
+              {planteles.map(([id, nombre]) => (
+                <button key={id} type="button" className={`chip${filtro === id ? ' activo' : ''}`} onClick={() => elegir(id)}>{nombre}</button>
+              ))}
+            </div>
+          )}
+          {visibles.slice(0, cuantos).map((p) => <TarjetaJugada key={p.id} p={p} />)}
+          {visibles.length > cuantos && (
+            <button type="button" className="btn secundario" onClick={() => setCuantos(cuantos + DE_A_POCOS)}>
+              Ver más ({visibles.length - cuantos})
+            </button>
+          )}
         </>
       )}
     </>
