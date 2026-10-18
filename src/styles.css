@@ -342,3 +342,7 @@ select:disabled, input:disabled { opacity: 0.6; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .chip { min-height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text); font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; }
 .chip.activo { background: rgba(198, 161, 91, 0.2); border-color: var(--gold); }
+
+/* Fecha: se puede escribir o tocar el calendario, y el calendario se ve claro (no oscuro). */
+input.fecha-clara { color-scheme: light; color: var(--text); }
+input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightness(1.6); cursor: pointer; }

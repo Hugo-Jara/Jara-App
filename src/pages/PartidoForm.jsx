@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos, equiposDelClub } from '../lib/partidos.js';
 import { complejoDe } from '../lib/complejos.js';
-import { fechaLarga, hoyIso, proximoDia, correrDias } from '../lib/fechas.js';
+import { fechaLarga, fechaCorta, hoyIso, proximoDia, correrDias } from '../lib/fechas.js';
 
 // Los próximos días de juego del plantel (su día de la semana), para elegir sin escribir.
 const proximosDias = (diaSemana, n = 10) => {
@@ -37,7 +37,6 @@ export default function PartidoForm() {
   const [error, setError] = useState('');
   const [ocupado, setOcupado] = useState(false);
   const [borrando, setBorrando] = useState(false);
-  const [otroDia, setOtroDia] = useState(false);
 
   // Los planteles que puede elegir: todos si es administrador, si no los suyos como encargado.
   useEffect(() => {
@@ -64,8 +63,6 @@ export default function PartidoForm() {
   const nombreEquipo = actual ? actual.equipo : equipos.find((eq) => eq.id === equipoId)?.nombre;
   const complejo = nombreEquipo ? complejoDe(nombreEquipo) : null;
   const dias = complejo?.dia != null ? proximosDias(complejo.dia) : null;
-  // Si el partido ya tiene un día que no es de la lista (p. ej. al editar), se muestra el calendario.
-  const diasConActual = dias && d.fecha && !dias.includes(d.fecha) && !otroDia ? null : dias;
   const canchas = complejo?.canchas
     ? Array.from({ length: complejo.canchas }, (_, i) => `Cancha ${i + 1}`)
     : null;
@@ -100,16 +97,14 @@ export default function PartidoForm() {
         <label htmlFor="pf-rival">Rival</label>
         <input id="pf-rival" required value={d.rival} onChange={set('rival')} />
         <label htmlFor="pf-fecha">Día</label>
-        {diasConActual && !otroDia ? (
-          <select id="pf-fecha" required value={d.fecha} onChange={(e) => {
-            if (e.target.value === 'otro') setOtroDia(true); else setD({ ...d, fecha: e.target.value });
-          }}>
-            {!d.fecha && <option value="">Elige el día…</option>}
-            {diasConActual.map((f) => <option key={f} value={f}>{fechaLarga(f)}</option>)}
-            <option value="otro">Otro día…</option>
-          </select>
-        ) : (
-          <input id="pf-fecha" type="date" required value={d.fecha} onChange={set('fecha')} />
+        <input id="pf-fecha" type="date" className="fecha-clara" required value={d.fecha} onChange={set('fecha')} />
+        {dias && (
+          <div className="chips" style={{ marginTop: 8 }}>
+            {dias.slice(0, 3).map((f) => (
+              <button key={f} type="button" className={`chip${d.fecha === f ? ' activo' : ''}`}
+                      onClick={() => setD({ ...d, fecha: f })}>{fechaCorta(f)}</button>
+            ))}
+          </div>
         )}
         {d.fecha && <p className="ayuda">{fechaLarga(d.fecha)}</p>}
         <label htmlFor="pf-citacion">Hora de citación (opcional)</label>
