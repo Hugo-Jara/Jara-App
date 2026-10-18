@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { useInicio } from '../lib/inicio.js';
-import { usePartidos, porEstado, sinResponder } from '../lib/partidos.js';
+import { usePartidos, porEstado, sinResponder, tieneResultado } from '../lib/partidos.js';
 import { useEntrenamiento, horario } from '../lib/entrenamiento.js';
 import { useSolicitudes } from '../lib/ingreso.js';
 import { useNoticias, TIPOS } from '../lib/noticias.js';
@@ -124,20 +124,22 @@ function UltimoPartido({ partido }) {
     partido.golesFavor < partido.golesContra ? 'Perdimos' : 'Empatamos';
   const visibles = Math.min(partido.fotos, 4);
   return (
-    <Link to="/partidos" className="card accion">
+    <Link to={partido.id ? `/partidos/${partido.id}` : '/partidos'} className="card accion">
       <div className="sobretitulo">Tu último partido · {partido.cuando}</div>
       <div className="marcador">
         <span className="marcador-goles display">{partido.golesFavor} – {partido.golesContra}</span>
         <span className="marcador-texto">{resultado} contra {partido.rival}</span>
       </div>
-      <div className="fotos" aria-hidden="true">
+      {partido.fotos > 0 && <div className="fotos" aria-hidden="true">
         {Array.from({ length: visibles }, (_, i) => (
           <div key={i} className={`foto foto-${i}`}>
             {i === visibles - 1 && partido.fotos > visibles && <span>+{partido.fotos - visibles}</span>}
           </div>
         ))}
-      </div>
-      <span className="ver-mas">Ver las {partido.fotos} fotos y el resumen <Icono nombre="flecha" size={16} /></span>
+      </div>}
+      <span className="ver-mas">
+        {partido.fotos > 0 ? `Ver las ${partido.fotos} fotos y el resumen` : 'Ver el partido'} <Icono nombre="flecha" size={16} />
+      </span>
     </Link>
   );
 }
@@ -168,11 +170,18 @@ function Noticias({ noticias }) {
 
 export default function Inicio() {
   const { persona } = useSesion();
-  const { ultimoPartido } = useInicio();
+  const { ultimoPartido: ejemplo } = useInicio();
   const noticias = useNoticias().publicaciones.slice(0, 3);
   const nombre = persona.nombre.split(' ')[0];
   const partidos = usePartidos(persona);
   const entreno = useEntrenamiento(persona);
+  // El último partido con resultado anotado, de mis planteles primero; si no hay, el de ejemplo (demo).
+  const real = partidos.jugados.filter(tieneResultado);
+  const ultimo = real.find((p) => p.esMio) ?? real[0];
+  const ultimoPartido = ultimo
+    ? { id: ultimo.id, equipo: ultimo.equipo, rival: ultimo.rival, cuando: fechaLarga(ultimo.fecha),
+        golesFavor: ultimo.golesFavor, golesContra: ultimo.golesContra, fotos: 0 }
+    : ejemplo;
   return (
     <>
       <h1 className="titulo display">Hola, {nombre}</h1>

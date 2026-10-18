@@ -301,3 +301,44 @@ select:disabled, input:disabled { opacity: 0.6; }
 /* Plano del complejo en ventana */
 .ventana-fondo { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; padding: 16px; }
 .ventana { width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; margin: 0; }
+
+/* Estadística de un partido y tablas del club */
+.goleadores { list-style: none; margin: 14px 0 0; padding: 0; }
+.goleadores li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 9px 0; border-top: 1px solid var(--border); font-size: 15px; }
+.goleadores li strong { color: var(--gold); font-weight: 700; }
+.goleadores li.suelto { color: var(--text-dim); }
+.cifras { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 10px; font-size: 13.5px; text-align: right; }
+.cifras em { font-style: normal; color: var(--text-dim); }
+.tarjeta { padding: 1px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; color: #120E0D; }
+.tarjeta.amarilla { background: #E3C04A; }
+.tarjeta.roja { background: var(--red); color: #fff; }
+.fila-jugador { margin-top: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; }
+.fila-jugador-cabeza { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+.cifras-campos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+.cifras-campos label { margin: 0; font-size: 11.5px; }
+.cifras-campos input { padding: 10px 8px; text-align: center; }
+.segmentos.dos { grid-template-columns: repeat(2, 1fr); }
+.segmentos.cuatro { grid-template-columns: repeat(4, 1fr); }
+.segmentos.cuatro .segmento { font-size: 13px; padding: 0 4px; }
+.tabla-goles { padding: 6px 16px; margin-top: 14px; }
+.fila-tabla { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.fila-tabla:last-child { border-bottom: none; }
+.fila-tabla .puesto { width: 24px; flex: none; color: var(--text-dim); font-size: 14px; font-variant-numeric: tabular-nums; }
+.fila-tabla .quien { flex: 1; min-width: 0; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tabla-club { padding: 4px 12px; margin-top: 14px; }
+.tabla-club .fila-tabla { gap: 4px; padding: 11px 0; }
+.tabla-club .col { width: 46px; flex: none; text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; background: none; border: 0; color: var(--text); padding: 0; font-family: inherit; }
+.tabla-club .col.cero { color: var(--text-dim); opacity: 0.45; }
+.tabla-club .col.activa { color: var(--gold); font-weight: 700; }
+.fila-tabla.cabeza { padding: 6px 0; }
+.fila-tabla.cabeza .quien, .fila-tabla.cabeza .col { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; }
+.fila-tabla.cabeza .col { cursor: pointer; min-height: 32px; display: grid; place-items: center; }
+.fila-tabla.cabeza .col.activa { color: var(--gold); border-bottom: 2px solid var(--gold); }
+.fila-tabla.total { border-bottom: none; border-top: 1px solid var(--border); font-weight: 700; }
+.tarjeta.mini { display: inline-block; width: 12px; height: 16px; padding: 0; border-radius: 3px; vertical-align: middle; }
+.fila-tabla.top .puesto { color: var(--gold); }
+.fila-tabla.yo .quien { font-weight: 700; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.chip { min-height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid var(--border); background: none; color: var(--text); font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit; }
+.chip.activo { background: rgba(198, 161, 91, 0.2); border-color: var(--gold); }

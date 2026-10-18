@@ -26,7 +26,7 @@ await db.exec(`
   grant usage on schema auth, public to anon, authenticated;
 `);
 for (const f of ['0001_base.sql', '0002_cotizaciones.sql', '0004_funciones_de_trigger_privadas.sql',
-                 '0009_ingreso_por_nombre.sql', '0010_partidos.sql', '0011_entrenamientos.sql']) {
+                 '0009_ingreso_por_nombre.sql', '0010_partidos.sql', '0011_entrenamientos.sql', '0012_resultado_y_estadisticas.sql']) {
   await db.exec(mig(f));
 }
 
@@ -270,6 +270,82 @@ r = await como('teso', 'select entrenamiento_pago($1, true)', [x.deben[0].id]);
 ok('Al pagar, sale de "Deben"', !r.error && (await uno('doble', 'select entrenamiento_actual()')).deben.length === 0, r.error);
 r = await como('doble', 'select count(*) from entrenamiento_inscritos');
 ok('Las tablas no se leen directamente', !!r.error);
+
+// --- Resultado y estadísticas (0012) -------------------------------------------
+const viejo = (await db.query(`select id from partidos where rival = 'Partido viejo'`)).rows[0].id;
+const J = (...xs) => JSON.stringify(xs.map(([persona_id, goles = 0, asistencias = 0, amarillas = 0, rojas = 0]) =>
+  ({ persona_id, goles, asistencias, amarillas, rojas })));
+x = await uno('doble', 'select partidos_jugados()');
+ok('Un partido de ayer aparece entre los jugados, sin resultado',
+   x.length === 1 && x[0].rival === 'Partido viejo' && x[0].goles_favor === null && x[0].estadisticas.length === 0, JSON.stringify(x));
+ok('Un jugador común ve que no puede anotar', x[0].puedo_anotar === false);
+r = await como('doble', 'select partido_resultado($1, 3, 5, $2)', [viejo, J([P.doble, 1])]);
+ok('Un jugador no anota resultados', /Solo quien anota/.test(r.error ?? ''), r.error);
+r = await como('capi', 'select partido_resultado($1, 3, 5, $2)', [viejo, J([P.doble, 2, 1, 1], [P.capi, 1, 2, 0, 1])]);
+ok('El encargado anota 3-5 con goles, asistencias y tarjetas', !r.error, r.error);
+x = (await uno('doble', 'select partidos_jugados()'))[0];
+ok('Todo el club ve el marcador y las cifras de cada uno',
+   x.goles_favor === 3 && x.goles_contra === 5 && x.estadisticas.length === 2
+   && x.estadisticas[0].nombre === 'Benjamín Silva' && x.estadisticas[0].goles === 2 && x.estadisticas[0].amarillas === 1
+   && x.estadisticas[1].asistencias === 2 && x.estadisticas[1].rojas === 1, JSON.stringify(x));
+r = await como('capi', 'select partido_resultado($1, 4, 5, $2)', [viejo, J([P.doble, 3], [P.capi, 0, 0, 0, 0])]);
+x = (await uno('doble', 'select partidos_jugados()'))[0];
+ok('Se puede corregir: las cifras se reemplazan y las filas vacías se ignoran',
+   !r.error && x.goles_favor === 4 && x.estadisticas.length === 1 && x.estadisticas[0].goles === 3 && x.estadisticas[0].asistencias === 0, r.error);
+r = await como('capi', 'select partido_resultado($1, 2, 1, $2)', [viejo, J([P.doble, 3])]);
+ok('Los goles de los jugadores no pueden sumar más que el marcador', /suman más/.test(r.error ?? ''), r.error);
+r = await como('capi', 'select partido_resultado($1, 2, 1, $2)', [viejo, J([P.doble, 1, 3])]);
+ok('Ni las asistencias más que los goles del equipo', /Las asistencias/.test(r.error ?? ''), r.error);
+r = await como('capi', 'select partido_resultado($1, 3, 1, $2)', [viejo, J([P.doble, 0, 0, 3])]);
+ok('Ni 3 amarillas a una persona', /2 amarillas/.test(r.error ?? ''), r.error);
+r = await como('capi', 'select partido_resultado($1, 3, 1, $2)', [viejo, J([P.doble, 0, 0, 0, 2])]);
+ok('Ni 2 rojas', /1 roja/.test(r.error ?? ''), r.error);
+r = await como('capi', 'select partido_resultado($1, 3, 1, $2)', [viejo, J([P.doble, 1], [P.doble, 1])]);
+ok('Un jugador no se repite', /repetido/.test(r.error ?? ''), r.error);
+r = await como('capi', 'select partido_resultado($1, 3, 1, $2)', [viejo, J(['20000000-0000-0000-0000-0000000000ff', 1])]);
+ok('Ni se acepta alguien que no está en la nómina', /nómina/.test(r.error ?? ''), r.error);
+x = (await uno('doble', 'select partidos_jugados()'))[0];
+ok('Un intento fallido no cambia lo anotado', x.goles_favor === 4 && x.estadisticas[0].goles === 3, JSON.stringify(x));
+r = await como('capi', 'select partido_resultado($1, 2, null, $2)', [viejo, '[]']);
+ok('No se acepta medio marcador', /Faltan los goles/.test(r.error ?? ''), r.error);
+r = await como('capi', 'select partido_resultado($1, -1, 2, $2)', [viejo, '[]']);
+ok('Ni goles negativos', /no válidos/.test(r.error ?? ''), r.error);
+r = await como('capi', 'select partido_resultado($1, 1, 0, $2)', [pSabado, '[]']);
+ok('El encargado de otro plantel no anota en este', /Solo quien anota/.test(r.error ?? ''), r.error);
+r = await como('capi', 'select partido_resultado($1, 1, 0, $2)', [pJueves, '[]']);
+ok('No se anota un partido que todavía no se juega', /todavía no se juega/.test(r.error ?? ''), r.error);
+
+await db.query(`update personas set anota_partidos = true where id = $1`, [P.teso]);
+x = (await uno('teso', 'select partidos_jugados()'))[0];
+ok('Quien tiene el permiso personal ve que puede anotar', x.puedo_anotar === true);
+r = await como('teso', 'select partido_resultado($1, 2, 2, $2)', [viejo, J([P.capi, 2, 0, 1])]);
+ok('…y anota aunque no sea encargado del plantel', !r.error, r.error);
+
+x = await uno('doble', 'select estadisticas()');
+ok('La tabla del club', x.length === 1 && x[0].nombre === 'Camilo Capitán' && x[0].goles === 2 && x[0].amarillas === 1, JSON.stringify(x));
+await db.query(`insert into partidos (club_id, equipo_id, rival, fecha, goles_favor, goles_contra)
+                values ($1, $2, 'Otro viejo', $3, 4, 0)`, [CLUB, EQ.sabado, ayer]);
+const otro = (await db.query(`select id from partidos where rival = 'Otro viejo'`)).rows[0].id;
+await db.query(`insert into partido_estadisticas (partido_id, persona_id, goles, asistencias, rojas) values ($1, $2, 3, 0, 1), ($1, $3, 1, 2, 0)`, [otro, P.doble, P.capi]);
+x = await uno('doble', 'select estadisticas()');
+const b = x.find((e) => e.nombre === 'Benjamín Silva'), c = x.find((e) => e.nombre === 'Camilo Capitán');
+ok('Suma entre partidos: goles, asistencias, amarillas y rojas',
+   x.length === 2 && b.goles === 3 && b.rojas === 1 && c.goles === 3 && c.asistencias === 2 && c.amarillas === 1, JSON.stringify(x));
+x = await uno('doble', 'select estadisticas($1)', [EQ.sabado]);
+ok('Se puede filtrar por plantel', x.length === 2 && x.every((e) => e.goles <= 3) && !x.some((e) => e.amarillas), JSON.stringify(x));
+x = await uno('doble', 'select estadisticas(null, 1999)');
+ok('Y por año', x.length === 0, JSON.stringify(x));
+r = await como('seba', 'select partido_resultado($1, null, null, $2)', [viejo, '[]']);
+x = (await uno('doble', 'select partidos_jugados()')).find((p) => p.id === viejo);
+ok('El administrador puede borrar el resultado, y se van las cifras', !r.error && x.goles_favor === null && x.estadisticas.length === 0, r.error);
+x = await uno('doble', 'select partidos_proximos()');
+ok('Los jugados no vuelven a "próximos"', !x.some((p) => p.id === viejo));
+r = await como('intruso', 'select partidos_jugados()');
+ok('Una cuenta rechazada tampoco ve los jugados', /no está en la nómina/.test(r.error ?? ''), r.error);
+r = await como('intruso', 'select estadisticas()');
+ok('Ni las estadísticas', /no está en la nómina/.test(r.error ?? ''), r.error);
+r = await como('doble', 'select count(*) from partido_estadisticas');
+ok('Las tablas de estadística no se leen directamente', !!r.error);
 
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

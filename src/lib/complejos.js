@@ -9,6 +9,8 @@ const COMPLEJOS = [
     nombre: 'Complejo de los sábados',
     equipos: ['Senior Sábado', 'Junior Sábado'],
     esquema: 'sabado',
+    dia: 6, // sábado
+    canchas: 6,
     lat: -33.214052,
     lng: -70.702407,
   },
@@ -16,6 +18,8 @@ const COMPLEJOS = [
     nombre: 'Complejo de los jueves (Huechuraba)',
     equipos: ['Senior Jueves'],
     esquema: 'jueves',
+    dia: 4, // jueves
+    canchas: 5,
     // Solo tenemos el link de Google Maps; el de Waze se suma cuando se comparta.
     mapas: 'https://goo.gl/maps/9xFVDzeif7GqYRAG8',
   },
@@ -29,5 +33,5 @@ const enlaces = (c) => ({
 // Devuelve { nombre, esquema, waze, mapas } para el plantel, o null si aún no está cargado.
 export function complejoDe(equipo) {
   const c = COMPLEJOS.find((x) => x.equipos.includes(equipo));
-  return c ? { nombre: c.nombre, esquema: c.esquema, ...enlaces(c) } : null;
+  return c ? { nombre: c.nombre, esquema: c.esquema, dia: c.dia, canchas: c.canchas, ...enlaces(c) } : null;
 }

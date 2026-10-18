@@ -29,6 +29,7 @@ Las migraciones están en `supabase/migrations/` y se aplican en orden:
 | `0009_ingreso_por_nombre.sql` | Cada jugador elige su nombre de la nómina y un encargado de su plantel lo aprueba |
 | `0010_partidos.sql` | Partidos por plantel y asistencia (voy, duda, baja) |
 | `0011_entrenamientos.sql` | Listas de entrenamiento con cupos, pago por sesión y deudas |
+| `0012_resultado_y_estadisticas.sql` | Marcador, goles, asistencias y tarjetas por jugador, tablas de estadística y permiso para anotar |
 
 `npm run test:db` y `npm run test:pedidos` aplican las migraciones en un Postgres en memoria y prueban los permisos, el flujo de cotizaciones, el ingreso por nombre, los partidos, los entrenamientos y los pedidos por link.
 

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
-import { usePartidos, porEstado, sinResponder, recordatorioPartido } from '../lib/partidos.js';
-import { fechaLarga } from '../lib/fechas.js';
+import { usePartidos, porEstado, sinResponder, recordatorioPartido, tieneResultado, textoResultado } from '../lib/partidos.js';
+import { fechaLarga, hoyIso } from '../lib/fechas.js';
 import RecordarPorWhatsApp from '../components/RecordarPorWhatsApp.jsx';
 import { complejoDe } from '../lib/complejos.js';
 import EsquemaCanchas from '../components/EsquemaCanchas.jsx';
@@ -66,6 +66,141 @@ function MiRespuesta({ partido, responder }) {
   );
 }
 
+const plural = (n, uno, varios) => `${n} ${n === 1 ? uno : varios}`;
+
+// Las cifras de cada jugador en el partido: goles, asistencias y tarjetas.
+function Estadisticas({ partido }) {
+  if (!partido.estadisticas?.length) return null;
+  const sueltos = partido.golesFavor - partido.estadisticas.reduce((t, g) => t + g.goles, 0);
+  return (
+    <ul className="goleadores">
+      {partido.estadisticas.map((g) => (
+        <li key={g.personaId}>
+          <span>{g.nombre}</span>
+          <span className="cifras">
+            {g.goles > 0 && <strong>{plural(g.goles, 'gol', 'goles')}</strong>}
+            {g.asistencias > 0 && <em>{plural(g.asistencias, 'asistencia', 'asistencias')}</em>}
+            {g.amarillas > 0 && <span className="tarjeta amarilla">{g.amarillas === 1 ? 'Amarilla' : '2 amarillas'}</span>}
+            {g.rojas > 0 && <span className="tarjeta roja">Roja</span>}
+          </span>
+        </li>
+      ))}
+      {sueltos > 0 && <li className="suelto"><span>Goles sin asignar</span><strong>{sueltos}</strong></li>}
+    </ul>
+  );
+}
+
+const CAMPOS = [['goles', 'Goles', 99], ['asistencias', 'Asist.', 99], ['amarillas', 'Amarillas', 2], ['rojas', 'Rojas', 1]];
+
+// Anotar o corregir el marcador y las cifras de cada jugador: solo quien anota
+// los partidos del plantel, desde el día en que se juega.
+function Resultado({ partido, anotar }) {
+  const hay = tieneResultado(partido);
+  const [editando, setEditando] = useState(false);
+  const [favor, setFavor] = useState(partido.golesFavor ?? '');
+  const [contra, setContra] = useState(partido.golesContra ?? '');
+  const [filas, setFilas] = useState((partido.estadisticas ?? []).map((g) => ({ ...g })));
+  const [error, setError] = useState('');
+  const [guardando, setGuardando] = useState(false);
+  const puede = partido.puedoAnotar && partido.fecha <= hoyIso();
+  // Quienes pueden aparecer: el plantel, más quien ya estaba anotado.
+  const opciones = [...partido.plantel, ...(partido.estadisticas ?? []).filter((g) => !partido.plantel.some((j) => j.id === g.personaId)).map((g) => ({ id: g.personaId, nombre: g.nombre }))];
+
+  const cambiarFila = (i, campo, valor) => setFilas(filas.map((f, k) => (k === i ? { ...f, [campo]: valor } : f)));
+  const num = (v) => Number(v || 0);
+  const guardar = async (e) => {
+    e.preventDefault();
+    if (favor === '' || contra === '') return setError('Pon los goles de los dos equipos.');
+    const elegidas = filas.filter((f) => f.personaId);
+    if (new Set(elegidas.map((f) => f.personaId)).size !== elegidas.length) return setError('Un jugador está repetido.');
+    const goles = elegidas.reduce((t, f) => t + num(f.goles), 0);
+    const asist = elegidas.reduce((t, f) => t + num(f.asistencias), 0);
+    if (goles > Number(favor)) return setError(`Los goles de los jugadores suman ${goles} y el marcador dice ${favor}.`);
+    if (asist > Number(favor)) return setError(`Las asistencias suman ${asist} y el equipo hizo ${favor} goles.`);
+    setError(''); setGuardando(true);
+    try {
+      await anotar(partido.id, Number(favor), Number(contra), elegidas.map((f) => ({
+        personaId: f.personaId, goles: num(f.goles), asistencias: num(f.asistencias), amarillas: num(f.amarillas), rojas: num(f.rojas),
+      })));
+      setEditando(false);
+    } catch (x) { setError(x.message); }
+    setGuardando(false);
+  };
+  const quitar = async () => {
+    setError(''); setGuardando(true);
+    try { await anotar(partido.id, null, null, []); setFavor(''); setContra(''); setFilas([]); setEditando(false); }
+    catch (x) { setError(x.message); }
+    setGuardando(false);
+  };
+
+  if (!editando) {
+    if (!hay && !puede) return null;
+    return (
+      <div className="card">
+        <div className="sobretitulo">Resultado</div>
+        {hay ? (
+          <>
+            <div className="marcador">
+              <span className="marcador-goles display">{partido.golesFavor} – {partido.golesContra}</span>
+              <span className="marcador-texto">{textoResultado(partido)} contra {partido.rival}</span>
+            </div>
+            <Estadisticas partido={partido} />
+            {!partido.estadisticas.length && partido.golesFavor > 0 && <p className="ayuda abajo">Todavía no se anota quién hizo los goles.</p>}
+          </>
+        ) : <p className="vacio">Todavía no se anota el resultado.</p>}
+        {puede && (
+          <button className="btn secundario" style={{ marginTop: 14 }} onClick={() => setEditando(true)}>
+            {hay ? 'Corregir resultado y estadísticas' : 'Poner resultado y estadísticas'}
+          </button>
+        )}
+      </div>
+    );
+  }
+  const asignados = filas.reduce((t, f) => t + num(f.goles), 0);
+  return (
+    <form className="card" onSubmit={guardar}>
+      <div className="sobretitulo">Resultado</div>
+      <label htmlFor="gf" style={{ marginTop: 0 }}>Goles del {partido.equipo}</label>
+      <input id="gf" type="number" inputMode="numeric" min="0" max="99" required value={favor} onChange={(e) => setFavor(e.target.value)} />
+      <label htmlFor="gc">Goles de {partido.rival}</label>
+      <input id="gc" type="number" inputMode="numeric" min="0" max="99" required value={contra} onChange={(e) => setContra(e.target.value)} />
+
+      <div className="sobretitulo" style={{ marginTop: 18 }}>Goles, asistencias y tarjetas</div>
+      {filas.map((f, i) => (
+        <div className="fila-jugador" key={i}>
+          <div className="fila-jugador-cabeza">
+            <select aria-label="Jugador" value={f.personaId} onChange={(e) => cambiarFila(i, 'personaId', e.target.value)}>
+              <option value="">Elige…</option>
+              {opciones.map((j) => <option key={j.id} value={j.id}>{j.nombre}</option>)}
+            </select>
+            <button type="button" className="enlace" aria-label="Quitar jugador" onClick={() => setFilas(filas.filter((_, k) => k !== i))}>Quitar</button>
+          </div>
+          <div className="cifras-campos">
+            {CAMPOS.map(([campo, texto, max]) => (
+              <label key={campo}>{texto}
+                <input type="number" inputMode="numeric" min="0" max={max} aria-label={`${texto} de este jugador`}
+                       value={f[campo] ?? 0} onChange={(e) => cambiarFila(i, campo, e.target.value)} />
+              </label>
+            ))}
+          </div>
+        </div>
+      ))}
+      <button type="button" className="btn secundario chico" style={{ marginTop: 10 }}
+              onClick={() => setFilas([...filas, { personaId: '', goles: 0, asistencias: 0, amarillas: 0, rojas: 0 }])}>
+        + Agregar jugador
+      </button>
+      {favor !== '' && <p className="ayuda abajo">Goles asignados: {asignados} de {favor}. Si falta alguno (autogol del rival, por ejemplo), queda como "sin asignar". Agrega solo a quienes tuvieron algo que anotar.</p>}
+
+      {error && <p className="error" role="alert">{error}</p>}
+      <div className="botones">
+        <button className="btn" disabled={guardando}>{guardando ? 'Guardando…' : 'Guardar'}</button>
+        <button type="button" className="btn secundario" onClick={() => setEditando(false)}>Cancelar</button>
+      </div>
+      {hay && <p className="ayuda abajo"><button type="button" className="enlace" onClick={quitar}>Borrar el resultado</button></p>}
+    </form>
+  );
+}
+
 function Grupo({ titulo, clase, lista }) {
   if (!lista.length) return null;
   return (
@@ -87,15 +222,16 @@ function Grupo({ titulo, clase, lista }) {
 export default function Partido() {
   const { id } = useParams();
   const { persona } = useSesion();
-  const { cargando, partidos, responder } = usePartidos(persona);
-  const partido = partidos.find((p) => p.id === id);
+  const { cargando, todos, responder, anotarResultado } = usePartidos(persona);
+  const partido = todos.find((p) => p.id === id);
+  const jugado = partido ? partido.fecha < hoyIso() : false;
 
   if (cargando) return <p className="vacio suelto">Cargando…</p>;
   if (!partido) {
     return (
       <>
         <Link to="/partidos" className="volver">‹ Partidos</Link>
-        <p className="vacio suelto">Ese partido ya se jugó o lo quitaron del calendario.</p>
+        <p className="vacio suelto">No encontramos ese partido; puede que lo hayan quitado del calendario.</p>
       </>
     );
   }
@@ -129,18 +265,22 @@ export default function Partido() {
         )}
       </dl>
 
-      <div className="card">
-        <div className="sobretitulo">¿Vas?</div>
-        {partido.esMio
-          ? <MiRespuesta key={partido.miRespuesta?.estado ?? 'sin'} partido={partido} responder={responder} />
-          : <p className="vacio">Este partido es del {partido.equipo}. Responden los jugadores de ese plantel.</p>}
-      </div>
+      <Resultado key={`${partido.golesFavor}-${partido.golesContra}-${(partido.estadisticas ?? []).map((g) => `${g.personaId}.${g.goles}.${g.asistencias}.${g.amarillas}.${g.rojas}`).join()}`} partido={partido} anotar={anotarResultado} />
+
+      {!jugado && (
+        <div className="card">
+          <div className="sobretitulo">¿Vas?</div>
+          {partido.esMio
+            ? <MiRespuesta key={partido.miRespuesta?.estado ?? 'sin'} partido={partido} responder={responder} />
+            : <p className="vacio">Este partido es del {partido.equipo}. Responden los jugadores de ese plantel.</p>}
+        </div>
+      )}
 
       <div className="card">
-        <Grupo titulo="Voy" clase="voy" lista={voy} />
+        <Grupo titulo={jugado ? 'Dijeron que iban' : 'Voy'} clase="voy" lista={voy} />
         <Grupo titulo="Dudas" clase="duda" lista={porEstado(partido, 'duda')} />
         <Grupo titulo="Bajas" clase="baja" lista={porEstado(partido, 'baja')} />
-        <Grupo titulo="Sin responder" clase="pendiente" lista={sinResponder(partido)} />
+        {!jugado && <Grupo titulo="Sin responder" clase="pendiente" lista={sinResponder(partido)} />}
         {partido.plantel.length === 0 && voy.length === 0 && <p className="vacio">Este plantel todavía no tiene jugadores cargados.</p>}
         {partido.tercerTiempo && (
           <p className="conteo">{voy.filter((r) => r.asado).length} se quedan al tercer tiempo</p>
@@ -148,7 +288,7 @@ export default function Partido() {
       </div>
       {partido.puedoEditar && (
         <>
-          <RecordarPorWhatsApp mensaje={(url) => recordatorioPartido(partido, url)} />
+          {!jugado && <RecordarPorWhatsApp mensaje={(url) => recordatorioPartido(partido, url)} />}
           <Link to={`/partidos/${partido.id}/editar`} className="btn secundario" style={{ marginTop: 10 }}>Editar el partido</Link>
         </>
       )}
