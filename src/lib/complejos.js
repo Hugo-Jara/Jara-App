@@ -20,7 +20,8 @@ const COMPLEJOS = [
     esquema: 'jueves',
     dia: 4, // jueves
     canchas: 5,
-    // Solo tenemos el link de Google Maps; el de Waze se suma cuando se comparta.
+    lat: -33.3609633,
+    lng: -70.66450092,
     mapas: 'https://goo.gl/maps/9xFVDzeif7GqYRAG8',
   },
 ];

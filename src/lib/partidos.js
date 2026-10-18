@@ -13,7 +13,7 @@ const filaEstadistica = (g) => ({
 
 const desdeFila = (f) => ({
   id: f.id, equipoId: f.equipo_id, equipo: f.equipo, rival: f.rival, torneo: f.torneo,
-  fecha: f.fecha, citacion: f.citacion, cancha: f.cancha, tercerTiempo: f.tercer_tiempo,
+  fecha: f.fecha, citacion: f.citacion, horaInicio: f.hora_inicio, cancha: f.cancha, tercerTiempo: f.tercer_tiempo,
   golesFavor: f.goles_favor ?? null, golesContra: f.goles_contra ?? null,
   estadisticas: (f.estadisticas ?? []).map(filaEstadistica),
   puedoAnotar: !!f.puedo_anotar,
@@ -42,7 +42,7 @@ const base = {
   }),
   guardar: (d) => llamar('partido_guardar', {
     p_id: d.id ?? null, p_equipo: d.equipoId, p_rival: d.rival, p_fecha: d.fecha,
-    p_citacion: d.citacion || null, p_cancha: d.cancha || null,
+    p_citacion: d.citacion || null, p_hora_inicio: d.horaInicio || null, p_cancha: d.cancha || null,
     p_torneo: d.torneo || null, p_tercer_tiempo: d.tercerTiempo || null,
   }),
   eliminar: (id) => llamar('partido_eliminar', { p_id: id }),
@@ -54,7 +54,7 @@ const gente = (...nombres) => nombres.map((n) => ({ id: n === 'Seba' ? 'demo' : 
 const va = (nombre, estado, asado, nota) => ({ personaId: nombre === 'Seba' ? 'demo' : `d-${nombre}`, nombre, estado, asado: !!asado, nota });
 let demo = [{
   id: 'p1', equipoId: 'e-sabado', equipo: 'Senior Sábado', torneo: 'Liga de ejemplo · 2ª fecha Clausura',
-  rival: 'Rival de ejemplo', fecha: proximoDia(6), citacion: '08:15', cancha: 'Cancha 1',
+  rival: 'Rival de ejemplo', fecha: proximoDia(6), citacion: '08:15', horaInicio: '09:00', cancha: 'Cancha 1',
   tercerTiempo: 'Asado después del partido', esMio: true, puedoEditar: true, puedoAnotar: true,
   plantel: gente('Pancho', 'Lalo', 'Tito', 'Nico', 'Rorro', 'Chino', 'Beto', 'Mauro', 'Javi', 'Leo', 'Fede', 'Koke', 'Dani', 'Rafa', 'Seba'),
   respuestas: [
@@ -167,7 +167,7 @@ export function recordatorioPartido(p, url) {
   return (
     `⚽ ¿Ya confirmaste para el partido?\n` +
     `${p.equipo} vs ${p.rival} · ${fechaLarga(p.fecha)}` +
-    (p.citacion ? `, citación ${p.citacion}` : '') + (p.cancha ? `, ${p.cancha}` : '') + `.\n` +
+    (p.citacion ? `, citación ${p.citacion}` : '') + (p.horaInicio ? `, parte ${p.horaInicio}` : '') + (p.cancha ? `, ${p.cancha}` : '') + `.\n` +
     `Van ${porEstado(p, 'voy').length} y hay ${porEstado(p, 'duda').length} en duda.` +
     (faltan ? ` Faltan ${faltan} por responder.` : ' Ya respondieron todos.') +
     `\nConfirma acá 👉 ${url}`

@@ -12,7 +12,7 @@ function Tarjeta({ p }) {
     <Link to={`/partidos/${p.id}`} className="card accion">
       <div className="sobretitulo">{p.equipo}{p.torneo ? ` · ${p.torneo}` : ''}</div>
       <h2 className="accion-titulo display">vs {p.rival}</h2>
-      <p className="accion-dato">{fechaLarga(p.fecha)}{p.citacion ? ` · citación ${p.citacion}` : ''}</p>
+      <p className="accion-dato">{fechaLarga(p.fecha)}{p.citacion ? ` · citación ${p.citacion}` : ''}{p.horaInicio ? ` · parte ${p.horaInicio}` : ''}</p>
       <p className="conteo">
         {p.esMio && (
           <span className={`estado ${p.miRespuesta ? p.miRespuesta.estado : 'pendiente'}`}>

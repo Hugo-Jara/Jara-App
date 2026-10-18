@@ -27,7 +27,7 @@ await db.exec(`
 `);
 for (const f of ['0001_base.sql', '0002_cotizaciones.sql', '0004_funciones_de_trigger_privadas.sql',
                  '0009_ingreso_por_nombre.sql', '0010_partidos.sql', '0011_entrenamientos.sql', '0012_resultado_y_estadisticas.sql',
-                 '0013_administra_entrenamientos.sql']) {
+                 '0013_administra_entrenamientos.sql', '0014_hora_de_inicio.sql']) {
   await db.exec(mig(f));
 }
 
@@ -297,6 +297,18 @@ ok('Con el permiso, elimina la lista', !r.error && (await db.query('select 1 fro
 await db.query(`update personas set administra_entrenamientos = false where id = $1`, [P.doble]);
 r = await abrir('doble', diaLista);
 ok('Al quitarle el permiso, deja de poder', /Solo quienes administran/.test(r.error ?? ''), r.error);
+
+// Hora de inicio del partido (0014).
+const diaInicio = await dia(9);
+r = await como('seba', `select partido_guardar(null, $1, 'Rival con hora', $2, '20:30', 'Cancha 2', 'Liga', null, '21:00') as id`, [EQ.jueves, diaInicio]);
+const conHora = r.rows[0]?.id;
+x = (await uno('seba', 'select partidos_proximos()')).find((p) => p.id === conHora);
+ok('El partido guarda la hora de citación y la de inicio', !r.error && x?.citacion === '20:30' && x?.hora_inicio === '21:00', r.error);
+r = await como('seba', `select partido_guardar($1, $2, 'Rival con hora', $3, '20:30', 'Cancha 2', 'Liga', null) as id`, [conHora, EQ.jueves, diaInicio]);
+x = (await uno('seba', 'select partidos_proximos()')).find((p) => p.id === conHora);
+ok('Sin indicarla, la hora de inicio queda vacía (la app anterior sigue funcionando)', !r.error && x?.hora_inicio === null, r.error);
+r = await como('doble', `select partido_guardar($1, $2, 'Rival con hora', $3, null, null, null, null, '21:00')`, [conHora, EQ.jueves, diaInicio]);
+ok('Un jugador no cambia la hora de inicio', /Solo el encargado/.test(r.error ?? ''), r.error);
 
 // --- Resultado y estadísticas (0012) -------------------------------------------
 const viejo = (await db.query(`select id from partidos where rival = 'Partido viejo'`)).rows[0].id;

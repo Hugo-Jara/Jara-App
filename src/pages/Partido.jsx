@@ -245,6 +245,7 @@ export default function Partido() {
       <dl className="datos">
         <div><dt>Día</dt><dd>{fechaLarga(partido.fecha)}</dd></div>
         {partido.citacion && <div><dt>Citación</dt><dd>{partido.citacion}</dd></div>}
+        {partido.horaInicio && <div><dt>Parte</dt><dd>{partido.horaInicio}</dd></div>}
         {partido.cancha && (
           <div><dt>Cancha</dt><dd>{complejo ? <EsquemaCanchas esquema={complejo.esquema} cancha={partido.cancha} /> : partido.cancha}</dd></div>
         )}

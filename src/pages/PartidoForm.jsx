@@ -47,9 +47,9 @@ export default function PartidoForm() {
   useEffect(() => {
     if (d || cargando || (id && !actual)) return;
     setD(actual
-      ? { equipoId: actual.equipoId, rival: actual.rival, fecha: actual.fecha, citacion: actual.citacion ?? '',
+      ? { equipoId: actual.equipoId, rival: actual.rival, fecha: actual.fecha, citacion: actual.citacion ?? '', horaInicio: actual.horaInicio ?? '',
           cancha: actual.cancha ?? '', torneo: actual.torneo ?? '', tercerTiempo: actual.tercerTiempo ?? '' }
-      : { equipoId: '', rival: '', fecha: '', citacion: '', cancha: '', torneo: '', tercerTiempo: '' });
+      : { equipoId: '', rival: '', fecha: '', citacion: '', horaInicio: '', cancha: '', torneo: '', tercerTiempo: '' });
   }, [d, cargando, id, actual]);
 
   if (!persona.esEncargado) return <p className="vacio suelto">Los partidos los programa el encargado de cada plantel.</p>;
@@ -72,10 +72,11 @@ export default function PartidoForm() {
     if (!equipoId) return setError('Elige el plantel.');
     if (!d.fecha) return setError('Elige el día del partido.');
     const hora = normalizarHora(d.citacion);
-    if (hora === null) return setError('La hora de citación no se entiende. Escríbela así: 20:30.');
+    const inicio = normalizarHora(d.horaInicio);
+    if (hora === null || inicio === null) return setError('Una de las horas no se entiende. Escríbela así: 20:30.');
     setError(''); setOcupado(true);
     try {
-      await guardar({ ...d, citacion: hora, id: actual?.id, equipoId });
+      await guardar({ ...d, citacion: hora, horaInicio: inicio, id: actual?.id, equipoId });
       ir(actual ? `/partidos/${actual.id}` : '/partidos');
     } catch (x) { setError(x.message); setOcupado(false); }
   };
@@ -111,6 +112,10 @@ export default function PartidoForm() {
         <input id="pf-citacion" inputMode="numeric" autoComplete="off" placeholder="Ej.: 20:30" value={d.citacion}
                onChange={set('citacion')}
                onBlur={() => { const h = normalizarHora(d.citacion); if (h !== null) setD((x) => ({ ...x, citacion: h })); }} />
+        <label htmlFor="pf-inicio">Hora de inicio del partido (opcional)</label>
+        <input id="pf-inicio" inputMode="numeric" autoComplete="off" placeholder="Ej.: 21:00" value={d.horaInicio}
+               onChange={set('horaInicio')}
+               onBlur={() => { const h = normalizarHora(d.horaInicio); if (h !== null) setD((x) => ({ ...x, horaInicio: h })); }} />
         <label htmlFor="pf-cancha">Cancha</label>
         {canchas ? (
           <select id="pf-cancha" value={d.cancha} onChange={set('cancha')}>

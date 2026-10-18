@@ -24,7 +24,7 @@ function ProximoPartido({ partido, destacado, responder }) {
     <section className={`card accion ${destacado ? 'destacada' : ''}`}>
       <div className="sobretitulo">Tu próximo partido · {partido.equipo}</div>
       <h2 className="accion-titulo display">vs {partido.rival}</h2>
-      <p className="accion-dato">{fechaLarga(partido.fecha)}{partido.citacion ? ` · citación ${partido.citacion}` : ''}</p>
+      <p className="accion-dato">{fechaLarga(partido.fecha)}{partido.citacion ? ` · citación ${partido.citacion}` : ''}{partido.horaInicio ? ` · parte ${partido.horaInicio}` : ''}</p>
       <p className="accion-dato tenue">{[partido.cancha, partido.tercerTiempo].filter(Boolean).join(' · ')}</p>
       {partido.miRespuesta ? (
         <p className="respuesta" role="status">
