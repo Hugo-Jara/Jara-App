@@ -9,13 +9,17 @@
 --     pagos y deudas;
 --   - al desmarcar un pago no quedaba quién lo había marcado ni cuándo.
 --
+-- Cómo se cobra en el club: uno se inscribe, entrena y después (ese día o
+-- los siguientes) quien cobra marca quién pagó. La multa es solo para quien se
+-- baja el mismo día.
+--
 -- Desde ahora:
+--   - Los pagos se marcan desde el día del entrenamiento, no antes.
 --   - Un pago marcado no lo borra nadie más que quien cobra (desmarcándolo).
---     Bajarse o volver a inscribirse ya no lo toca. Quien ya pagó y se baja el
---     mismo día no paga multa encima.
---   - Quien pagó y se baja antes del día queda en la lista como "baja" con su
---     pago, para que quien cobra decida si le devuelve la plata (y entonces
---     desmarca el pago).
+--     Bajarse o volver a inscribirse ya no lo toca. Si alguien ya pagó y se
+--     baja ese mismo día, no paga multa encima.
+--   - A quien tiene un pago anotado no se le saca de la lista: primero hay que
+--     quitar el pago.
 --   - Cada vez que se marca o desmarca un pago queda anotado en la bitácora
 --     entrenamiento_pagos: qué, cuánto, quién y cuándo. Esa bitácora no se
 --     borra ni se edita desde la app.
@@ -24,11 +28,6 @@
 --
 -- Las funciones mantienen sus nombres y parámetros, así que la app actual
 -- sigue funcionando mientras se sube la nueva.
-
--- Una persona que pagó y se bajó antes del día queda como 'baja'.
-alter table public.entrenamiento_inscritos drop constraint entrenamiento_inscritos_estado_check;
-alter table public.entrenamiento_inscritos add constraint entrenamiento_inscritos_estado_check
-  check (estado in ('inscrito', 'baja_tarde', 'baja'));
 
 -- Bitácora de pagos: una fila por cada vez que alguien marca o desmarca.
 -- Mientras una inscripción tenga movimientos, no se puede borrar.
@@ -58,67 +57,6 @@ returns boolean language sql stable security definer set search_path = public as
   select exists (select 1 from public.entrenamiento_pagos where inscrito_id = p_inscrito);
 $$;
 
--- Igual que antes, más 'bajas_pagadas': quienes pagaron y se bajaron antes del día.
-create or replace function public.entrenamiento_json(e public.entrenamientos)
-returns jsonb language sql stable security definer set search_path = public as $$
-  with filas as (
-    select i.*, coalesce(p.nombre, i.invitado_nombre) as nombre,
-           (select nombre from public.personas where id = i.invitado_por) as invita
-      from public.entrenamiento_inscritos i left join public.personas p on p.id = i.persona_id
-     where i.entrenamiento_id = e.id)
-  select jsonb_build_object(
-    'id', e.id, 'fecha', e.fecha,
-    'hora_inicio', to_char(e.hora_inicio, 'HH24:MI'), 'hora_fin', to_char(e.hora_fin, 'HH24:MI'),
-    'lugar', e.lugar, 'cupo', e.cupo,
-    'precio_junior', e.precio_junior, 'precio_senior', e.precio_senior,
-    'precio_invitado', e.precio_invitado, 'multa', e.multa,
-    'mi_precio', public.entrenamiento_precio(e, public.mi_persona_id()),
-    'inscritos', coalesce((
-      select jsonb_agg(jsonb_build_object(
-               'id', f.id, 'persona_id', f.persona_id, 'nombre', f.nombre,
-               'invitado', f.persona_id is null, 'invitado_por', f.invita,
-               'es_mio', coalesce(f.persona_id = public.mi_persona_id(), false)
-                         or coalesce(f.invitado_por = public.mi_persona_id(), false),
-               'monto', f.monto, 'pagado', f.pagado) order by f.creado_en)
-        from filas f where f.estado = 'inscrito'), '[]'::jsonb),
-    'bajas_tarde', coalesce((
-      select jsonb_agg(jsonb_build_object(
-               'id', f.id, 'persona_id', f.persona_id, 'nombre', f.nombre,
-               'monto', f.monto, 'pagado', f.pagado) order by f.creado_en)
-        from filas f where f.estado = 'baja_tarde'), '[]'::jsonb),
-    'bajas_pagadas', coalesce((
-      select jsonb_agg(jsonb_build_object(
-               'id', f.id, 'persona_id', f.persona_id, 'nombre', f.nombre,
-               'monto', f.monto, 'pagado', f.pagado) order by f.creado_en)
-        from filas f where f.estado = 'baja' and f.pagado), '[]'::jsonb));
-$$;
-
--- Igual que en 0013, pero "Deben" no incluye a quienes se bajaron antes del día.
-create or replace function public.entrenamiento_actual()
-returns jsonb language plpgsql stable security definer set search_path = public as $$
-declare
-  e public.entrenamientos;
-begin
-  if public.mi_persona_id() is null then raise exception 'Tu cuenta no está en la nómina del club'; end if;
-  select * into e from public.entrenamientos
-   where club_id = public.mi_club_id() and fecha >= public.hoy()
-   order by fecha, hora_inicio limit 1;
-  return jsonb_build_object(
-    'entrenamiento', case when e.id is not null then public.entrenamiento_json(e) end,
-    'puedo_administrar', public.puedo_administrar_entrenamientos(),
-    'puedo_cobrar', public.puedo_cobrar(),
-    'deben', coalesce((
-      select jsonb_agg(jsonb_build_object(
-               'id', i.id, 'nombre', coalesce(p.nombre, i.invitado_nombre), 'fecha', a.fecha,
-               'monto', i.monto, 'multa', i.estado = 'baja_tarde') order by a.fecha, i.creado_en)
-        from public.entrenamiento_inscritos i
-        join public.entrenamientos a on a.id = i.entrenamiento_id
-        left join public.personas p on p.id = i.persona_id
-       where a.club_id = public.mi_club_id() and a.fecha < public.hoy()
-         and i.estado <> 'baja' and not i.pagado and i.monto > 0), '[]'::jsonb));
-end;
-$$;
-
 -- Volver a inscribirse ya no borra un pago: si ya había pagado, sigue pagado
 -- con el mismo monto.
 create or replace function public.entrenamiento_inscribirme(p_id uuid)
@@ -144,9 +82,8 @@ $$;
 --   - Se baja solo (o baja a su invitado) el mismo día y hay multa:
 --       si no había pagado, queda debiendo la multa;
 --       si ya había pagado, queda con su pago y no debe nada más.
---   - En cualquier otro caso:
---       si nunca tuvo un pago anotado, sale de la lista como antes;
---       si lo tuvo, queda como 'baja' con su pago, para que quien cobra decida.
+--   - En cualquier otro caso sale de la lista como antes, salvo que tenga un
+--     pago anotado: entonces primero hay que quitar el pago.
 create or replace function public.entrenamiento_bajar(p_inscrito uuid)
 returns void language plpgsql security definer set search_path = public as $$
 declare
@@ -169,19 +106,20 @@ begin
        set estado = 'baja_tarde', monto = case when pagado then monto else e.multa end
      where id = i.id;
   elsif public.entrenamiento_tiene_pagos(i.id) then
-    update public.entrenamiento_inscritos set estado = 'baja' where id = i.id;
+    raise exception 'Esa persona tiene un pago anotado; para sacarla de la lista, primero quita el pago';
   else
     delete from public.entrenamiento_inscritos where id = i.id;
   end if;
 end;
 $$;
 
--- Marcar o desmarcar un pago, también de entrenamientos pasados. Cada cambio
--- queda en la bitácora. Apretar dos veces no anota dos veces.
+-- Marcar o desmarcar un pago, desde el día del entrenamiento en adelante.
+-- Cada cambio queda en la bitácora. Apretar dos veces no anota dos veces.
 create or replace function public.entrenamiento_pago(p_inscrito uuid, p_pagado boolean)
 returns void language plpgsql security definer set search_path = public as $$
 declare
   i public.entrenamiento_inscritos;
+  v_fecha date;
   v_pagado boolean := coalesce(p_pagado, false);
 begin
   if not public.puedo_cobrar() then
@@ -192,6 +130,10 @@ begin
    where i2.id = p_inscrito and e.club_id = public.mi_club_id()
      for update of i2;
   if i.id is null then raise exception 'Esa inscripción no existe'; end if;
+  select fecha into v_fecha from public.entrenamientos where id = i.entrenamiento_id;
+  if v_fecha > public.hoy() then
+    raise exception 'Los pagos se marcan desde el día del entrenamiento';
+  end if;
   if i.pagado = v_pagado then
     return;
   end if;

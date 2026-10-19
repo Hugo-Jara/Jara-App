@@ -63,6 +63,8 @@ export default function Entrenar() {
     );
   }
   const esHoy = e.fecha === hoyIso();
+  // Se paga después de entrenar: antes del día no hay pagos que marcar.
+  const cobrarHoy = t.puedoCobrar && e.fecha <= hoyIso();
   const multa = e.multa > 0 ? `Si te bajas el mismo día se cobra una multa de ${pesos(e.multa)}.` : '';
   return (
     <>
@@ -117,7 +119,7 @@ export default function Entrenar() {
               {((i.invitado && i.esMio) || (t.puedoAdministrar && i.personaId !== persona.id)) && (
                 <button className="enlace quitar" aria-label={`Bajar a ${i.nombre} de la lista`} onClick={() => intentar(t.bajar)(i.id)}>Bajar</button>
               )}
-              <Pago fila={i} puedoCobrar={t.puedoCobrar} marcar={intentar(t.marcarPago)} />
+              <Pago fila={i} puedoCobrar={cobrarHoy} marcar={intentar(t.marcarPago)} />
             </li>
           ))}
         </ol>
@@ -129,21 +131,7 @@ export default function Entrenar() {
                 <li key={i.id}>
                   <span className="nombre">{i.nombre}</span>
                   <span className="comentario">{i.pagado && i.monto !== e.multa ? 'ya había pagado' : 'multa'}</span>
-                  <Pago fila={i} puedoCobrar={t.puedoCobrar} marcar={intentar(t.marcarPago)} />
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
-        {e.bajasPagadas.length > 0 && (
-          <section className="grupo">
-            <h3 className="grupo-titulo baja">Pagaron y se bajaron <span>{e.bajasPagadas.length}</span></h3>
-            {t.puedoCobrar && <p className="ayuda">Si les devuelves la plata, quita el pago.</p>}
-            <ol className="nombres">
-              {e.bajasPagadas.map((i) => (
-                <li key={i.id}>
-                  <span className="nombre">{i.nombre}</span>
-                  <Pago fila={i} puedoCobrar={t.puedoCobrar} marcar={intentar(t.marcarPago)} />
+                  <Pago fila={i} puedoCobrar={cobrarHoy} marcar={intentar(t.marcarPago)} />
                 </li>
               ))}
             </ol>

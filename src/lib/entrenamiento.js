@@ -14,7 +14,6 @@ const desdeFila = (f) => f && ({
   precioJunior: f.precio_junior, precioSenior: f.precio_senior, precioInvitado: f.precio_invitado,
   multa: f.multa, miPrecio: f.mi_precio,
   inscritos: f.inscritos.map(inscrito), bajasTarde: f.bajas_tarde.map(inscrito),
-  bajasPagadas: (f.bajas_pagadas ?? []).map(inscrito),
 });
 
 const base = {
@@ -51,7 +50,7 @@ let demo = {
       fila('Pancho', true), fila('Lalo', true), fila('Tito', false), fila('Nico', true), fila('Rorro', false),
       fila('Invitado 1', true, { personaId: null, invitado: true, invitadoPor: 'Pancho', monto: 5000 }), fila('Mauro', false),
     ],
-    bajasTarde: [], bajasPagadas: [],
+    bajasTarde: [],
   },
   deben: [{ id: 'x1', nombre: 'Chino', fecha: correrDias(proximoDia(1), -7), monto: 4000, multa: false }],
 };
@@ -60,19 +59,13 @@ const enDemo = {
   cargar: async () => demo,
   inscribirme: async (_id, yo) => conLista((l) => [...l, fila(yo.nombre, false, { id: 'i-yo', personaId: yo.id, esMio: true })]),
   invitar: async (_id, yo, nombre) => conLista((l) => [...l, fila(nombre, false, { id: `i-${Date.now()}`, personaId: null, invitado: true, invitadoPor: yo.nombre, esMio: true, monto: 5000 })]),
-  // Como en la base: quien ya pagó y se baja queda aparte con su pago.
-  bajar: async (inscritoId) => {
-    const e = demo.entrenamiento, quien = e.inscritos.find((i) => i.id === inscritoId);
-    demo = { ...demo, entrenamiento: { ...e, inscritos: e.inscritos.filter((i) => i.id !== inscritoId),
-                                       bajasPagadas: quien?.pagado ? [...e.bajasPagadas, quien] : e.bajasPagadas } };
-  },
+  bajar: async (inscritoId) => conLista((l) => l.filter((i) => i.id !== inscritoId)),
   pago: async (inscritoId, pagado) => {
     conLista((l) => l.map((i) => (i.id === inscritoId ? { ...i, pagado } : i)));
-    demo = { ...demo, entrenamiento: { ...demo.entrenamiento, bajasPagadas: demo.entrenamiento.bajasPagadas.map((i) => (i.id === inscritoId ? { ...i, pagado } : i)).filter((i) => i.pagado) } };
     if (pagado) demo = { ...demo, deben: demo.deben.filter((d) => d.id !== inscritoId) };
   },
   guardar: async (d) => {
-    demo = { ...demo, entrenamiento: { ...(demo.entrenamiento ?? { id: 'e2', inscritos: [], bajasTarde: [], bajasPagadas: [], miPrecio: d.precioSenior }), ...d } };
+    demo = { ...demo, entrenamiento: { ...(demo.entrenamiento ?? { id: 'e2', inscritos: [], bajasTarde: [], miPrecio: d.precioSenior }), ...d } };
   },
   eliminar: async () => { demo = { ...demo, entrenamiento: null }; },
 };
