@@ -65,7 +65,12 @@ export default function Entrenar() {
   const esHoy = e.fecha === hoyIso();
   // Se paga después de entrenar: antes del día no hay pagos que marcar.
   const cobrarHoy = t.puedoCobrar && e.fecha <= hoyIso();
-  const multa = e.multa > 0 ? `Si te bajas el mismo día se cobra una multa de ${pesos(e.multa)}.` : '';
+  // Igual que en la base: la multa corre desde las 5:00 del día y, desde la
+  // hora de inicio, uno ya no se baja.
+  const hora = new Date().toTimeString().slice(0, 5);
+  const conMulta = esHoy && e.multa > 0 && hora >= '05:00';
+  const empezo = esHoy && !!e.horaInicio && hora >= e.horaInicio;
+  const multa = e.multa > 0 ? `Si te bajas desde las 5:00 del día del entrenamiento se cobra una multa de ${pesos(e.multa)}.` : '';
   return (
     <>
       <div className="sobretitulo">Entrenamiento</div>
@@ -82,9 +87,11 @@ export default function Entrenar() {
         {t.miInscripcion ? (
           <p className="respuesta sin-margen" role="status">
             Estás inscrito.{' '}
-            <button className="enlace" onClick={() => intentar(t.bajar)(t.miInscripcion.id)}>
-              Bajarme de la lista{esHoy && e.multa > 0 ? ` (multa de ${pesos(e.multa)})` : ''}
-            </button>
+            {!empezo && (
+              <button className="enlace" onClick={() => intentar(t.bajar)(t.miInscripcion.id)}>
+                Bajarme de la lista{conMulta ? ` (multa de ${pesos(e.multa)})` : ''}
+              </button>
+            )}
           </p>
         ) : t.libres > 0 ? (
           <button className="btn" onClick={intentar(t.inscribirme)}>Me inscribo · {pesos(e.miPrecio)}</button>
@@ -116,7 +123,7 @@ export default function Entrenar() {
             <li key={i.id}>
               <span className="nombre">{i.nombre}</span>
               {i.invitado && <span className="marca">invitado{i.invitadoPor ? ` de ${i.invitadoPor.split(' ')[0]}` : ''}</span>}
-              {((i.invitado && i.esMio) || (t.puedoAdministrar && i.personaId !== persona.id)) && (
+              {((i.invitado && i.esMio && !empezo) || (t.puedoAdministrar && i.personaId !== persona.id)) && (
                 <button className="enlace quitar" aria-label={`Bajar a ${i.nombre} de la lista`} onClick={() => intentar(t.bajar)(i.id)}>Bajar</button>
               )}
               <Pago fila={i} puedoCobrar={cobrarHoy} marcar={intentar(t.marcarPago)} />

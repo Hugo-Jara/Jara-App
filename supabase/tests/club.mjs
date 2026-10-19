@@ -27,9 +27,14 @@ await db.exec(`
 `);
 for (const f of ['0001_base.sql', '0002_cotizaciones.sql', '0004_funciones_de_trigger_privadas.sql',
                  '0009_ingreso_por_nombre.sql', '0010_partidos.sql', '0011_entrenamientos.sql', '0012_resultado_y_estadisticas.sql',
-                 '0013_administra_entrenamientos.sql', '0014_hora_de_inicio.sql', '0015_pagos_de_entrenamiento.sql']) {
+                 '0013_administra_entrenamientos.sql', '0014_hora_de_inicio.sql', '0015_pagos_de_entrenamiento.sql',
+                 '0016_multa_desde_las_cinco.sql']) {
   await db.exec(mig(f));
 }
+// En las pruebas la hora de Chile se fija a mano (por omisión, mediodía de hoy).
+await db.exec(`create or replace function public.ahora_chile() returns timestamp language sql stable as $$
+  select public.hoy() + coalesce(nullif(current_setting('prueba.hora', true), ''), '12:00')::time $$;`);
+const aLas = (h) => db.query(`select set_config('prueba.hora', $1, false)`, [h]);
 
 const CLUB = '10000000-0000-0000-0000-000000000001';
 const EQ = { jueves: '40000000-0000-0000-0000-000000000001', sabado: '40000000-0000-0000-0000-000000000002', junior: '40000000-0000-0000-0000-000000000003' };
@@ -350,6 +355,35 @@ r = await como('capi', 'select entrenamiento_eliminar($1)', [ent4]);
 ok('No se elimina la lista de un entrenamiento que ya pasó', /ya pasó/.test(r.error ?? ''), r.error);
 r = await abrir('capi', manana, 5, ent4);
 ok('…ni se cambia su fecha para poder eliminarla', /ya pasó/.test(r.error ?? ''), r.error);
+
+// La multa corre desde las 5:00 del día (0016)
+console.log('\nMulta desde las 5:00');
+r = await abrir('capi', manana, 5);
+const ent5 = r.rows[0]?.id;
+await db.query(`update entrenamientos set fecha = public.hoy() where id = $1`, [ent5]);
+const filaEn5 = async (persona) => (await db.query(
+  'select id, estado, monto from entrenamiento_inscritos where entrenamiento_id = $1 and persona_id = $2', [ent5, persona])).rows[0];
+await como('capi', 'select entrenamiento_inscribirme($1)', [ent5]);
+await como('junior', 'select entrenamiento_inscribirme($1)', [ent5]);
+await como('doble', `select entrenamiento_invitar($1, 'Amigo de Benja')`, [ent5]);
+await aLas('04:59');
+r = await como('capi', 'select entrenamiento_bajar($1)', [(await filaEn5(P.capi)).id]);
+ok('Antes de las 5:00 del día uno se baja sin multa', !r.error && !(await filaEn5(P.capi)), r.error);
+await aLas('05:00');
+r = await como('junior', 'select entrenamiento_bajar($1)', [(await filaEn5(P.junior)).id]);
+x = await filaEn5(P.junior);
+ok('Desde las 5:00, quien se baja queda con la multa', !r.error && x?.estado === 'baja_tarde' && x.monto === 1000, JSON.stringify(x) + r.error);
+await como('capi', 'select entrenamiento_inscribirme($1)', [ent5]);
+await aLas('20:00');
+r = await como('capi', 'select entrenamiento_bajar($1)', [(await filaEn5(P.capi)).id]);
+ok('Desde la hora de inicio, uno ya no se puede bajar', /ya empezó/.test(r.error ?? '') && (await filaEn5(P.capi)).estado === 'inscrito', r.error);
+const amigo = (await db.query(`select id from entrenamiento_inscritos where entrenamiento_id = $1 and invitado_nombre = 'Amigo de Benja'`, [ent5])).rows[0].id;
+r = await como('doble', 'select entrenamiento_bajar($1)', [amigo]);
+ok('…ni bajar a su invitado', /ya empezó/.test(r.error ?? ''), r.error);
+r = await como('seba', 'select entrenamiento_bajar($1)', [(await filaEn5(P.capi)).id]);
+ok('Quien administra sí puede sacar a alguien que no fue, sin multa', !r.error && !(await filaEn5(P.capi)), r.error);
+await aLas('12:00');
+
 r = await como('teso', 'select count(*) from entrenamiento_pagos');
 ok('La bitácora no se lee directamente', !!r.error);
 
