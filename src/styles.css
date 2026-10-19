@@ -372,7 +372,6 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .checklist .casilla { align-items: flex-start; margin: 12px 0 0; font-size: 14.5px; }
 .checklist-nombre { display: block; font-weight: 600; }
 .checklist-nota { display: block; font-size: 12.5px; color: var(--text-dim); margin-top: 2px; }
-.opciones-topico .opcion.activa { border-color: var(--gold); background: rgba(198, 161, 91, 0.12); }
 .dudas { padding-left: 38px; margin: 0 0 14px; }
 .dudas li { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; line-height: 1.45; }
 .dudas li:last-child { border-bottom: none; }

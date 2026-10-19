@@ -15,12 +15,6 @@ export const FONDO = {
   hasta: '2026-12-28',
 };
 
-export const TOPICOS = [
-  { id: 'fondo', nombre: 'Fondo Las Condes 2026', desc: 'Entrenamientos Funcionales. Controla presupuesto y respaldos.' },
-  { id: 'aniversario', nombre: '20 años · fiesta 21 nov', desc: 'Gastos de la celebración.' },
-  { id: 'general', nombre: 'Gastos generales del club', desc: 'Lo que no es de un proyecto.' },
-];
-
 export const ITEMS = [
   { id: 'personal', nombre: 'Personal (honorarios)', aprobado: 637500, detalle: 'Entrenador, 3 cuotas de $212.500 (oct–dic)' },
   { id: 'bienes', nombre: 'Bienes e infraestructura', aprobado: 1848000, detalle: 'Balones, cintas de goma, conos y vallas, poleras de entrenamiento' },
