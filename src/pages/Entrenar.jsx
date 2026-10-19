@@ -7,14 +7,19 @@ import { pesos } from '../lib/pedido.js';
 import { plural } from '../lib/texto.js';
 import RecordarPorWhatsApp from '../components/RecordarPorWhatsApp.jsx';
 
-// El pago queda a la vista de todo el club; lo marca quien cobra.
+// El pago queda a la vista de todo el club; lo marca quien cobra. Para
+// desmarcarlo se pide confirmar, porque un toque de más borraba un pago.
 function Pago({ fila, puedoCobrar, marcar }) {
   const texto = fila.pagado ? 'Pagó' : `Debe ${pesos(fila.monto)}`;
   if (!puedoCobrar) return <span className={`pago ${fila.pagado ? 'si' : 'no'}`}>{texto}</span>;
+  const tocar = () => {
+    if (fila.pagado && !window.confirm(`¿Quitar el pago de ${fila.nombre} (${pesos(fila.monto)})? Va a quedar debiendo.`)) return;
+    marcar(fila.id, !fila.pagado);
+  };
   return (
     <button className={`pago boton ${fila.pagado ? 'si' : 'no'}`} aria-pressed={fila.pagado}
             aria-label={`${fila.nombre}: ${texto}. Tocar para ${fila.pagado ? 'desmarcar el pago' : 'marcar como pagado'}`}
-            onClick={() => marcar(fila.id, !fila.pagado)}>
+            onClick={tocar}>
       {texto}
     </button>
   );
@@ -123,7 +128,21 @@ export default function Entrenar() {
               {e.bajasTarde.map((i) => (
                 <li key={i.id}>
                   <span className="nombre">{i.nombre}</span>
-                  <span className="comentario">multa</span>
+                  <span className="comentario">{i.pagado && i.monto !== e.multa ? 'ya había pagado' : 'multa'}</span>
+                  <Pago fila={i} puedoCobrar={t.puedoCobrar} marcar={intentar(t.marcarPago)} />
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+        {e.bajasPagadas.length > 0 && (
+          <section className="grupo">
+            <h3 className="grupo-titulo baja">Pagaron y se bajaron <span>{e.bajasPagadas.length}</span></h3>
+            {t.puedoCobrar && <p className="ayuda">Si les devuelves la plata, quita el pago.</p>}
+            <ol className="nombres">
+              {e.bajasPagadas.map((i) => (
+                <li key={i.id}>
+                  <span className="nombre">{i.nombre}</span>
                   <Pago fila={i} puedoCobrar={t.puedoCobrar} marcar={intentar(t.marcarPago)} />
                 </li>
               ))}

@@ -32,6 +32,7 @@ Las migraciones están en `supabase/migrations/` y se aplican en orden:
 | `0012_resultado_y_estadisticas.sql` | Marcador, goles, asistencias y tarjetas por jugador, tablas de estadística y permiso para anotar |
 | `0013_administra_entrenamientos.sql` | Permiso personal para administrar los entrenamientos (abrir y eliminar listas, bajar gente y cobrar) sin ser encargado ni tesorero |
 | `0014_hora_de_inicio.sql` | Hora de inicio del partido, además de la hora de citación |
+| `0015_pagos_de_entrenamiento.sql` | Los pagos de entrenamiento no se pierden: bajarse o reinscribirse no borra un pago, bitácora `entrenamiento_pagos`, y no se eliminan listas pasadas o con pagos |
 
 `npm run test:db` y `npm run test:pedidos` aplican las migraciones en un Postgres en memoria y prueban los permisos, el flujo de cotizaciones, el ingreso por nombre, los partidos, los entrenamientos y los pedidos por link.
 

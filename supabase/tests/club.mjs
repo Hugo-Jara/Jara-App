@@ -27,7 +27,7 @@ await db.exec(`
 `);
 for (const f of ['0001_base.sql', '0002_cotizaciones.sql', '0004_funciones_de_trigger_privadas.sql',
                  '0009_ingreso_por_nombre.sql', '0010_partidos.sql', '0011_entrenamientos.sql', '0012_resultado_y_estadisticas.sql',
-                 '0013_administra_entrenamientos.sql', '0014_hora_de_inicio.sql']) {
+                 '0013_administra_entrenamientos.sql', '0014_hora_de_inicio.sql', '0015_pagos_de_entrenamiento.sql']) {
   await db.exec(mig(f));
 }
 
@@ -293,10 +293,64 @@ x = (await uno('doble', 'select entrenamiento_actual()')).entrenamiento;
 r = await como('doble', 'select entrenamiento_pago($1, true)', [x.inscritos.find((i) => i.persona_id === P.capi).id]);
 ok('Con el permiso, marca pagos', !r.error, r.error);
 r = await como('doble', 'select entrenamiento_eliminar($1)', [ent2]);
-ok('Con el permiso, elimina la lista', !r.error && (await db.query('select 1 from entrenamientos where id = $1', [ent2])).rows.length === 0, r.error);
+ok('Una lista con pagos anotados no se elimina', /ya tiene pagos/.test(r.error ?? '') && (await db.query('select 1 from entrenamientos where id = $1', [ent2])).rows.length === 1, r.error);
+r = await abrir('doble', await dia(4));
+const ent3 = r.rows[0]?.id;
+r = await como('doble', 'select entrenamiento_eliminar($1)', [ent3]);
+ok('Con el permiso, elimina una lista sin pagos', !r.error && (await db.query('select 1 from entrenamientos where id = $1', [ent3])).rows.length === 0, r.error);
 await db.query(`update personas set administra_entrenamientos = false where id = $1`, [P.doble]);
 r = await abrir('doble', diaLista);
 ok('Al quitarle el permiso, deja de poder', /Solo quienes administran/.test(r.error ?? ''), r.error);
+
+// Los pagos no se pierden (0015)
+console.log('\nPagos de entrenamiento');
+r = await abrir('capi', manana, 5);
+const ent4 = r.rows[0]?.id;
+const filaDe = async (persona) => (await db.query(
+  'select id, estado, monto, pagado from entrenamiento_inscritos where entrenamiento_id = $1 and persona_id = $2', [ent4, persona])).rows[0];
+const bitacora = async (id) => (await db.query(
+  'select pagado, monto, por from entrenamiento_pagos where inscrito_id = $1 order by id', [id])).rows;
+await como('capi', 'select entrenamiento_inscribirme($1)', [ent4]);
+const deCapi4 = (await filaDe(P.capi)).id;
+r = await como('teso', 'select entrenamiento_pago($1, true)', [deCapi4]);
+await como('teso', 'select entrenamiento_pago($1, true)', [deCapi4]);
+x = await bitacora(deCapi4);
+ok('Marcar un pago queda en la bitácora, con monto y quién lo marcó', !r.error && x.length === 1 && x[0].pagado && x[0].monto === 4000 && x[0].por === P.teso, JSON.stringify(x));
+ok('Apretar dos veces no anota el pago dos veces', x.length === 1);
+
+await db.query(`update entrenamientos set fecha = public.hoy() where id = $1`, [ent4]);
+r = await como('capi', 'select entrenamiento_bajar($1)', [deCapi4]);
+x = await filaDe(P.capi);
+ok('Quien ya pagó y se baja el mismo día conserva su pago y no debe multa',
+   !r.error && x.estado === 'baja_tarde' && x.pagado === true && x.monto === 4000, JSON.stringify(x) + r.error);
+r = await como('capi', 'select entrenamiento_inscribirme($1)', [ent4]);
+x = await filaDe(P.capi);
+ok('Si vuelve a inscribirse, sigue pagado', !r.error && x.estado === 'inscrito' && x.pagado === true && x.monto === 4000, JSON.stringify(x));
+
+await db.query(`update entrenamientos set fecha = public.hoy() + 1 where id = $1`, [ent4]);
+r = await como('capi', 'select entrenamiento_bajar($1)', [deCapi4]);
+x = (await uno('capi', 'select entrenamiento_actual()')).entrenamiento;
+ok('Quien pagó y se baja antes del día queda aparte con su pago y libera el cupo',
+   !r.error && x.id === ent4 && x.inscritos.length === 0 && x.bajas_pagadas.length === 1 && x.bajas_pagadas[0].pagado === true, JSON.stringify(x));
+r = await como('teso', 'select entrenamiento_pago($1, false)', [deCapi4]);
+x = await bitacora(deCapi4);
+ok('Desmarcar (por ejemplo, porque se le devolvió) también queda en la bitácora',
+   !r.error && x.length === 2 && x[1].pagado === false && x[1].por === P.teso, JSON.stringify(x));
+
+await como('junior', 'select entrenamiento_inscribirme($1)', [ent4]);
+const deJunior4 = (await filaDe(P.junior)).id;
+r = await como('junior', 'select entrenamiento_bajar($1)', [deJunior4]);
+ok('Quien nunca tuvo un pago anotado sale de la lista como antes', !r.error && !(await filaDe(P.junior)), r.error);
+
+await db.query(`update entrenamientos set fecha = public.hoy() - 1 where id = $1`, [ent4]);
+x = await uno('doble', 'select entrenamiento_actual()');
+ok('Quien se bajó antes del día no aparece en "Deben"', !x.deben.some((d) => d.id === deCapi4), JSON.stringify(x.deben));
+r = await como('capi', 'select entrenamiento_eliminar($1)', [ent4]);
+ok('No se elimina la lista de un entrenamiento que ya pasó', /ya pasó/.test(r.error ?? ''), r.error);
+r = await abrir('capi', manana, 5, ent4);
+ok('…ni se cambia su fecha para poder eliminarla', /ya pasó/.test(r.error ?? ''), r.error);
+r = await como('teso', 'select count(*) from entrenamiento_pagos');
+ok('La bitácora no se lee directamente', !!r.error);
 
 // Hora de inicio del partido (0014).
 const diaInicio = await dia(9);
