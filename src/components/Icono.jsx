@@ -7,6 +7,7 @@ const TRAZOS = {
   club: <><circle cx="9" cy="8" r="3.2" /><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.900 1.900 6.500 5.500" /><circle cx="17" cy="9" r="2.4" /><path d="M17.500 14.300c2.200.400 3.600 1.900 4 4.200" /></>,
   asambleas: <><rect x="3" y="6" width="13" height="12" rx="2.500" /><path d="M16 10.500l5-3v9l-5-3z" /></>,
   entrenar: <><circle cx="12" cy="14" r="7" /><path d="M12 14V10.500M9.500 3h5M12 3v4" /></>,
+  jugadores: <path d="M8.500 3.500 3 6.500l2 4.300 2.300-1V20.500h9.400V9.800l2.300 1 2-4.300-5.500-3c-.4 1.500-1.800 2.500-3.500 2.500s-3.100-1-3.500-2.500z" />,
   noticias: <><rect x="3" y="5" width="18" height="14" rx="2.500" /><path d="M7 9.500h6M7 13h10M7 16h7" /></>,
   mas: <><rect x="4" y="4" width="6.500" height="6.500" rx="1.500" /><rect x="13.500" y="4" width="6.500" height="6.500" rx="1.500" /><rect x="4" y="13.500" width="6.500" height="6.500" rx="1.500" /><rect x="13.500" y="13.500" width="6.500" height="6.500" rx="1.500" /></>,
   flecha: <path d="M9 6l6 6-6 6" />,

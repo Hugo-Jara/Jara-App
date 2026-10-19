@@ -71,7 +71,6 @@ export default function Partidos() {
     <>
       <h1 className="titulo display">Partidos</h1>
       <p className="subtitulo">Los que vienen y los que ya se jugaron. Respondes en los de tu plantel.</p>
-      <Link to="/estadisticas" className="card accion"><div className="sobretitulo">Estadísticas del club</div><p className="accion-dato">Goleadores, asistentes y tarjetas</p><span className="ver-mas">Ver las tablas <Icono nombre="flecha" size={16} /></span></Link>
       {persona.esEncargado && <Link to="/partidos/nuevo" className="btn secundario" style={{ marginBottom: 14 }}>Programar un partido</Link>}
       {error && <p className="error" role="alert">{error}</p>}
       {cargando ? <p className="vacio suelto">Cargando…</p> : (

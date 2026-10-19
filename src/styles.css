@@ -346,3 +346,12 @@ select:disabled, input:disabled { opacity: 0.6; }
 /* Fecha: se puede escribir o tocar el calendario, y el calendario se ve claro (no oscuro). */
 input.fecha-clara { color-scheme: light; color: var(--text); }
 input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightness(1.6); cursor: pointer; }
+
+/* Campos de fecha y hora escribibles (CamposFechaHora.jsx). */
+.campo-con-boton { position: relative; display: flex; gap: 8px; align-items: stretch; }
+.campo-con-boton input:not(.calendario-oculto) { flex: 1; min-width: 0; }
+.boton-calendario { flex: none; width: 52px; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-card-alt); color: var(--gold); display: grid; place-items: center; cursor: pointer; }
+.boton-calendario:active { background: var(--bg-card); }
+.calendario-oculto { position: absolute; right: 0; bottom: 0; width: 52px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
+.chips.sugeridas { margin-top: 8px; }
+.error.chico { font-size: 13px; margin: 6px 0 0; }

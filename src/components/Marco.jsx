@@ -7,7 +7,7 @@ const NAV = [
   { a: '/', icono: 'inicio', texto: 'Inicio' },
   { a: '/partidos', icono: 'partidos', texto: 'Partidos' },
   { a: '/entrenar', icono: 'entrenar', texto: 'Entrenar' },
-  { a: '/noticias', icono: 'noticias', texto: 'Noticias' },
+  { a: '/jugadores', icono: 'jugadores', texto: 'Jugadores' },
   { a: '/mas', icono: 'mas', texto: 'Más' },
 ];
 

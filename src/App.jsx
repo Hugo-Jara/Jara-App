@@ -44,7 +44,8 @@ export default function App() {
         <Route path="/partidos/nuevo" element={<PartidoForm />} />
         <Route path="/partidos/:id" element={<Partido />} />
         <Route path="/partidos/:id/editar" element={<PartidoForm />} />
-        <Route path="/estadisticas" element={<Estadisticas />} />
+        <Route path="/jugadores" element={<Estadisticas />} />
+        <Route path="/estadisticas" element={<Navigate to="/jugadores" replace />} />
         <Route path="/entrenar" element={<Entrenar />} />
         <Route path="/entrenar/lista" element={<EntrenamientoForm />} />
         <Route path="/ingresos" element={<Ingresos />} />

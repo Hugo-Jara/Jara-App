@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos, equiposDelClub } from '../lib/partidos.js';
 import { complejoDe } from '../lib/complejos.js';
+import { CampoFecha, CampoHora } from '../components/CamposFechaHora.jsx';
 import { fechaLarga, fechaCorta, hoyIso, proximoDia, correrDias } from '../lib/fechas.js';
 
 // Los próximos días de juego del plantel (su día de la semana), para elegir sin escribir.
@@ -63,6 +64,12 @@ export default function PartidoForm() {
   const nombreEquipo = actual ? actual.equipo : equipos.find((eq) => eq.id === equipoId)?.nombre;
   const complejo = nombreEquipo ? complejoDe(nombreEquipo) : null;
   const dias = complejo?.dia != null ? proximosDias(complejo.dia) : null;
+  // Las horas que más se han usado en los partidos de este plantel (hasta 3).
+  const horasDe = (campo) => {
+    const cuenta = new Map();
+    todos.filter((p) => p.equipoId === equipoId && p[campo]).forEach((p) => cuenta.set(p[campo], (cuenta.get(p[campo]) ?? 0) + 1));
+    return [...cuenta.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 3).map(([h]) => h).sort();
+  };
   const canchas = complejo?.canchas
     ? Array.from({ length: complejo.canchas }, (_, i) => `Cancha ${i + 1}`)
     : null;
@@ -70,7 +77,7 @@ export default function PartidoForm() {
   const enviar = async (e) => {
     e.preventDefault();
     if (!equipoId) return setError('Elige el plantel.');
-    if (!d.fecha) return setError('Elige el día del partido.');
+    if (!d.fecha) return setError('Escribe el día del partido completo (dd/mm/aaaa) o elígelo en el calendario.');
     const hora = normalizarHora(d.citacion);
     const inicio = normalizarHora(d.horaInicio);
     if (hora === null || inicio === null) return setError('Una de las horas no se entiende. Escríbela así: 20:30.');
@@ -98,24 +105,15 @@ export default function PartidoForm() {
         <label htmlFor="pf-rival">Rival</label>
         <input id="pf-rival" required value={d.rival} onChange={set('rival')} />
         <label htmlFor="pf-fecha">Día</label>
-        <input id="pf-fecha" type="date" className="fecha-clara" required value={d.fecha} onChange={set('fecha')} />
-        {dias && (
-          <div className="chips" style={{ marginTop: 8 }}>
-            {dias.slice(0, 3).map((f) => (
-              <button key={f} type="button" className={`chip${d.fecha === f ? ' activo' : ''}`}
-                      onClick={() => setD({ ...d, fecha: f })}>{fechaCorta(f)}</button>
-            ))}
-          </div>
-        )}
+        <CampoFecha id="pf-fecha" requerido valor={d.fecha} alCambiar={(f) => setD((x) => ({ ...x, fecha: f }))}
+                    sugeridas={dias ? dias.slice(0, 3) : []} textoSugerida={fechaCorta} />
         {d.fecha && <p className="ayuda">{fechaLarga(d.fecha)}</p>}
         <label htmlFor="pf-citacion">Hora de citación (opcional)</label>
-        <input id="pf-citacion" inputMode="numeric" autoComplete="off" placeholder="Ej.: 20:30" value={d.citacion}
-               onChange={set('citacion')}
-               onBlur={() => { const h = normalizarHora(d.citacion); if (h !== null) setD((x) => ({ ...x, citacion: h })); }} />
+        <CampoHora id="pf-citacion" valor={d.citacion} alCambiar={(h) => setD((x) => ({ ...x, citacion: h }))}
+                   sugeridas={horasDe('citacion')} />
         <label htmlFor="pf-inicio">Hora de inicio del partido (opcional)</label>
-        <input id="pf-inicio" inputMode="numeric" autoComplete="off" placeholder="Ej.: 21:00" value={d.horaInicio}
-               onChange={set('horaInicio')}
-               onBlur={() => { const h = normalizarHora(d.horaInicio); if (h !== null) setD((x) => ({ ...x, horaInicio: h })); }} />
+        <CampoHora id="pf-inicio" valor={d.horaInicio} alCambiar={(h) => setD((x) => ({ ...x, horaInicio: h }))}
+                   sugeridas={horasDe('horaInicio')} placeholder="Ej.: 21:00" />
         <label htmlFor="pf-cancha">Cancha</label>
         {canchas ? (
           <select id="pf-cancha" value={d.cancha} onChange={set('cancha')}>

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos, tablaEstadisticas, equiposDelClub } from '../lib/partidos.js';
 import { hoyIso } from '../lib/fechas.js';
@@ -50,9 +49,9 @@ export default function Estadisticas() {
 
   return (
     <>
-      <Link to="/partidos" className="volver">‹ Partidos</Link>
-      <h1 className="titulo display">Estadísticas</h1>
+      <h1 className="titulo display">Jugadores</h1>
       <p className="subtitulo">Goles, asistencias y tarjetas de todo el club, con lo que se anota en cada partido.</p>
+      <h2 className="seccion">Estadísticas</h2>
 
       <div className="segmentos dos" role="radiogroup" aria-label="Periodo">
         {[[anioActual, 'Este año'], [0, 'Histórico']].map(([valor, texto]) => (
