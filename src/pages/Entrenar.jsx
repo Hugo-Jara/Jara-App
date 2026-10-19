@@ -7,14 +7,19 @@ import { pesos } from '../lib/pedido.js';
 import { plural } from '../lib/texto.js';
 import RecordarPorWhatsApp from '../components/RecordarPorWhatsApp.jsx';
 
-// El pago queda a la vista de todo el club; lo marca quien cobra.
+// El pago queda a la vista de todo el club; lo marca quien cobra. Para
+// desmarcarlo se pide confirmar, porque un toque de más borraba un pago.
 function Pago({ fila, puedoCobrar, marcar }) {
   const texto = fila.pagado ? 'Pagó' : `Debe ${pesos(fila.monto)}`;
   if (!puedoCobrar) return <span className={`pago ${fila.pagado ? 'si' : 'no'}`}>{texto}</span>;
+  const tocar = () => {
+    if (fila.pagado && !window.confirm(`¿Quitar el pago de ${fila.nombre} (${pesos(fila.monto)})? Va a quedar debiendo.`)) return;
+    marcar(fila.id, !fila.pagado);
+  };
   return (
     <button className={`pago boton ${fila.pagado ? 'si' : 'no'}`} aria-pressed={fila.pagado}
             aria-label={`${fila.nombre}: ${texto}. Tocar para ${fila.pagado ? 'desmarcar el pago' : 'marcar como pagado'}`}
-            onClick={() => marcar(fila.id, !fila.pagado)}>
+            onClick={tocar}>
       {texto}
     </button>
   );
@@ -58,6 +63,8 @@ export default function Entrenar() {
     );
   }
   const esHoy = e.fecha === hoyIso();
+  // Se paga después de entrenar: antes del día no hay pagos que marcar.
+  const cobrarHoy = t.puedoCobrar && e.fecha <= hoyIso();
   const multa = e.multa > 0 ? `Si te bajas el mismo día se cobra una multa de ${pesos(e.multa)}.` : '';
   return (
     <>
@@ -112,7 +119,7 @@ export default function Entrenar() {
               {((i.invitado && i.esMio) || (t.puedoAdministrar && i.personaId !== persona.id)) && (
                 <button className="enlace quitar" aria-label={`Bajar a ${i.nombre} de la lista`} onClick={() => intentar(t.bajar)(i.id)}>Bajar</button>
               )}
-              <Pago fila={i} puedoCobrar={t.puedoCobrar} marcar={intentar(t.marcarPago)} />
+              <Pago fila={i} puedoCobrar={cobrarHoy} marcar={intentar(t.marcarPago)} />
             </li>
           ))}
         </ol>
@@ -123,8 +130,8 @@ export default function Entrenar() {
               {e.bajasTarde.map((i) => (
                 <li key={i.id}>
                   <span className="nombre">{i.nombre}</span>
-                  <span className="comentario">multa</span>
-                  <Pago fila={i} puedoCobrar={t.puedoCobrar} marcar={intentar(t.marcarPago)} />
+                  <span className="comentario">{i.pagado && i.monto !== e.multa ? 'ya había pagado' : 'multa'}</span>
+                  <Pago fila={i} puedoCobrar={cobrarHoy} marcar={intentar(t.marcarPago)} />
                 </li>
               ))}
             </ol>
