@@ -45,6 +45,17 @@ function ProximoPartido({ partido, destacado, responder }) {
   );
 }
 
+// Si no cargó, se dice eso, en vez de "no hay" (que sería falso).
+function ErrorCarga({ titulo, error, recargar }) {
+  return (
+    <section className="card accion">
+      <div className="sobretitulo">{titulo}</div>
+      <p className="error" role="alert">{error}</p>
+      <button className="btn chico secundario" onClick={recargar}>Reintentar</button>
+    </section>
+  );
+}
+
 function SinPartido({ equipos }) {
   return (
     <section className="card accion">
@@ -191,9 +202,12 @@ export default function Inicio() {
         ? <section className="card accion"><p className="vacio">Cargando tus partidos…</p></section>
         : partidos.mios.length
           ? partidos.mios.map((p, i) => <ProximoPartido key={p.id} partido={p} destacado={i === 0} responder={partidos.responder} />)
-          : <SinPartido equipos={persona.equipos} />}
-      {!entreno.cargando && (
-        <Entrenamiento e={entreno.entrenamiento} miInscripcion={entreno.miInscripcion} libres={entreno.libres} inscribirme={entreno.inscribirme} />
+          : partidos.error
+            ? <ErrorCarga titulo="Tu próximo partido" error={partidos.error} recargar={partidos.recargar} />
+            : <SinPartido equipos={persona.equipos} />}
+      {!entreno.cargando && (entreno.error && !entreno.entrenamiento
+        ? <ErrorCarga titulo="Entrenamiento" error={entreno.error} recargar={entreno.recargar} />
+        : <Entrenamiento e={entreno.entrenamiento} miInscripcion={entreno.miInscripcion} libres={entreno.libres} inscribirme={entreno.inscribirme} />
       )}
       <UltimoPartido partido={ultimoPartido} />
       <Noticias noticias={noticias} />

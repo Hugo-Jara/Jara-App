@@ -222,11 +222,20 @@ function Grupo({ titulo, clase, lista }) {
 export default function Partido() {
   const { id } = useParams();
   const { persona } = useSesion();
-  const { cargando, todos, responder, anotarResultado } = usePartidos(persona);
+  const { cargando, error, recargar, todos, responder, anotarResultado } = usePartidos(persona);
   const partido = todos.find((p) => p.id === id);
   const jugado = partido ? partido.fecha < hoyIso() : false;
 
   if (cargando) return <p className="vacio suelto">Cargando…</p>;
+  if (!partido && error) {
+    return (
+      <>
+        <Link to="/partidos" className="volver">‹ Partidos</Link>
+        <p className="error" role="alert">{error}</p>
+        <button className="btn secundario" onClick={recargar}>Reintentar</button>
+      </>
+    );
+  }
   if (!partido) {
     return (
       <>

@@ -80,7 +80,7 @@ export function useEntrenamiento(yo) {
   const mia = e?.inscritos.find((i) => i.personaId === yo.id) ?? null;
   const y = (accion) => async (...a) => { await accion(...a); await almacen.recargar(); };
   return {
-    cargando, error, entrenamiento: e,
+    cargando, error, recargar: almacen.recargar, entrenamiento: e,
     deben: datos?.deben ?? [],
     puedoAdministrar: !!datos?.puedoAdministrar, puedoCobrar: !!datos?.puedoCobrar,
     miInscripcion: mia,

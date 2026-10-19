@@ -138,7 +138,7 @@ export function usePartidos(yo) {
   const proximos = partidos.filter((p) => p.fecha >= hoy);
   const jugados = partidos.filter((p) => p.fecha < hoy).sort((a, b) => b.fecha.localeCompare(a.fecha));
   return {
-    cargando, error, todos: partidos, partidos: proximos, jugados,
+    cargando, error, recargar: almacen.recargar, todos: partidos, partidos: proximos, jugados,
     mios: proximos.filter((p) => p.esMio),
     anotarResultado: y(origen.resultado),
     responder: y((id, respuesta) => origen.responder(id, yo, respuesta)),

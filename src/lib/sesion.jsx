@@ -29,18 +29,28 @@ const desdeFila = (f) => f && ({
 export function ProveedorSesion({ children }) {
   const [cargando, setCargando] = useState(!esDemo);
   const [sesion, setSesion] = useState(null);
-  // persona: quién es en la nómina. null = la cuenta todavía no está enlazada a nadie.
+  // persona: quién es en la nómina. undefined = todavía no se sabe; null = la
+  // base respondió que la cuenta no está enlazada a nadie.
   const [persona, setPersona] = useState(esDemo ? PERSONA_DEMO : undefined);
+  // No se pudo preguntar (sin señal, Supabase caído). No es lo mismo que null:
+  // no hay que mandar a la persona a buscar su nombre de nuevo.
+  const [sinConexion, setSinConexion] = useState(false);
 
   const cargarPersona = useCallback(async () => {
     try {
       // Si su correo ya estaba cargado en la nómina, queda enlazada sola.
       await llamar('vincular_persona');
       setPersona(desdeFila(await llamar('mi_persona')) ?? null);
+      setSinConexion(false);
     } catch {
-      setPersona(null);
+      setSinConexion(true);
     }
   }, []);
+
+  const reintentar = useCallback(async () => {
+    setSinConexion(false);
+    await cargarPersona();
+  }, [cargarPersona]);
 
   useEffect(() => {
     if (esDemo) return;
@@ -53,8 +63,8 @@ export function ProveedorSesion({ children }) {
       if (id === cuenta) return;
       cuenta = id;
       vaciarPartidos(); vaciarEntrenamiento(); vaciarSolicitudes();
+      setPersona(undefined); setSinConexion(false);
       if (s) await cargarPersona();
-      else setPersona(undefined);
       if (vigente) setCargando(false);
     };
     supabase.auth.getSession().then(({ data }) => aplicar(data.session));
@@ -83,7 +93,7 @@ export function ProveedorSesion({ children }) {
 
   return (
     <Contexto.Provider
-      value={{ cargando, sesion, persona, esDemo, entrarConGoogle, entrarConCorreo, salir, recargarPersona: cargarPersona }}
+      value={{ cargando, sesion, persona, sinConexion, reintentar, esDemo, entrarConGoogle, entrarConCorreo, salir, recargarPersona: cargarPersona }}
     >
       {children}
     </Contexto.Provider>
