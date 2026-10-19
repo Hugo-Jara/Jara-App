@@ -20,6 +20,7 @@ import Mas from './pages/Mas.jsx';
 import Publicacion from './pages/Publicacion.jsx';
 import Publicar from './pages/Publicar.jsx';
 import Pedido from './pages/Pedido.jsx';
+import Fondo from './pages/Fondo.jsx';
 
 export default function App() {
   const { cargando, sesion, persona, sinConexion, esDemo } = useSesion();
@@ -28,6 +29,8 @@ export default function App() {
   // El pedido de compras es una página suelta: se entra con un link, sin cuenta
   // y sin el resto de la app alrededor.
   if (pathname.startsWith('/pedido/')) return <Pedido />;
+  // Vista previa del Fondo Las Condes: datos de ejemplo, se abre con el link y sin cuenta.
+  if (pathname === '/fondo') return <Fondo />;
 
   // En modo demostración, /ingreso muestra la pantalla de entrada para revisarla.
   if (esDemo && pathname === '/ingreso') return <Ingreso />;

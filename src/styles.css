@@ -355,3 +355,47 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .calendario-oculto { position: absolute; right: 0; bottom: 0; width: 52px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
 .chips.sugeridas { margin-top: 8px; }
 .error.chico { font-size: 13px; margin: 6px 0 0; }
+
+/* Fondo Las Condes (vista previa) */
+.ef { font-size: 12px; font-weight: 700; white-space: nowrap; }
+.ef.lista, .ef.al_dia { color: var(--green); }
+.ef.pendiente, .ef.faltan { color: var(--gold); }
+.ef.no_rendible, .ef.excedido { color: var(--rose); }
+.ef.rendida, .ef.sin_gastos { color: var(--text-dim); }
+.progreso > div.excedido { background: var(--rose); }
+.fondo-item .item-cabeza { align-items: center; }
+.fondo .items.card { padding-top: 4px; padding-bottom: 4px; }
+.item-boton { display: block; width: 100%; text-align: left; background: none; border: none; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+.compra-detalle { margin-top: 12px; }
+.compra-detalle .datos { margin-top: 8px; }
+.checklist { list-style: none; margin: 0; padding: 0; }
+.checklist .casilla { align-items: flex-start; margin: 12px 0 0; font-size: 14.5px; }
+.checklist-nombre { display: block; font-weight: 600; }
+.checklist-nota { display: block; font-size: 12.5px; color: var(--text-dim); margin-top: 2px; }
+.opciones-topico .opcion.activa { border-color: var(--gold); background: rgba(198, 161, 91, 0.12); }
+.dudas { padding-left: 38px; margin: 0 0 14px; }
+.dudas li { padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14.5px; line-height: 1.45; }
+.dudas li:last-child { border-bottom: none; }
+.tabla-scroll { overflow-x: auto; margin: 12px 0; }
+.hoja-titulo { font-size: 15px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.02em; }
+.hoja-dato, .hoja-nota { font-size: 12.5px; color: var(--text-dim); margin: 0; line-height: 1.45; }
+.hoja-nota { margin-top: 14px; }
+.hoja-tabla { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 12.5px; }
+.hoja-tabla th, .hoja-tabla td { border: 1px solid var(--border); padding: 7px 8px; text-align: left; vertical-align: top; }
+.hoja-tabla th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--gold); }
+.hoja-tabla .num { text-align: right; white-space: nowrap; }
+.hoja-tabla tfoot td { font-weight: 700; }
+.firmas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 34px; font-size: 12px; color: var(--text-dim); text-align: center; }
+.firmas .linea { display: block; border-top: 1px solid var(--text-dim); margin-bottom: 6px; }
+.firmas .timbre { display: inline-block; border: 1px dashed var(--text-dim); border-radius: 50%; padding: 18px 10px; }
+@media print {
+  body { background: #fff; color: #000; }
+  .no-imprimir { display: none !important; }
+  .pagina { max-width: none; padding: 0; }
+  .card.hoja { background: #fff; border: none; box-shadow: none; padding: 0; color: #000; }
+  .hoja-dato, .hoja-nota, .firmas { color: #333; }
+  .tabla-scroll { overflow: visible; }
+  .hoja-tabla { min-width: 0; }
+  .hoja-tabla th, .hoja-tabla td { border-color: #999; color: #000; }
+  .firmas .linea { border-color: #000; }
+}
