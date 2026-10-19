@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useFondo, FONDO, TOPICOS, ITEMS, PAGOS, ESTADOS, DUDAS, respaldosDe, motivoNoRendible } from '../lib/fondo.js';
+import { useFondo, FONDO, ITEMS, PAGOS, ESTADOS, DUDAS, respaldosDe, motivoNoRendible } from '../lib/fondo.js';
 import { pesos } from '../lib/pedido.js';
 import { fechaCorta, hoyIso } from '../lib/fechas.js';
 import { plural } from '../lib/texto.js';
@@ -134,22 +134,11 @@ function Compra({ c, f, abierta, alternar }) {
 }
 
 function Agregar({ f, listo }) {
-  const [topico, setTopico] = useState('fondo');
   const [item, setItem] = useState('bienes');
   const [que, setQue] = useState('');
   const [monto, setMonto] = useState('');
   const [pago, setPago] = useState('');
   const [entrega, setEntrega] = useState(false);
-  const [aviso, setAviso] = useState('');
-
-  if (aviso) {
-    return (
-      <section className="card">
-        <p className="respuesta sin-margen">{aviso}</p>
-        <button className="btn secundario" style={{ marginTop: 14 }} onClick={listo}>Volver a las compras</button>
-      </section>
-    );
-  }
 
   const n = Number(String(monto).replace(/\D/g, '')) || 0;
   const it = f.porItem.find((i) => i.id === item);
@@ -163,67 +152,43 @@ function Agregar({ f, listo }) {
   return (
     <form className="card" onSubmit={guardar}>
       <div className="sobretitulo">Agregar compra</div>
-      <label>¿Para qué es esta compra?</label>
-      <div className="opciones-topico">
-        {TOPICOS.map((t) => (
-          <button type="button" key={t.id} className={`opcion ${topico === t.id ? 'activa' : ''}`} onClick={() => setTopico(t.id)}>
-            <span className="opcion-nombre">{t.nombre}</span>
-            <span className="opcion-detalle">{t.desc}</span>
-          </button>
-        ))}
-      </div>
+      <label htmlFor="f-item">Ítem del presupuesto</label>
+      <select id="f-item" value={item} onChange={(e) => setItem(e.target.value)}>
+        {ITEMS.filter((i) => i.id !== 'personal').map((i) => <option key={i.id} value={i.id}>{i.nombre}</option>)}
+        <option value="fuera">No está en el presupuesto</option>
+      </select>
+      <p className="item-meta">Los honorarios del entrenador van en su pestaña. No se rinden multas, intereses ni impuestos (art. 11).</p>
 
-      {topico !== 'fondo' ? (
+      {item === 'fuera' ? (
         <>
-          <p className="item-meta" style={{ marginTop: 14 }}>
-            Esta compra sigue el camino de siempre (el pedido de compras) y no toca el fondo ni sus alertas.
+          <p className="item-comentario">
+            No está en el presupuesto aprobado, así que no se puede cargar al fondo. Si igual hay que comprarlo, va por el pedido de compras de siempre y lo paga el club.
           </p>
           <button type="button" className="btn secundario" style={{ marginTop: 14 }} onClick={listo}>Entendido</button>
         </>
       ) : (
         <>
-          <label htmlFor="f-item">Ítem del presupuesto</label>
-          <select id="f-item" value={item} onChange={(e) => setItem(e.target.value)}>
-            {ITEMS.filter((i) => i.id !== 'personal').map((i) => <option key={i.id} value={i.id}>{i.nombre}</option>)}
-            <option value="fuera">No está en el presupuesto</option>
+          <label htmlFor="f-que">¿Qué se compra?</label>
+          <input id="f-que" required minLength={3} value={que} onChange={(e) => setQue(e.target.value)} placeholder="Por ejemplo: balones (22)" />
+          <label htmlFor="f-monto">Monto con IVA</label>
+          <input id="f-monto" required inputMode="numeric" value={monto ? pesos(n) : ''}
+                 onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))} placeholder="$0" />
+          <p className="item-meta">Con IVA, porque es lo que dirá la boleta. Disponible en este ítem: <strong>{pesos(it?.disponible ?? 0)}</strong></p>
+          {pasa > 0 && <p className="item-comentario">Pasa lo disponible por {pesos(pasa)}. Esa parte no se rinde: la pone el club.</p>}
+          <label htmlFor="f-pago">¿Cómo se va a pagar?</label>
+          <select id="f-pago" value={pago} onChange={(e) => setPago(e.target.value)}>
+            <option value="">Todavía no se sabe</option>
+            {Object.entries(PAGOS).map(([id, texto]) => <option key={id} value={id}>{texto}</option>)}
           </select>
-          <p className="item-meta">Los honorarios del entrenador van en su pestaña. No se rinden multas, intereses ni impuestos (art. 11).</p>
-
-          {item === 'fuera' ? (
-            <>
-              <p className="item-comentario">
-                No está en el presupuesto aprobado. Solo se rinden los ítems del proyecto: si se compra, no se rinde y lo paga el club.
-              </p>
-              <button type="button" className="btn secundario" style={{ marginTop: 14 }}
-                      onClick={() => setAviso('Listo: la compra quedaría en «Gastos generales del club», sin cargo al fondo.')}>
-                Agregar igual, sin cargo al fondo
-              </button>
-            </>
-          ) : (
-            <>
-              <label htmlFor="f-que">¿Qué se compra?</label>
-              <input id="f-que" required minLength={3} value={que} onChange={(e) => setQue(e.target.value)} placeholder="Por ejemplo: balones (22)" />
-              <label htmlFor="f-monto">Monto con IVA</label>
-              <input id="f-monto" required inputMode="numeric" value={monto ? pesos(n) : ''}
-                     onChange={(e) => setMonto(e.target.value.replace(/\D/g, ''))} placeholder="$0" />
-              <p className="item-meta">Con IVA, porque es lo que dirá la boleta. Disponible en este ítem: <strong>{pesos(it?.disponible ?? 0)}</strong></p>
-              {pasa > 0 && <p className="item-comentario">Pasa lo disponible por {pesos(pasa)}. Esa parte no se rinde: la pone el club.</p>}
-              <label htmlFor="f-pago">¿Cómo se va a pagar?</label>
-              <select id="f-pago" value={pago} onChange={(e) => setPago(e.target.value)}>
-                <option value="">Todavía no se sabe</option>
-                {Object.entries(PAGOS).map(([id, texto]) => <option key={id} value={id}>{texto}</option>)}
-              </select>
-              {pago === 'particular' && <p className="item-comentario">Así no se puede rendir (art. 9): solo pagos con la cuenta o el débito del club.</p>}
-              <label className="casilla">
-                <input type="checkbox" checked={entrega} onChange={(e) => setEntrega(e.target.checked)} />
-                Se entrega a los participantes (pide nómina firmada, art. 10)
-              </label>
-              <div className="botones">
-                <button className="btn">Agregar al fondo</button>
-                <button type="button" className="btn secundario" onClick={listo}>Cancelar</button>
-              </div>
-            </>
-          )}
+          {pago === 'particular' && <p className="item-comentario">Así no se puede rendir (art. 9): solo pagos con la cuenta o el débito del club.</p>}
+          <label className="casilla">
+            <input type="checkbox" checked={entrega} onChange={(e) => setEntrega(e.target.checked)} />
+            Se entrega a los participantes (pide nómina firmada, art. 10)
+          </label>
+          <div className="botones">
+            <button className="btn">Agregar al fondo</button>
+            <button type="button" className="btn secundario" onClick={listo}>Cancelar</button>
+          </div>
         </>
       )}
     </form>
