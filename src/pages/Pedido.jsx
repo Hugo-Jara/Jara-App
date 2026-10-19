@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { usePedido, totales, pesos, ESTADOS } from '../lib/pedido.js';
+import { usePedido, totales, pesos, ESTADOS, enlaceComprobante } from '../lib/pedido.js';
 import { esDemo } from '../lib/supabase.js';
-import { ESCUDO } from '../lib/base.js';
+import { ESCUDO, BASE } from '../lib/base.js';
 
 const esLink = (texto) => /^https?:\/\//i.test(texto.trim());
 
@@ -19,6 +19,33 @@ function Adjunto({ archivo, texto }) {
   return archivo.url
     ? <a className="enlace" href={archivo.url} target="_blank" rel="noreferrer">{texto}</a>
     : <span className="tenue">{texto}: {archivo.nombre}</span>;
+}
+
+// El comprobante trae datos bancarios: se abre con una dirección que dura 10
+// minutos y solo con una cuenta de la Jara App que puede verlo.
+function Comprobante({ archivo, puedoVer }) {
+  const [error, setError] = useState('');
+  if (!puedoVer) {
+    return <span className="tenue">Hay comprobante. Para verlo, <a className="enlace" href={BASE}>entra a la Jara App</a> con tu cuenta.</span>;
+  }
+  const abrir = async () => {
+    setError('');
+    // La pestaña se abre al tiro (si no, el iPhone la bloquea) y después se le pone la dirección.
+    const pestana = window.open('', '_blank');
+    try {
+      const url = await enlaceComprobante(archivo.ruta);
+      if (pestana) pestana.location.href = url; else window.location.href = url;
+    } catch (e) {
+      pestana?.close();
+      setError(e.message);
+    }
+  };
+  return (
+    <>
+      <button type="button" className="enlace" onClick={abrir}>Ver comprobante</button>
+      {error && <span className="error" role="alert">{error}</span>}
+    </>
+  );
 }
 
 // Botón que abre el selector de archivos del teléfono o del computador.
@@ -144,7 +171,7 @@ function Edicion({ item, onGuardar, onCancelar }) {
   );
 }
 
-function Item({ item, hacienda, acciones }) {
+function Item({ item, hacienda, puedoVerComprobantes, acciones }) {
   const [comentario, setComentario] = useState('');
   const [modo, setModo] = useState(null); // 'devolver' | 'corregir' | 'editar' | 'eliminar'
   const [error, setError] = useState('');
@@ -189,9 +216,11 @@ function Item({ item, hacienda, acciones }) {
           ? <a className="enlace" href={item.referencia} target="_blank" rel="noreferrer">Ver referencia</a>
           : <span className="tenue">{item.referencia}</span>)}
         <Adjunto archivo={item.referenciaArchivo} texto="Ver archivo de referencia" />
-        {hacienda
-          ? <Adjunto archivo={item.comprobante} texto="Ver comprobante" />
-          : item.conComprobante && <span className="tenue">Transferencia con comprobante</span>}
+        {item.comprobante?.privado
+          ? <Comprobante archivo={item.comprobante} puedoVer={puedoVerComprobantes} />
+          : hacienda
+            ? <Adjunto archivo={item.comprobante} texto="Ver comprobante" />
+            : item.conComprobante && <span className="tenue">Transferencia con comprobante</span>}
         <Adjunto archivo={item.boleta} texto="Ver boleta" />
       </div>
 
@@ -319,7 +348,7 @@ export default function Pedido() {
         ? <p className="vacio suelto">Todavía no hay compras. Agrega la primera.</p>
         : (
           <ul className="card lista items">
-            {pedido.items.map((i) => <Item key={i.id} item={i} hacienda={hacienda} acciones={acciones} />)}
+            {pedido.items.map((i) => <Item key={i.id} item={i} hacienda={hacienda} puedoVerComprobantes={pedido.puedoVerComprobantes} acciones={acciones} />)}
           </ul>
         )}
 

@@ -30,6 +30,9 @@ export const pesos = (n) => `$${Math.round(n).toLocaleString('es-CL')}`;
 // Con la base conectada
 // ---------------------------------------------------------------------------
 const BUCKET = 'pedidos';
+// Los comprobantes de transferencia van aparte, en un bucket privado: se abren
+// con una dirección que dura 10 minutos y solo con una cuenta que puede verlos.
+const BUCKET_COMPROBANTES = 'comprobantes';
 const archivo = (ruta, nombre) =>
   ruta ? { nombre, url: supabase.storage.from(BUCKET).getPublicUrl(ruta).data.publicUrl, ruta } : null;
 
@@ -39,18 +42,18 @@ const desdeFila = (f) => ({
   cotizacion: archivo(f.cotizacion_ruta, f.cotizacion_nombre),
   referenciaArchivo: archivo(f.referencia_ruta, f.referencia_nombre),
   boleta: archivo(f.boleta_ruta, f.boleta_nombre),
-  // El archivo del comprobante solo llega con el link de Hacienda; el resto
-  // solo sabe si existe.
-  comprobante: archivo(f.comprobante_ruta, f.comprobante_nombre),
+  // La ruta del comprobante solo llega con el link de Hacienda o a quien puede
+  // verlo con su cuenta; el resto solo sabe si existe.
+  comprobante: f.comprobante_ruta ? { nombre: f.comprobante_nombre, ruta: f.comprobante_ruta, privado: true } : null,
   conComprobante: !!f.con_comprobante,
   estado: f.estado, comentario: f.comentario,
 });
 
-async function subir(carpeta, file) {
+async function subir(carpeta, file, bucket = BUCKET) {
   if (!file) return null;
   const limpio = file.name.normalize('NFD').replace(/[^\w.-]+/g, '_').slice(-60);
   const ruta = `${carpeta}/${crypto.randomUUID()}-${limpio}`;
-  const { error } = await supabase.storage.from(BUCKET).upload(ruta, file, { contentType: file.type });
+  const { error } = await supabase.storage.from(bucket).upload(ruta, file, { contentType: file.type });
   if (error) throw new Error('No se pudo subir el archivo. Revisa que sea una foto o un PDF de menos de 10 MB.');
   return { ruta, nombre: file.name };
 }
@@ -69,7 +72,8 @@ function usePedidoReal(token) {
       const p = await llamar('pedido_ver', { p_token: token });
       setEstado({
         cargando: false, error: '',
-        pedido: { nombre: p.nombre, abierto: p.abierto, esHacienda: p.es_hacienda, carpeta: p.carpeta, items: p.items.map(desdeFila) },
+        pedido: { nombre: p.nombre, abierto: p.abierto, esHacienda: p.es_hacienda, puedoVerComprobantes: !!p.puedo_ver_comprobantes,
+                  carpeta: p.carpeta, items: p.items.map(desdeFila) },
       });
     } catch (e) {
       setEstado((s) => ({ ...s, cargando: false, error: e.message }));
@@ -118,11 +122,18 @@ function usePedidoReal(token) {
     eliminar: async (id) => { await llamar('pedido_eliminar', { p_token: token, p_item: id }); await cargar(); },
     // Hacienda: en una compra aprobada además la deja como plata entregada.
     subirComprobante: async (id, file) => {
-      const c = await subir(carpeta, file);
+      const c = await subir(carpeta, file, BUCKET_COMPROBANTES);
       await llamar('pedido_comprobante', { p_token: token, p_item: id, p_ruta: c.ruta, p_nombre: c.nombre });
       await cargar();
     },
   };
+}
+
+// Dirección para abrir un comprobante, válida por 10 minutos.
+export async function enlaceComprobante(ruta) {
+  const { data, error } = await supabase.storage.from(BUCKET_COMPROBANTES).createSignedUrl(ruta, 600);
+  if (error) throw new Error('No pudimos abrir el comprobante. Entra a la Jara App con una cuenta de tesorería, Hacienda o presidencia.');
+  return data.signedUrl;
 }
 
 // ---------------------------------------------------------------------------

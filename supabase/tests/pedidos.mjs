@@ -194,5 +194,83 @@ ok('A un pedido cerrado no se le agregan compras', /cerrado/.test(r.error ?? '')
 r = await anon(`select pedido_carpeta_abierta('carpeta1') as a, pedido_carpeta_abierta('carpeta2') as b`);
 ok('…ni se le pueden subir archivos', r.rows[0]?.a === false && r.rows[0]?.b === true);
 
+// ---------------------------------------------------------------------------
+console.log('\nComprobantes privados (0017)');
+// Storage de Supabase simulado: buckets, archivos y sus reglas de acceso.
+await db.exec(`
+  create schema storage;
+  create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
+  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text);
+  alter table storage.objects enable row level security;
+  create function storage.foldername(name text) returns text[] language sql immutable as $$
+    select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
+  grant usage on schema storage to anon, authenticated;
+  grant select, insert on storage.objects to anon, authenticated;
+  create or replace function auth.uid() returns uuid language sql stable as $$
+    select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+`);
+await db.exec(mig('0017_comprobantes_privados.sql'));
+r = await db.query(`select count(*)::int as n from pedido_items where comprobante_ruta is not null`);
+ok('Los comprobantes que estaban en el bucket público se desenlazan', r.rows[0].n === 0, JSON.stringify(r.rows));
+r = await db.query(`select count(*)::int as n from pedido_item_eventos where comentario like 'Comprobante quitado%'`);
+ok('…y queda anotado en el historial', r.rows[0].n === 2, JSON.stringify(r.rows));
+r = await db.query(`select public from storage.buckets where id = 'comprobantes'`);
+ok('El bucket de comprobantes es privado', r.rows[0]?.public === false);
+
+const CLUB = '10000000-0000-0000-0000-000000000001';
+const U = { admin: '00000000-0000-0000-0000-0000000000a1', teso: '00000000-0000-0000-0000-0000000000a2',
+            presi: '00000000-0000-0000-0000-0000000000a3', jugador: '00000000-0000-0000-0000-0000000000a4' };
+await db.exec(`
+  insert into auth.users (id, email) values ${Object.entries(U).map(([k, id]) => `('${id}', '${k}@correo.cl')`).join(', ')};
+  insert into equipos (id, club_id, nombre, orden) values ('40000000-0000-0000-0000-000000000001', '${CLUB}', 'Plantel de prueba', 1);
+  insert into personas (id, club_id, nombre, es_admin, user_id, ve_comprobantes) values
+    ('20000000-0000-0000-0000-0000000000a1', '${CLUB}', 'Admin Prueba', true, '${U.admin}', false),
+    ('20000000-0000-0000-0000-0000000000a2', '${CLUB}', 'Tesorero Prueba', false, '${U.teso}', false),
+    ('20000000-0000-0000-0000-0000000000a3', '${CLUB}', 'Presidente Prueba', false, '${U.presi}', true),
+    ('20000000-0000-0000-0000-0000000000a4', '${CLUB}', 'Jugador Prueba', false, '${U.jugador}', false);
+  insert into persona_equipos (persona_id, equipo_id, rol) values
+    ('20000000-0000-0000-0000-0000000000a2', '40000000-0000-0000-0000-000000000001', 'tesorero'),
+    ('20000000-0000-0000-0000-0000000000a4', '40000000-0000-0000-0000-000000000001', 'jugador');
+`);
+async function como(quien, sql, params = []) {
+  await db.exec('set role authenticated');
+  await db.query(`select set_config('request.jwt.claim.sub', $1, false)`, [U[quien]]);
+  try { const r = await db.query(sql, params); return { rows: r.rows, error: null }; }
+  catch (e) { return { rows: [], error: e.message }; }
+  finally { await db.exec('reset role'); await db.query(`select set_config('request.jwt.claim.sub', '', false)`); }
+}
+
+r = await anon(`insert into storage.objects (bucket_id, name) values ('comprobantes', 'carpeta1/c0.jpg')`);
+ok('No se suben comprobantes a un pedido cerrado', !!r.error);
+r = await anon(`insert into storage.objects (bucket_id, name) values ('comprobantes', 'carpeta2/c1.jpg')`);
+ok('Con el link se sube un comprobante a un pedido abierto, sin cuenta', !r.error, r.error);
+r = await agregar('tok-otro', 'Lalo', 'Conos', 30000, 'carpeta2/cot.pdf', 'https://x.cl', null);
+const conos = r.rows[0]?.id;
+await revisar('tok-otro-h', conos, 'aprobar');
+await db.query(`insert into storage.objects (bucket_id, name) values ('pedidos', 'carpeta2/publico.jpg')`);
+r = await comprobante('tok-otro-h', conos, 'carpeta2/publico.jpg');
+ok('Un comprobante guardado en el bucket público se rechaza', /Falta el archivo/.test(r.error ?? ''), r.error);
+r = await comprobante('tok-otro-h', conos, 'carpeta2/c1.jpg');
+ok('Hacienda adjunta el comprobante privado', !r.error, r.error);
+
+const cuantos = async (quien) => {
+  const sql = `select count(*)::int as n from storage.objects where bucket_id = 'comprobantes'`;
+  const x = quien ? await como(quien, sql) : await anon(sql);
+  return x.rows[0]?.n ?? x.error;
+};
+ok('Sin cuenta no se abre el archivo', (await cuantos(null)) === 0);
+ok('Un jugador tampoco', (await cuantos('jugador')) === 0);
+ok('Un tesorero sí', (await cuantos('teso')) === 1);
+ok('Quien tiene el permiso personal (por ejemplo, el presidente) sí', (await cuantos('presi')) === 1);
+ok('Un administrador sí', (await cuantos('admin')) === 1);
+
+const deConos = (x) => x.items.find((i) => i.id === conos);
+p = await ver('tok-otro');
+ok('Con el link de pedir y sin cuenta no llega la ruta', deConos(p).comprobante_ruta === null && deConos(p).con_comprobante && p.puedo_ver_comprobantes === false);
+p = (await como('teso', `select pedido_ver('tok-otro') as p`)).rows[0]?.p;
+ok('Un tesorero con su cuenta recibe la ruta, aun con el link de pedir', deConos(p).comprobante_ruta === 'carpeta2/c1.jpg' && p.puedo_ver_comprobantes === true, JSON.stringify(p));
+p = await ver('tok-otro-h');
+ok('Con el link de Hacienda y sin cuenta llega la ruta, pero la app sabe que no puede abrirla', deConos(p).comprobante_ruta === 'carpeta2/c1.jpg' && p.puedo_ver_comprobantes === false);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);
