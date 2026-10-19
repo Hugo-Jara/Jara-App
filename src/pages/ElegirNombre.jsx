@@ -158,11 +158,25 @@ function EnEspera({ solicitud, alCambiar }) {
 export default function ElegirNombre() {
   const { sesion, salir } = useSesion();
   const [solicitud, setSolicitud] = useState(undefined);
+  const [errorCarga, setErrorCarga] = useState('');
+  // Si falla la consulta no se asume "sin solicitud": se avisa y se reintenta.
   const cargar = async () => {
-    try { setSolicitud(await miSolicitud()); } catch { setSolicitud({ estado: 'sin_solicitud' }); }
+    setErrorCarga('');
+    try { setSolicitud(await miSolicitud()); } catch (e) { setErrorCarga(e.message); }
   };
   useEffect(() => { cargar(); }, []);
 
+  if (solicitud === undefined && errorCarga) {
+    return (
+      <div className="ingreso">
+        <img className="escudo" src={ESCUDO} alt="Escudo del Club Hugo Jara" />
+        <h1 className="titulo display">No pudimos conectar</h1>
+        <p className="error" role="alert">{errorCarga}</p>
+        <button className="btn" onClick={cargar}>Reintentar</button>
+        <button className="btn secundario" onClick={salir}>Entrar con otra cuenta</button>
+      </div>
+    );
+  }
   if (solicitud === undefined) return <div className="cargando">Cargando…</div>;
   const rechazada = solicitud.estado === 'rechazada';
   return (
@@ -180,6 +194,7 @@ export default function ElegirNombre() {
           No aprobaron tu solicitud como {solicitud.nombre}. Si fue un error, vuelve a pedirla y avísale a tu encargado.
         </p>
       )}
+      {errorCarga && <p className="error" role="alert">{errorCarga}</p>}
       {solicitud.estado === 'pendiente'
         ? <EnEspera solicitud={solicitud} alCambiar={cargar} />
         : <Buscar alPedir={cargar} />}

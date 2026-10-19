@@ -55,7 +55,9 @@ export default function Entrenar() {
     return (
       <>
         <h1 className="titulo display">Entrenar</h1>
-        <p className="vacio suelto">No hay entrenamientos abiertos por ahora.</p>
+        {t.error
+          ? <><p className="error" role="alert">{t.error}</p><button className="btn secundario" onClick={t.recargar}>Reintentar</button></>
+          : <p className="vacio suelto">No hay entrenamientos abiertos por ahora.</p>}
         {t.puedoAdministrar && <Link to="/entrenar/lista" className="btn">Abrir una lista</Link>}
         {error && <p className="error" role="alert">{error}</p>}
         {deben}
