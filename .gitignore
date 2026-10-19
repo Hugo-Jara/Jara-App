@@ -1,0 +1,12 @@
+# Lo que se instala o se genera en cada computador: no va al repositorio.
+node_modules/
+dist/
+
+# Claves y datos de conexión: nunca al repositorio (CLAUDE.md, regla 2).
+.env*
+!.env.example
+
+# Archivos del sistema y de editores.
+.DS_Store
+Thumbs.db
+*.log
