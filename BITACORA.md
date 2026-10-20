@@ -16,7 +16,11 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 **Comprobado:** `npm run build`, `npm run test:db` (34 + 126 pruebas) y `npm run test:pedidos` (75 pruebas) pasan.
 
-**Pendiente:** los nombres reales siguen en el historial de git (a propósito, no se reescribe). Siguiente: Fase 2 — Seguridad antes de sumar gente.
+**Pendiente:** los nombres reales siguen en el historial de git (a propósito, no se reescribe).
+
+**Pendiente menor para la Fase 8 (pulido):** `src/lib/partidos.js` y `src/lib/sesion.jsx` tienen nombres de pila en los datos de demostración. `sesion.jsx` necesita revisión del administrador de la app.
+
+Siguiente: Fase 2 — Seguridad antes de sumar gente.
 
 ---
 
