@@ -110,6 +110,15 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
   - Los reembolsos a particulares quedan marcados como no rendibles.
 - **Nota:** puede adelantarse a la Fase 5 si las respuestas llegan antes.
 
+## Fase 6b — Calendario de partidos
+- **Modelo:** Opus · conversación nueva
+- **Alcance:**
+  - En Partidos se ve solo el próximo partido de cada plantel del jugador, y un botón "Ver próximos partidos" con el resto en lista compacta (fecha, rival, cancha, estado).
+  - Estados del partido: programado, suspendido (con motivo: lluvia, cancha u otro), reprogramado (nueva fecha, conservando la original) y por definir (sin fecha).
+  - Al reprogramar se mantienen las confirmaciones, pero el partido queda marcado como "fecha nueva, reconfirma".
+  - Carga del fixture completo de una vez: el encargado pega la tabla de la liga (fecha, hora, rival, cancha).
+- **Nota:** necesita migración nueva (estado, motivo y fecha original); la revisa el administrador de la app antes de aplicarla.
+
 ## Fase 7 — Perfil del jugador
 - **Modelo:** Sonnet · /clear (el modelo de datos se define antes en el chat)
 - **Alcance:**
@@ -139,6 +148,7 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 - Hacienda: cuadratura con la cuenta corriente.
 - Historias de 24 horas.
 - Canchas de Huechuraba.
+- Importar automáticamente el fixture desde las páginas de las ligas (temporada 2027), investigando antes qué publica cada liga.
 
 ## Tareas manuales del administrador de la app (fuera del código)
 - **Antes de la Fase 3:**
