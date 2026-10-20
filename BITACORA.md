@@ -4,6 +4,36 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-10-20 · Plan: Compras en tres partes antes de la Fase 4
+
+**Qué se hizo** (solo documentos, en el PR de la Fase 2):
+- `PLAN-JARA-APP.md`: se reemplazan las fases 6a y 6c por tres, todas con Opus y conversación nueva:
+  - **Compras 1 – Compras integrado a la app:** reemplaza la pantalla "Llega el 19 de octubre"; los pedidos se ven y se crean desde la app con cuenta, con tópico (Fondo, 20 años, General); el link sin cuenta sigue funcionando sobre los mismos datos.
+  - **Compras 2 – Fondo:** ítems del presupuesto, respaldos con archivos privados, honorarios del entrenador, panel y permisos solo para el equipo del fondo.
+  - **Compras 3 – Rendiciones:** hoja tipo Anexo N°1 y registro de rendiciones presentadas.
+- Orden nuevo: Fase 3 → Compras 1 → Compras 2 → Compras 3 → Fase 4 → hito 28/10 → Fase 5 → Fase 6b → Fase 7 → Fase 8.
+- Sin fechas intermedias: solo quedan los hitos 28/10 y 21/11. Se sacaron las fechas límite de las fases 4 y 8.
+- **El equipo del fondo empieza a usarlo solo cuando estén cerradas las tres.**
+- **Requisito de Compras 2:** las respuestas de la reunión del fondo del 20/10 se anotan aquí, en la bitácora, antes de partir.
+- **Migraciones:** la de Compras 2 la revisan el administrador de la app y Hacienda antes de aplicarla; la de la Fase 6b la revisa el administrador de la app.
+
+**Pendiente para la Fase 8 (pulido):** las sugerencias de día de Entrenamiento (los botones de sugerencia del formulario de la lista) se dejan como están por ahora; se revisan en el pulido.
+
+Siguiente: Fase 3 — Ingreso a prueba de celulares.
+
+---
+
+## 2026-10-20 · Fase 2b — Fecha y hora en Entrenamiento + plan
+
+**Qué se hizo:**
+- `src/pages/EntrenamientoForm.jsx` (abrir y editar listas) ahora usa `CampoFecha` y `CampoHora` de `src/components/CamposFechaHora.jsx`, igual que `PartidoForm.jsx`: calendario claro, campos escribibles con máscara, "/" y ":" automáticos, y botones de sugerencia para hoy, mañana y pasado. Se muestra además la fecha en largo bajo el campo.
+- Revisión de otros formularios: no queda ningún otro con fecha u hora que funcione distinto. Los demás campos de texto o número (compras, Fondo, torneo) no son fecha ni hora.
+- `PLAN-JARA-APP.md`: nueva "Fase 6b — Calendario de partidos" entre la 6 y la 7, y en "Después de la fiesta" la importación automática del fixture de las ligas (temporada 2027).
+
+**Sin migraciones.**
+
+---
+
 ## 2026-10-20 · Fase 2 — Seguridad antes de sumar gente
 
 **Qué se hizo** (todo en la migración `0018_seguridad_antes_de_sumar_gente.sql`, que el administrador de la app corre en Supabase antes del merge):

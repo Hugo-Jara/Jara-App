@@ -74,6 +74,13 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
   - Todo con migración y pruebas nuevas.
 - **Listo cuando:** las pruebas cubren cada caso. El administrador de la app corre la migración y prueba con dos cuentas de planteles distintos.
 
+## Orden de las fases (actualizado)
+Fase 3 → Compras 1 → Compras 2 → Compras 3 → Fase 4 → **hito 28/10** → Fase 5 → Fase 6b → Fase 7 → Fase 8 → **hito 21/11**.
+
+Sin fechas intermedias: solo quedan los hitos 28/10 y 21/11. Las secciones de abajo siguen ese orden.
+
+---
+
 ## Fase 3 — Ingreso a prueba de celulares (A4 Parte 3)
 - **Modelo:** Sonnet · /clear
 - **Requisito:** El administrador de la app ya pasó Google OAuth a producción (A4 Parte 2) y borró la cuenta de prueba.
@@ -82,9 +89,34 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
   - Checklist de pruebas en iPhone y Android.
 - **Listo cuando:** el administrador de la app entra desde los dos sistemas con Google y con el código.
 
+## Compras 1 — Compras integrado a la app
+- **Modelo:** Opus · conversación nueva
+- **Alcance:**
+  - Reemplaza la pantalla "Llega el 19 de octubre".
+  - Los pedidos se ven y se crean desde la app, con cuenta, con tópico (Fondo, 20 años, General).
+  - El link sin cuenta sigue funcionando sobre los mismos datos.
+
+## Compras 2 — Fondo
+- **Modelo:** Opus · conversación nueva
+- **Requisito:** Compras 1 terminada, y las respuestas de la reunión del fondo del 20/10 anotadas en la bitácora.
+- **Alcance:**
+  - Ítems del presupuesto.
+  - Respaldos con archivos privados.
+  - Honorarios del entrenador.
+  - Panel del fondo.
+  - Permisos solo para el equipo del fondo.
+- **Nota:** necesita migración nueva; la revisan el administrador de la app y Hacienda antes de aplicarla.
+
+## Compras 3 — Rendiciones
+- **Modelo:** Opus · conversación nueva
+- **Requisito:** Compras 2 terminada.
+- **Alcance:**
+  - Hoja tipo Anexo N°1.
+  - Registro de las rendiciones presentadas.
+- **Aviso:** el equipo del fondo empieza a usarlo solo cuando estén cerradas las tres (Compras 1, 2 y 3).
+
 ## Fase 4 — Tablero de tesoreros en modo demo
 - **Modelo:** Sonnet · /clear (el diseño se define antes en el chat)
-- **Fecha límite:** 27/10.
 - **Alcance:**
   - Un tablero por plantel: plata disponible, quién pagó y quién no, cuánto falta recaudar, ingresos y egresos.
   - Una vista de Hacienda con el aporte entregado y el pendiente de cada plantel, y Entrenamiento como línea aparte (solo lectura, sin aporte por jugador).
@@ -102,13 +134,14 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
   - Aplicar los ajustes que salgan de la reunión.
 - **Listo cuando:** cada tesorero ve los números reales de su plantel y estos cuadran con su planilla.
 
-## Fase 6 — Fondo real
+## Fase 6b — Calendario de partidos
 - **Modelo:** Opus · conversación nueva
-- **Requisito:** respuestas a las 10 dudas de la reunión del fondo, anotadas en la bitácora.
 - **Alcance:**
-  - Base de datos, permisos por rol (administrador del fondo, tesorero, presidente, revisión, compras), archivos privados y rendición.
-  - Los reembolsos a particulares quedan marcados como no rendibles.
-- **Nota:** puede adelantarse a la Fase 5 si las respuestas llegan antes.
+  - En Partidos se ve solo el próximo partido de cada plantel del jugador, y un botón "Ver próximos partidos" con el resto en lista compacta (fecha, rival, cancha, estado).
+  - Estados del partido: programado, suspendido (con motivo: lluvia, cancha u otro), reprogramado (nueva fecha, conservando la original) y por definir (sin fecha).
+  - Al reprogramar se mantienen las confirmaciones, pero el partido queda marcado como "fecha nueva, reconfirma".
+  - Carga del fixture completo de una vez: el encargado pega la tabla de la liga (fecha, hora, rival, cancha).
+- **Nota:** necesita migración nueva (estado, motivo y fecha original); la revisa el administrador de la app antes de aplicarla.
 
 ## Fase 7 — Perfil del jugador
 - **Modelo:** Sonnet · /clear (el modelo de datos se define antes en el chat)
@@ -120,7 +153,6 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 
 ## Fase 8 — Pulido para la fiesta
 - **Modelo:** Sonnet · /clear
-- **Fecha límite:** 18/11.
 - **Alcance:**
   - Recorrido completo de la app como socio nuevo.
   - Arreglos visuales.
@@ -139,6 +171,7 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 - Hacienda: cuadratura con la cuenta corriente.
 - Historias de 24 horas.
 - Canchas de Huechuraba.
+- Importar automáticamente el fixture desde las páginas de las ligas (temporada 2027), investigando antes qué publica cada liga.
 
 ## Tareas manuales del administrador de la app (fuera del código)
 - **Antes de la Fase 3:**

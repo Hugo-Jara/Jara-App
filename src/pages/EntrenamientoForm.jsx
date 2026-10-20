@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { useEntrenamiento } from '../lib/entrenamiento.js';
+import { CampoFecha, CampoHora } from '../components/CamposFechaHora.jsx';
+import { fechaLarga, fechaCorta, hoyIso, correrDias } from '../lib/fechas.js';
 
 const soloNumero = (t) => Number(String(t).replace(/\D/g, '')) || 0;
 
@@ -57,15 +59,17 @@ export default function EntrenamientoForm() {
       <h1 className="titulo display">{actual ? 'Editar la lista' : 'Abrir una lista'}</h1>
       <form className="card" onSubmit={enviar}>
         <label htmlFor="ef-fecha" style={{ marginTop: 0 }}>Día</label>
-        <input id="ef-fecha" type="date" required value={d.fecha} onChange={set('fecha')} />
+        <CampoFecha id="ef-fecha" requerido valor={d.fecha} alCambiar={(f) => setD((x) => ({ ...x, fecha: f }))}
+                    sugeridas={[0, 1, 2].map((n) => correrDias(hoyIso(), n))} textoSugerida={fechaCorta} />
+        {d.fecha && <p className="ayuda">{fechaLarga(d.fecha)}</p>}
         <div className="dos">
           <div>
             <label htmlFor="ef-desde">Desde</label>
-            <input id="ef-desde" type="time" value={d.horaInicio} onChange={set('horaInicio')} />
+            <CampoHora id="ef-desde" valor={d.horaInicio} alCambiar={(h) => setD((x) => ({ ...x, horaInicio: h }))} />
           </div>
           <div>
             <label htmlFor="ef-hasta">Hasta</label>
-            <input id="ef-hasta" type="time" value={d.horaFin} onChange={set('horaFin')} />
+            <CampoHora id="ef-hasta" valor={d.horaFin} alCambiar={(h) => setD((x) => ({ ...x, horaFin: h }))} placeholder="Ej.: 22:00" />
           </div>
         </div>
         <label htmlFor="ef-lugar">Lugar</label>
