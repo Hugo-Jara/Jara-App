@@ -149,5 +149,5 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 - **Cuando haya tiempo:**
   - DMARC.
   - Cliente antiguo de Google OAuth.
-  - Invitación del colaborador técnico a GitHub.
+  - Invitación del voluntario de Comunicaciones a GitHub.
   - Cuentas de los socios nuevos en @hugojara.cl.

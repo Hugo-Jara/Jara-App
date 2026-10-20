@@ -19,7 +19,7 @@ App del Club Deportivo Hugo Jara. El plan vigente está en `PLAN-JARA-APP.md` y 
 1. Trabaja en la rama que te asignen y abre un PR.
 2. La cuenta del club aprueba el PR y se hace Squash and merge.
 3. Las migraciones (`supabase/migrations/`) las corre el administrador de la app en Supabase **antes** del merge. Una migración nueva nunca edita una vieja.
-4. **No se toca sin revisión del administrador de la app:** `supabase/migrations/`, `src/lib/sesion.jsx`, permisos y roles, y todo lo que mueva plata (cuotas, compras, pagos). Un error ahí afecta datos de ~80 personas. Si un cambio necesita base de datos, se escribe como migración nueva (nunca se edita una vieja) y la revisa antes de aplicarse. Si te piden algo que cae aquí, detente y dilo.
+4. **No se toca sin revisión del administrador de la app (y de Hacienda, si mueve plata):** `supabase/migrations/`, `src/lib/sesion.jsx`, permisos y roles, y todo lo que mueva plata (cuotas, compras, pagos). Un error ahí afecta datos de ~80 personas. Si un cambio necesita base de datos, se escribe como migración nueva (nunca se edita una vieja) y la revisa antes de aplicarse. Si te piden algo que cae aquí, detente y dilo.
 
 ## Cómo se organiza la plata del club
 - El ministro de Hacienda es el tesorero formal del club y consolida todo.
