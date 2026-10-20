@@ -19,7 +19,9 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 **Pendiente para la Fase 8 (pulido):** en el piloto de Compras por link, cuando no hay señal el mensaje dice "Pídele el link de nuevo a quien te lo mandó" (`src/pages/Pedido.jsx`). Debería decir solo que revises la señal y tener un botón Reintentar.
 
-**Dudas abiertas:** los tesoreros de cualquier plantel siguen pudiendo marcar pagos de entrenamiento (`puedo_cobrar`). Como mueve plata, no se tocó; queda para que lo decidan el administrador de la app y Hacienda.
+**Decisión tomada:** los tesoreros de cualquier plantel siguen marcando pagos de entrenamiento (`puedo_cobrar`). Lo confirmó el administrador de la app, así que se mantiene.
+
+**Migración aplicada:** el administrador de la app corrió la 0018 en Supabase el 20/10. `api-anonima.mjs` no se pudo correr desde la sesión porque la red del entorno no deja llegar a Supabase; queda para correrlo desde un computador.
 
 Siguiente: Fase 3 — Ingreso a prueba de celulares.
 
