@@ -1,6 +1,6 @@
 # PLAN-JARA-APP.md
 
-Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y cada fase necesita el visto bueno de Seba antes de pasar a la siguiente. El historial de lo hecho está en `BITACORA.md`.
+Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y cada fase necesita el visto bueno del administrador de la app antes de pasar a la siguiente. El historial de lo hecho está en `BITACORA.md`.
 
 - **Repo:** Hugo-Jara/Jara-App (Supabase propio del club, dominio hugojara.cl)
 - **Hitos:**
@@ -9,7 +9,7 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 - **Forma de trabajo:**
   - Sesión de Claude Code en la nube conectada al repo.
   - Cada fase va en un PR. La cuenta del club lo aprueba y se hace Squash and merge.
-  - Las migraciones las corre Seba en Supabase, con la cuenta del club, **antes** del merge.
+  - Las migraciones las corre el administrador de la app en Supabase, con la cuenta del club, **antes** del merge.
 - **Regla:** este archivo y la bitácora pueden ser públicos. No van nombres, correos ni datos personales de socios; se habla de roles (presidente, tesoreros, administrador de entrenamientos).
 
 ---
@@ -33,7 +33,7 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 - Lo de los correos por Resend, Google OAuth y la cuenta de prueba vive en Supabase y no se puede comprobar desde el repo; se da por bueno lo que dicen los traspasos.
 
 **Pendientes conocidos:**
-- A4 Parte 2: Google OAuth en producción. Es manual, de Seba.
+- A4 Parte 2: Google OAuth en producción. Es manual, del administrador de la app.
 - A4 Parte 3: pruebas en iPhone y Android, y el código de 6 dígitos.
 - Auditoría: M1, M2, M3, M5 y B1.
 - `llamar` duplicado en `src/lib/pedido.js`, que sigue mostrando "Failed to fetch".
@@ -58,7 +58,7 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 - **Modelo:** Sonnet · /clear
 - **Alcance:**
   - Borrar los archivos huérfanos (Tesoreria.jsx, tesoreria.js, listas.js, SinNomina.jsx y docs/) después de confirmar que nada los importa.
-  - B1: nombres ficticios en `supabase/tests/club.mjs`.
+  - B1: reemplazar **todos** los nombres de `supabase/tests/club.mjs` por nombres inventados (hoy hay al menos uno que corresponde a una persona real del club). El historial de git no se reescribe.
   - Que `pedido.js` use el `llamar` común, con los errores en español.
   - Si hace falta, crear `.env.example` (el `README.md` lo menciona y no existe).
 - **Listo cuando:** la app compila, `test:db` y `test:pedidos` pasan, y Compras muestra los errores en español.
@@ -72,27 +72,28 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
   - M3: que la nómina no se pueda enumerar sin ser socio.
   - M5: evitar el doble toque en "Sumar invitado".
   - Todo con migración y pruebas nuevas.
-- **Listo cuando:** las pruebas cubren cada caso. Seba corre la migración y prueba con dos cuentas de planteles distintos.
+- **Listo cuando:** las pruebas cubren cada caso. El administrador de la app corre la migración y prueba con dos cuentas de planteles distintos.
 
 ## Fase 3 — Ingreso a prueba de celulares (A4 Parte 3)
 - **Modelo:** Sonnet · /clear
-- **Requisito:** Seba ya pasó Google OAuth a producción (A4 Parte 2) y borró la cuenta de prueba.
+- **Requisito:** El administrador de la app ya pasó Google OAuth a producción (A4 Parte 2) y borró la cuenta de prueba.
 - **Alcance:**
   - Código de 6 dígitos en el correo (`{{ .Token }}`) como alternativa al link, para la app instalada en iPhone.
   - Checklist de pruebas en iPhone y Android.
-- **Listo cuando:** Seba entra desde los dos sistemas con Google y con el código.
+- **Listo cuando:** el administrador de la app entra desde los dos sistemas con Google y con el código.
 
 ## Fase 4 — Tablero de tesoreros en modo demo
 - **Modelo:** Sonnet · /clear (el diseño se define antes en el chat)
 - **Fecha límite:** 27/10.
 - **Alcance:**
   - Un tablero por plantel: plata disponible, quién pagó y quién no, cuánto falta recaudar, ingresos y egresos.
+  - Una vista de Hacienda con el aporte entregado y el pendiente de cada plantel, y Entrenamiento como línea aparte (solo lectura, sin aporte por jugador).
   - Datos inventados y una etiqueta visible de "DEMO".
   - Cuentas de los tesoreros creadas, con su rol.
 - **Fuera:** los datos reales, que van en la Fase 5.
-- **Listo cuando:** Seba entra como cada tesorero y ve solo su plantel.
+- **Listo cuando:** el administrador de la app entra como cada tesorero y ve solo su plantel, y como Hacienda ve el consolidado.
 
-**▶ Hito 28/10: reunión con los tesoreros.** Seba trae al chat los comentarios de la reunión.
+**▶ Hito 28/10: reunión con los tesoreros.** El administrador de la app trae al chat los comentarios de la reunión.
 
 ## Fase 5 — Tablero de tesoreros con datos reales
 - **Modelo:** Opus · conversación nueva
@@ -115,7 +116,7 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
   - Foto, posición, pie hábil y dorsal por plantel.
   - Estatura y peso opcionales, con visibilidad elegida por el jugador.
   - Estadísticas individuales.
-- **Listo cuando:** Seba edita su perfil y lo ve desde otra cuenta.
+- **Listo cuando:** el administrador de la app edita su perfil y lo ve desde otra cuenta.
 
 ## Fase 8 — Pulido para la fiesta
 - **Modelo:** Sonnet · /clear
@@ -134,12 +135,12 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 - Tablón del cuerpo técnico con "quién lo vio" (no es un chat) y repositorio de material. Los videos van al Drive del club.
 - Notificaciones: primero dentro de la app, después push.
 - Campeonatos y tablas de goleadores, asistencias y tarjetas.
-- Plataforma de Comunicaciones: boletín armado en la app, con descargable para WhatsApp.
+- Plataforma de Comunicaciones: boletín armado en la app, con descargable para WhatsApp. Lo toma un voluntario del club; si al 31/10 no hay avance, lo asume el administrador de la app y se replanifica.
 - Hacienda: cuadratura con la cuenta corriente.
 - Historias de 24 horas.
 - Canchas de Huechuraba.
 
-## Tareas manuales de Seba (fuera del código)
+## Tareas manuales del administrador de la app (fuera del código)
 - **Antes de la Fase 3:**
   - Google OAuth en producción.
   - Borrar la cuenta de prueba en Supabase.
@@ -148,5 +149,5 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 - **Cuando haya tiempo:**
   - DMARC.
   - Cliente antiguo de Google OAuth.
-  - Invitación de Benja a GitHub.
+  - Invitación del colaborador técnico a GitHub.
   - Cuentas de los socios nuevos en @hugojara.cl.

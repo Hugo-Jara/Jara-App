@@ -27,9 +27,9 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 0001 base · 0002 cotizaciones · 0003 storage compras · 0004 funciones de trigger privadas · 0005 pedidos de compra · 0006 storage pedidos · 0007 comprobante de transferencia · 0008 Hacienda edita y elimina · 0009 ingreso por nombre · 0010 partidos · 0011 entrenamientos · 0012 resultado y estadísticas · 0013 administra entrenamientos · 0014 hora de inicio · 0015 pagos de entrenamiento · 0016 multa desde las cinco · 0017 comprobantes privados. Detalle de cada una en la tabla del `README.md`.
 
 ### Problemas conocidos
-- **A4 Parte 2:** Google OAuth en producción (manual, de Seba).
+- **A4 Parte 2:** Google OAuth en producción (manual, del administrador de la app).
 - **A4 Parte 3:** pruebas en iPhone y Android, y código de 6 dígitos en el correo.
-- **Auditoría pendiente:** M1 (un encargado solo debería gestionar su plantel), M2 (permisos de las tablas 0001 y 0002), M3 (la nómina no debería poder enumerarse sin ser socio), M5 (doble toque en "Sumar invitado") y B1 (nombres ficticios en `supabase/tests/club.mjs`).
+- **Auditoría pendiente:** M1 (un encargado solo debería gestionar su plantel), M2 (permisos de las tablas 0001 y 0002), M3 (la nómina no debería poder enumerarse sin ser socio), M5 (doble toque en "Sumar invitado") y B1 (`supabase/tests/club.mjs` usa al menos un nombre de una persona real del club; hay que reemplazarlos todos por nombres inventados, sin reescribir el historial de git).
 - **`llamar` duplicado** en `src/lib/pedido.js`: no traduce los errores de red y Compras sigue mostrando "Failed to fetch".
 - **Archivos huérfanos** que ninguna ruta usa: `src/pages/Tesoreria.jsx`, `src/lib/tesoreria.js`, `src/lib/listas.js`, `src/pages/SinNomina.jsx` y `docs/`.
 - **`.env.example` no existe**, aunque el `README.md` manda a copiarlo.
@@ -37,4 +37,4 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 - **No verificable desde el repo:** los correos de ingreso por Resend y la configuración de Google OAuth viven en Supabase; se dan por buenos según los traspasos.
 
 ### Siguiente
-Fase 1 — Limpieza, cuando Seba dé el visto bueno.
+Fase 1 — Limpieza, cuando el administrador de la app dé el visto bueno.
