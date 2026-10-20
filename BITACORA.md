@@ -4,6 +4,20 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-10-20 · Plan: el Fondo real se adelanta
+
+**Qué se hizo** (solo documentos, en el PR de la Fase 2):
+- `PLAN-JARA-APP.md`: la Fase 6 se divide en **6a – Fondo real** (compras con ítem del presupuesto, respaldos con archivos privados, honorarios, panel y permisos solo para el equipo del fondo; Opus; fecha límite lunes 27/10) y **6c – Rendiciones** (hoja tipo Anexo N°1 y registro de rendiciones presentadas; Opus; noviembre).
+- Orden nuevo: Fase 3 → Fase 6a → Fase 4 → hito 28/10 → Fase 5 → Fase 6c → Fase 6b → Fase 7 → Fase 8.
+- **Requisito de la 6a:** las respuestas de la reunión del fondo del 20/10 se anotan aquí, en la bitácora, antes de partir.
+- **Migraciones:** la de la 6a la revisa el administrador de la app (y Hacienda, si mueve plata) antes de aplicarla; la de la 6b la revisa el administrador de la app.
+
+**Pendiente para la Fase 8 (pulido):** las sugerencias de día de Entrenamiento (los botones de sugerencia del formulario de la lista) se dejan como están por ahora; se revisan en el pulido.
+
+Siguiente: Fase 3 — Ingreso a prueba de celulares.
+
+---
+
 ## 2026-10-20 · Fase 2b — Fecha y hora en Entrenamiento + plan
 
 **Qué se hizo:**

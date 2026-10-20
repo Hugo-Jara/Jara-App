@@ -74,6 +74,13 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
   - Todo con migración y pruebas nuevas.
 - **Listo cuando:** las pruebas cubren cada caso. El administrador de la app corre la migración y prueba con dos cuentas de planteles distintos.
 
+## Orden de las fases (actualizado)
+Fase 3 → Fase 6a → Fase 4 → **hito 28/10** → Fase 5 → Fase 6c → Fase 6b → Fase 7 → Fase 8.
+
+El Fondo real (6a) se adelanta a las fases 4 y 5. Las secciones de abajo siguen ese orden.
+
+---
+
 ## Fase 3 — Ingreso a prueba de celulares (A4 Parte 3)
 - **Modelo:** Sonnet · /clear
 - **Requisito:** El administrador de la app ya pasó Google OAuth a producción (A4 Parte 2) y borró la cuenta de prueba.
@@ -81,6 +88,19 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
   - Código de 6 dígitos en el correo (`{{ .Token }}`) como alternativa al link, para la app instalada en iPhone.
   - Checklist de pruebas en iPhone y Android.
 - **Listo cuando:** el administrador de la app entra desde los dos sistemas con Google y con el código.
+
+## Fase 6a — Fondo real
+- **Modelo:** Opus · conversación nueva
+- **Fecha límite:** lunes 27/10.
+- **Requisito:** respuestas de la reunión del fondo del 20/10, anotadas en la bitácora antes de partir.
+- **Alcance:**
+  - Compras con ítem del presupuesto.
+  - Respaldos con archivos privados.
+  - Honorarios.
+  - Panel del fondo.
+  - Permisos solo para el equipo del fondo (administrador del fondo, tesorero, presidente, revisión, compras).
+  - Los reembolsos a particulares quedan marcados como no rendibles.
+- **Nota:** necesita migración nueva; la revisa el administrador de la app (y Hacienda, porque mueve plata) antes de aplicarla.
 
 ## Fase 4 — Tablero de tesoreros en modo demo
 - **Modelo:** Sonnet · /clear (el diseño se define antes en el chat)
@@ -102,13 +122,13 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
   - Aplicar los ajustes que salgan de la reunión.
 - **Listo cuando:** cada tesorero ve los números reales de su plantel y estos cuadran con su planilla.
 
-## Fase 6 — Fondo real
+## Fase 6c — Rendiciones
 - **Modelo:** Opus · conversación nueva
-- **Requisito:** respuestas a las 10 dudas de la reunión del fondo, anotadas en la bitácora.
+- **Fecha límite:** noviembre.
+- **Requisito:** Fase 6a terminada.
 - **Alcance:**
-  - Base de datos, permisos por rol (administrador del fondo, tesorero, presidente, revisión, compras), archivos privados y rendición.
-  - Los reembolsos a particulares quedan marcados como no rendibles.
-- **Nota:** puede adelantarse a la Fase 5 si las respuestas llegan antes.
+  - Hoja tipo Anexo N°1.
+  - Registro de las rendiciones presentadas.
 
 ## Fase 6b — Calendario de partidos
 - **Modelo:** Opus · conversación nueva
