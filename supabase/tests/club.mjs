@@ -38,10 +38,10 @@ const aLas = (h) => db.query(`select set_config('prueba.hora', $1, false)`, [h])
 
 const CLUB = '10000000-0000-0000-0000-000000000001';
 const EQ = { jueves: '40000000-0000-0000-0000-000000000001', sabado: '40000000-0000-0000-0000-000000000002', junior: '40000000-0000-0000-0000-000000000003' };
-const P = { seba: '20000000-0000-0000-0000-000000000001', capi: '20000000-0000-0000-0000-000000000002',
+const P = { admin: '20000000-0000-0000-0000-000000000001', capi: '20000000-0000-0000-0000-000000000002',
             doble: '20000000-0000-0000-0000-000000000003', junior: '20000000-0000-0000-0000-000000000004',
             teso: '20000000-0000-0000-0000-000000000005' };
-const U = { seba: '00000000-0000-0000-0000-000000000001', capi: '00000000-0000-0000-0000-000000000002',
+const U = { admin: '00000000-0000-0000-0000-000000000001', capi: '00000000-0000-0000-0000-000000000002',
             doble: '00000000-0000-0000-0000-000000000003', junior: '00000000-0000-0000-0000-000000000004',
             nuevo: '00000000-0000-0000-0000-000000000005', intruso: '00000000-0000-0000-0000-000000000006',
             teso: '00000000-0000-0000-0000-000000000007' };
@@ -54,16 +54,16 @@ await db.exec(`
     ('${EQ.jueves}', '${CLUB}', 'Senior Jueves', 1, 'senior'),
     ('${EQ.sabado}', '${CLUB}', 'Senior Sábado', 2, 'senior'),
     ('${EQ.junior}', '${CLUB}', 'Junior Sábado', 3, 'junior');
-  -- Seba (administrador) y el capitán del Jueves ya tienen cuenta; el resto todavía no.
+  -- El administrador y el capitán del Jueves ya tienen cuenta; el resto todavía no.
   insert into personas (id, club_id, nombre, es_admin, user_id) values
-    ('${P.seba}', '${CLUB}', 'Sebastián Pino', true, '${U.seba}'),
-    ('${P.capi}', '${CLUB}', 'Camilo Capitán', false, '${U.capi}'),
-    ('${P.teso}', '${CLUB}', 'Tomás Tesorero', false, '${U.teso}');
+    ('${P.admin}', '${CLUB}', 'Aldo Admin Inventado', true, '${U.admin}'),
+    ('${P.capi}', '${CLUB}', 'Carla Capitán Inventada', false, '${U.capi}'),
+    ('${P.teso}', '${CLUB}', 'Tina Tesorera Inventada', false, '${U.teso}');
   insert into personas (id, club_id, nombre) values
-    ('${P.doble}', '${CLUB}', 'Benjamín Silva'),
-    ('${P.junior}', '${CLUB}', 'Andrés Albornoz');
+    ('${P.doble}', '${CLUB}', 'Bruno Dóble Inventado'),
+    ('${P.junior}', '${CLUB}', 'Julia Junior Inventada');
   insert into persona_equipos (persona_id, equipo_id, rol) values
-    ('${P.seba}', '${EQ.sabado}', 'jugador'),
+    ('${P.admin}', '${EQ.sabado}', 'jugador'),
     ('${P.capi}', '${EQ.jueves}', 'jugador'), ('${P.capi}', '${EQ.jueves}', 'encargado'),
     ('${P.teso}', '${EQ.sabado}', 'tesorero'),
     ('${P.doble}', '${EQ.jueves}', 'jugador'), ('${P.doble}', '${EQ.junior}', 'jugador'),
@@ -92,18 +92,18 @@ ok('…ni las solicitudes de ingreso', !!r.error);
 ok('Sin persona enlazada, mi_persona es vacío', (await uno('doble', 'select mi_persona()')) === null);
 x = await uno('doble', `select nomina_buscar('be')`);
 ok('Con menos de tres letras la búsqueda no devuelve nada', Array.isArray(x) && x.length === 0);
-x = await uno('doble', `select nomina_buscar('BENJAMIN sil')`);
+x = await uno('doble', `select nomina_buscar('BRUNO dob')`);
 ok('Encuentra su nombre sin tildes ni mayúsculas, con sus dos planteles',
-   x.length === 1 && x[0].nombre === 'Benjamín Silva' && x[0].equipos.length === 2, JSON.stringify(x));
-x = await uno('doble', `select nomina_buscar('sebastian')`);
+   x.length === 1 && x[0].nombre === 'Bruno Dóble Inventado' && x[0].equipos.length === 2, JSON.stringify(x));
+x = await uno('doble', `select nomina_buscar('aldo')`);
 ok('No ofrece nombres que ya tienen cuenta', x.length === 0, JSON.stringify(x));
-r = await como('doble', `select ingreso_solicitar($1)`, [P.seba]);
+r = await como('doble', `select ingreso_solicitar($1)`, [P.admin]);
 ok('No se puede pedir un nombre que ya tiene cuenta', /ya tiene una cuenta/.test(r.error ?? ''), r.error);
 r = await como('doble', `select ingreso_solicitar($1)`, [P.doble]);
 ok('Pide el ingreso con su nombre', !r.error, r.error);
 x = await uno('doble', 'select ingreso_mi_estado()');
 ok('Queda en espera y sabe a quién avisarle',
-   x.estado === 'pendiente' && x.nombre === 'Benjamín Silva' && x.aprueban.includes('Camilo Capitán') && x.aprueban.includes('Sebastián Pino'), JSON.stringify(x));
+   x.estado === 'pendiente' && x.nombre === 'Bruno Dóble Inventado' && x.aprueban.includes('Carla Capitán Inventada') && x.aprueban.includes('Aldo Admin Inventado'), JSON.stringify(x));
 ok('Mientras espera sigue sin entrar', (await uno('doble', 'select mi_persona()')) === null);
 r = await como('doble', 'select partidos_proximos()');
 ok('…y no ve los partidos', /no está en la nómina/.test(r.error ?? ''), r.error);
@@ -114,7 +114,7 @@ x = await uno('teso', 'select ingreso_pendientes()');
 ok('Un tesorero no aprueba ingresos', x.length === 0, JSON.stringify(x));
 x = await uno('capi', 'select ingreso_pendientes()');
 ok('El encargado del plantel ve las dos solicitudes, con el correo de cada una',
-   x.length === 2 && x.some((s) => s.email === correo('doble')) && x.every((s) => s.nombre === 'Benjamín Silva'), JSON.stringify(x));
+   x.length === 2 && x.some((s) => s.email === correo('doble')) && x.every((s) => s.nombre === 'Bruno Dóble Inventado'), JSON.stringify(x));
 const sol = (correoDe) => x.find((s) => s.email === correo(correoDe)).id;
 const solDoble = sol('doble'), solIntruso = sol('intruso');
 r = await como('teso', 'select ingreso_resolver($1, true)', [solDoble]);
@@ -125,7 +125,7 @@ r = await como('capi', 'select ingreso_resolver($1, true)', [solDoble]);
 ok('El encargado aprueba', !r.error, r.error);
 x = await uno('doble', 'select mi_persona()');
 ok('La cuenta queda enlazada y trae sus dos planteles',
-   x?.nombre === 'Benjamín Silva' && x.equipos.map((e) => e.nombre).join() === 'Senior Jueves,Junior Sábado' && x.es_encargado === false, JSON.stringify(x));
+   x?.nombre === 'Bruno Dóble Inventado' && x.equipos.map((e) => e.nombre).join() === 'Senior Jueves,Junior Sábado' && x.es_encargado === false, JSON.stringify(x));
 r = await db.query(`select email from persona_contactos where persona_id = $1`, [P.doble]);
 ok('Se guarda el correo con que entró', r.rows[0]?.email === correo('doble'));
 x = await uno('intruso', 'select ingreso_mi_estado()');
@@ -140,14 +140,14 @@ r = await como('nuevo', `select ingreso_solicitar(null, 'Nuevo Refuerzo', $1::uu
 ok('Quien no está en la lista pide el ingreso con nombre y plantel', !r.error, r.error);
 x = await uno('capi', 'select ingreso_pendientes()');
 ok('El encargado del Jueves no ve una solicitud del Sábado', x.length === 0, JSON.stringify(x));
-x = await uno('seba', 'select ingreso_pendientes()');
+x = await uno('admin', 'select ingreso_pendientes()');
 ok('El administrador sí, marcada como fuera de la nómina', x.length === 1 && x[0].en_nomina === false && x[0].equipos[0] === 'Senior Sábado', JSON.stringify(x));
-r = await como('seba', 'select ingreso_resolver($1, true)', [x[0].id]);
+r = await como('admin', 'select ingreso_resolver($1, true)', [x[0].id]);
 x = await uno('nuevo', 'select mi_persona()');
 ok('Al aprobarla se crea la persona en su plantel', !r.error && x?.nombre === 'Nuevo Refuerzo' && x.equipos[0]?.nombre === 'Senior Sábado', r.error || JSON.stringify(x));
 r = await como('intruso', `select ingreso_solicitar(null, 'Intruso Total')`);
-x = (await uno('seba', 'select ingreso_pendientes()'))[0];
-r = await como('seba', 'select ingreso_resolver($1, false)', [x.id]);
+x = (await uno('admin', 'select ingreso_pendientes()'))[0];
+r = await como('admin', 'select ingreso_resolver($1, false)', [x.id]);
 ok('Rechazar deja a la cuenta fuera', !r.error && (await uno('intruso', 'select mi_persona()')) === null && (await uno('intruso', 'select ingreso_mi_estado()')).estado === 'rechazada');
 
 // ---------------------------------------------------------------------------
@@ -162,9 +162,9 @@ ok('El encargado del Jueves no programa los del Sábado', /Solo el encargado/.te
 r = await guardarPartido('capi', EQ.jueves, 'Los del Jueves', manana);
 const pJueves = r.rows[0]?.id;
 ok('El encargado programa un partido de su plantel', !!pJueves, r.error);
-r = await guardarPartido('seba', EQ.junior, 'Los Junior', hoy, null, null);
+r = await guardarPartido('admin', EQ.junior, 'Los Junior', hoy, null, null);
 const pJunior = r.rows[0]?.id;
-r = await guardarPartido('seba', EQ.sabado, 'Los del Sábado', manana);
+r = await guardarPartido('admin', EQ.sabado, 'Los del Sábado', manana);
 const pSabado = r.rows[0]?.id;
 ok('El administrador programa para cualquier plantel', !!pJunior && !!pSabado, r.error);
 await db.query(`insert into partidos (club_id, equipo_id, rival, fecha) values ($1, $2, 'Partido viejo', $3)`, [CLUB, EQ.jueves, ayer]);
@@ -174,13 +174,13 @@ ok('Quien juega en dos planteles ve primero sus dos partidos, y después el del 
    x.length === 3 && x[0].es_mio && x[1].es_mio && !x[2].es_mio && x[2].equipo === 'Senior Sábado'
    && x.slice(0, 2).map((p) => p.equipo).sort().join() === 'Junior Sábado,Senior Jueves', JSON.stringify(x.map((p) => [p.equipo, p.es_mio])));
 ok('El partido de ayer ya no aparece', !x.some((p) => p.rival === 'Partido viejo'));
-ok('El partido trae el plantel completo', x.find((p) => p.id === pJueves).plantel.map((j) => j.nombre).join() === 'Benjamín Silva,Camilo Capitán');
+ok('El partido trae el plantel completo', x.find((p) => p.id === pJueves).plantel.map((j) => j.nombre).join() === 'Bruno Dóble Inventado,Carla Capitán Inventada');
 r = await como('doble', `select partido_responder($1, 'voy', '  llevo carne  ', true)`, [pJueves]);
 ok('Responde "voy" con comentario y tercer tiempo', !r.error, r.error);
 r = await como('doble', `select partido_responder($1, 'voy', null, true)`, [pJunior]);
 x = await uno('doble', 'select partidos_proximos()');
 const rJ = x.find((p) => p.id === pJueves).respuestas[0], rN = x.find((p) => p.id === pJunior).respuestas[0];
-ok('Queda guardada con su nombre', rJ.nombre === 'Benjamín Silva' && rJ.estado === 'voy' && rJ.nota === 'llevo carne' && rJ.tercer_tiempo === true, JSON.stringify(rJ));
+ok('Queda guardada con su nombre', rJ.nombre === 'Bruno Dóble Inventado' && rJ.estado === 'voy' && rJ.nota === 'llevo carne' && rJ.tercer_tiempo === true, JSON.stringify(rJ));
 ok('Si el partido no tiene tercer tiempo, no se marca', rN.tercer_tiempo === false);
 r = await como('doble', `select partido_responder($1, 'baja', 'turno', true)`, [pJueves]);
 x = (await uno('capi', 'select partidos_proximos()')).find((p) => p.id === pJueves);
@@ -224,11 +224,11 @@ r = await como('doble', 'select entrenamiento_inscribirme($1)', [ent]);
 r = await como('doble', 'select entrenamiento_inscribirme($1)', [ent]);
 x = (await uno('doble', 'select entrenamiento_actual()')).entrenamiento;
 ok('Se inscribe una sola vez aunque apriete dos veces', !r.error && x.inscritos.length === 1 && x.inscritos[0].monto === 4000 && x.inscritos[0].es_mio, r.error);
-r = await como('doble', `select entrenamiento_invitar($1, 'Primo de Benja')`, [ent]);
+r = await como('doble', `select entrenamiento_invitar($1, 'Primo de Bruno')`, [ent]);
 r = await como('junior', 'select entrenamiento_inscribirme($1)', [ent]);
 x = (await uno('capi', 'select entrenamiento_actual()')).entrenamiento;
 const invitado = x.inscritos.find((i) => i.invitado);
-ok('Suma un invitado a su nombre, con precio de invitado', invitado?.monto === 5000 && invitado.invitado_por === 'Benjamín Silva', JSON.stringify(invitado));
+ok('Suma un invitado a su nombre, con precio de invitado', invitado?.monto === 5000 && invitado.invitado_por === 'Bruno Dóble Inventado', JSON.stringify(invitado));
 r = await como('capi', 'select entrenamiento_inscribirme($1)', [ent]);
 ok('Con el cupo lleno no entra nadie más', /completa/.test(r.error ?? ''), r.error);
 r = await como('junior', 'select entrenamiento_bajar($1)', [invitado.id]);
@@ -263,7 +263,7 @@ x = (await uno('doble', 'select entrenamiento_actual()')).entrenamiento;
 ok('Bajarse el mismo día deja la multa por pagar y libera el cupo',
    !r.error && x.bajas_tarde.length === 1 && x.bajas_tarde[0].monto === 1000 && x.bajas_tarde[0].pagado === false && x.inscritos.length === 2, JSON.stringify(x.bajas_tarde));
 const deCapi = x.inscritos.find((i) => i.persona_id === P.capi);
-r = await como('seba', 'select entrenamiento_bajar($1)', [deCapi.id]);
+r = await como('admin', 'select entrenamiento_bajar($1)', [deCapi.id]);
 x = (await uno('doble', 'select entrenamiento_actual()')).entrenamiento;
 ok('Si lo baja un encargado el mismo día, no hay multa', !r.error && x.bajas_tarde.length === 1 && x.inscritos.length === 1, r.error);
 
@@ -271,7 +271,7 @@ ok('Si lo baja un encargado el mismo día, no hay multa', !r.error && x.bajas_ta
 await db.query(`update entrenamientos set fecha = public.hoy() - 1 where id = $1`, [ent]);
 x = await uno('doble', 'select entrenamiento_actual()');
 ok('Pasado el entrenamiento, la multa impaga aparece en "Deben"',
-   x.entrenamiento === null && x.deben.length === 1 && x.deben[0].nombre === 'Benjamín Silva' && x.deben[0].multa === true && x.deben[0].monto === 1000, JSON.stringify(x.deben));
+   x.entrenamiento === null && x.deben.length === 1 && x.deben[0].nombre === 'Bruno Dóble Inventado' && x.deben[0].multa === true && x.deben[0].monto === 1000, JSON.stringify(x.deben));
 r = await como('doble', 'select entrenamiento_inscribirme($1)', [ent]);
 ok('No se inscribe en un entrenamiento que ya pasó', /ya pasó/.test(r.error ?? ''), r.error);
 r = await como('teso', 'select entrenamiento_pago($1, true)', [x.deben[0].id]);
@@ -336,14 +336,14 @@ ok('Quien ya pagó y se baja el mismo día conserva su pago y no debe multa',
 r = await como('capi', 'select entrenamiento_inscribirme($1)', [ent4]);
 x = await filaDe(P.capi);
 ok('Si vuelve a inscribirse, sigue pagado', !r.error && x.estado === 'inscrito' && x.pagado === true && x.monto === 4000, JSON.stringify(x));
-r = await como('seba', 'select entrenamiento_bajar($1)', [deCapi4]);
+r = await como('admin', 'select entrenamiento_bajar($1)', [deCapi4]);
 ok('A quien tiene un pago anotado no se le saca de la lista', /primero quita el pago/.test(r.error ?? '') && (await filaDe(P.capi)).estado === 'inscrito', r.error);
 r = await como('teso', 'select entrenamiento_pago($1, false)', [deCapi4]);
 x = await bitacora(deCapi4);
 ok('Desmarcar también queda en la bitácora', !r.error && x.length === 2 && x[1].pagado === false && x[1].por === P.teso, JSON.stringify(x));
 
 await como('junior', 'select entrenamiento_inscribirme($1)', [ent4]);
-r = await como('seba', 'select entrenamiento_bajar($1)', [(await filaDe(P.junior)).id]);
+r = await como('admin', 'select entrenamiento_bajar($1)', [(await filaDe(P.junior)).id]);
 ok('Sin pagos anotados, quien administra lo saca de la lista como antes', !r.error && !(await filaDe(P.junior)), r.error);
 
 await db.query(`update entrenamientos set fecha = public.hoy() - 1 where id = $1`, [ent4]);
@@ -365,7 +365,7 @@ const filaEn5 = async (persona) => (await db.query(
   'select id, estado, monto from entrenamiento_inscritos where entrenamiento_id = $1 and persona_id = $2', [ent5, persona])).rows[0];
 await como('capi', 'select entrenamiento_inscribirme($1)', [ent5]);
 await como('junior', 'select entrenamiento_inscribirme($1)', [ent5]);
-await como('doble', `select entrenamiento_invitar($1, 'Amigo de Benja')`, [ent5]);
+await como('doble', `select entrenamiento_invitar($1, 'Amigo de Bruno')`, [ent5]);
 await aLas('04:59');
 r = await como('capi', 'select entrenamiento_bajar($1)', [(await filaEn5(P.capi)).id]);
 ok('Antes de las 5:00 del día uno se baja sin multa', !r.error && !(await filaEn5(P.capi)), r.error);
@@ -377,10 +377,10 @@ await como('capi', 'select entrenamiento_inscribirme($1)', [ent5]);
 await aLas('20:00');
 r = await como('capi', 'select entrenamiento_bajar($1)', [(await filaEn5(P.capi)).id]);
 ok('Desde la hora de inicio, uno ya no se puede bajar', /ya empezó/.test(r.error ?? '') && (await filaEn5(P.capi)).estado === 'inscrito', r.error);
-const amigo = (await db.query(`select id from entrenamiento_inscritos where entrenamiento_id = $1 and invitado_nombre = 'Amigo de Benja'`, [ent5])).rows[0].id;
+const amigo = (await db.query(`select id from entrenamiento_inscritos where entrenamiento_id = $1 and invitado_nombre = 'Amigo de Bruno'`, [ent5])).rows[0].id;
 r = await como('doble', 'select entrenamiento_bajar($1)', [amigo]);
 ok('…ni bajar a su invitado', /ya empezó/.test(r.error ?? ''), r.error);
-r = await como('seba', 'select entrenamiento_bajar($1)', [(await filaEn5(P.capi)).id]);
+r = await como('admin', 'select entrenamiento_bajar($1)', [(await filaEn5(P.capi)).id]);
 ok('Quien administra sí puede sacar a alguien que no fue, sin multa', !r.error && !(await filaEn5(P.capi)), r.error);
 await aLas('12:00');
 
@@ -389,12 +389,12 @@ ok('La bitácora no se lee directamente', !!r.error);
 
 // Hora de inicio del partido (0014).
 const diaInicio = await dia(9);
-r = await como('seba', `select partido_guardar(null, $1, 'Rival con hora', $2, '20:30', 'Cancha 2', 'Liga', null, '21:00') as id`, [EQ.jueves, diaInicio]);
+r = await como('admin', `select partido_guardar(null, $1, 'Rival con hora', $2, '20:30', 'Cancha 2', 'Liga', null, '21:00') as id`, [EQ.jueves, diaInicio]);
 const conHora = r.rows[0]?.id;
-x = (await uno('seba', 'select partidos_proximos()')).find((p) => p.id === conHora);
+x = (await uno('admin', 'select partidos_proximos()')).find((p) => p.id === conHora);
 ok('El partido guarda la hora de citación y la de inicio', !r.error && x?.citacion === '20:30' && x?.hora_inicio === '21:00', r.error);
-r = await como('seba', `select partido_guardar($1, $2, 'Rival con hora', $3, '20:30', 'Cancha 2', 'Liga', null) as id`, [conHora, EQ.jueves, diaInicio]);
-x = (await uno('seba', 'select partidos_proximos()')).find((p) => p.id === conHora);
+r = await como('admin', `select partido_guardar($1, $2, 'Rival con hora', $3, '20:30', 'Cancha 2', 'Liga', null) as id`, [conHora, EQ.jueves, diaInicio]);
+x = (await uno('admin', 'select partidos_proximos()')).find((p) => p.id === conHora);
 ok('Sin indicarla, la hora de inicio queda vacía (la app anterior sigue funcionando)', !r.error && x?.hora_inicio === null, r.error);
 r = await como('doble', `select partido_guardar($1, $2, 'Rival con hora', $3, null, null, null, null, '21:00')`, [conHora, EQ.jueves, diaInicio]);
 ok('Un jugador no cambia la hora de inicio', /Solo el encargado/.test(r.error ?? ''), r.error);
@@ -414,7 +414,7 @@ ok('El encargado anota 3-5 con goles, asistencias y tarjetas', !r.error, r.error
 x = (await uno('doble', 'select partidos_jugados()'))[0];
 ok('Todo el club ve el marcador y las cifras de cada uno',
    x.goles_favor === 3 && x.goles_contra === 5 && x.estadisticas.length === 2
-   && x.estadisticas[0].nombre === 'Benjamín Silva' && x.estadisticas[0].goles === 2 && x.estadisticas[0].amarillas === 1
+   && x.estadisticas[0].nombre === 'Bruno Dóble Inventado' && x.estadisticas[0].goles === 2 && x.estadisticas[0].amarillas === 1
    && x.estadisticas[1].asistencias === 2 && x.estadisticas[1].rojas === 1, JSON.stringify(x));
 r = await como('capi', 'select partido_resultado($1, 4, 5, $2)', [viejo, J([P.doble, 3], [P.capi, 0, 0, 0, 0])]);
 x = (await uno('doble', 'select partidos_jugados()'))[0];
@@ -450,20 +450,20 @@ r = await como('teso', 'select partido_resultado($1, 2, 2, $2)', [viejo, J([P.ca
 ok('…y anota aunque no sea encargado del plantel', !r.error, r.error);
 
 x = await uno('doble', 'select estadisticas()');
-ok('La tabla del club', x.length === 1 && x[0].nombre === 'Camilo Capitán' && x[0].goles === 2 && x[0].amarillas === 1, JSON.stringify(x));
+ok('La tabla del club', x.length === 1 && x[0].nombre === 'Carla Capitán Inventada' && x[0].goles === 2 && x[0].amarillas === 1, JSON.stringify(x));
 await db.query(`insert into partidos (club_id, equipo_id, rival, fecha, goles_favor, goles_contra)
                 values ($1, $2, 'Otro viejo', $3, 4, 0)`, [CLUB, EQ.sabado, ayer]);
 const otro = (await db.query(`select id from partidos where rival = 'Otro viejo'`)).rows[0].id;
 await db.query(`insert into partido_estadisticas (partido_id, persona_id, goles, asistencias, rojas) values ($1, $2, 3, 0, 1), ($1, $3, 1, 2, 0)`, [otro, P.doble, P.capi]);
 x = await uno('doble', 'select estadisticas()');
-const b = x.find((e) => e.nombre === 'Benjamín Silva'), c = x.find((e) => e.nombre === 'Camilo Capitán');
+const b = x.find((e) => e.nombre === 'Bruno Dóble Inventado'), c = x.find((e) => e.nombre === 'Carla Capitán Inventada');
 ok('Suma entre partidos: goles, asistencias, amarillas y rojas',
    x.length === 2 && b.goles === 3 && b.rojas === 1 && c.goles === 3 && c.asistencias === 2 && c.amarillas === 1, JSON.stringify(x));
 x = await uno('doble', 'select estadisticas($1)', [EQ.sabado]);
 ok('Se puede filtrar por plantel', x.length === 2 && x.every((e) => e.goles <= 3) && !x.some((e) => e.amarillas), JSON.stringify(x));
 x = await uno('doble', 'select estadisticas(null, 1999)');
 ok('Y por año', x.length === 0, JSON.stringify(x));
-r = await como('seba', 'select partido_resultado($1, null, null, $2)', [viejo, '[]']);
+r = await como('admin', 'select partido_resultado($1, null, null, $2)', [viejo, '[]']);
 x = (await uno('doble', 'select partidos_jugados()')).find((p) => p.id === viejo);
 ok('El administrador puede borrar el resultado, y se van las cifras', !r.error && x.goles_favor === null && x.estadisticas.length === 0, r.error);
 x = await uno('doble', 'select partidos_proximos()');
