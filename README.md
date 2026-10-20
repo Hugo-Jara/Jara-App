@@ -51,6 +51,6 @@ returning token, token_hacienda;
 
 ## Estructura
 
-- `src/lib/sesion.jsx`: ingreso (Google o link al correo) y enlace de la cuenta con la nómina.
+- `src/lib/sesion.jsx`: ingreso (Google, o correo con link o código de 6 dígitos) y enlace de la cuenta con la nómina.
 - `src/components/Marco.jsx`: encabezado y navegación inferior.
 - `src/pages/`: una pantalla por módulo.

@@ -16,6 +16,7 @@ App del Club Deportivo Hugo Jara. El plan vigente está en `PLAN-JARA-APP.md` y 
 - `npm run test:pedidos`: pedidos de compra por link.
 
 ## Flujo de trabajo
+0. Antes de empezar una fase, el PR de la fase anterior tiene que estar mergeado; parte siempre desde main actualizado.
 1. Trabaja en la rama que te asignen y abre un PR.
 2. La cuenta del club aprueba el PR y se hace Squash and merge.
 3. Las migraciones (`supabase/migrations/`) las corre el administrador de la app en Supabase **antes** del merge. Una migración nueva nunca edita una vieja.
