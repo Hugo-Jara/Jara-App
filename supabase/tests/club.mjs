@@ -28,7 +28,7 @@ await db.exec(`
 for (const f of ['0001_base.sql', '0002_cotizaciones.sql', '0004_funciones_de_trigger_privadas.sql',
                  '0009_ingreso_por_nombre.sql', '0010_partidos.sql', '0011_entrenamientos.sql', '0012_resultado_y_estadisticas.sql',
                  '0013_administra_entrenamientos.sql', '0014_hora_de_inicio.sql', '0015_pagos_de_entrenamiento.sql',
-                 '0016_multa_desde_las_cinco.sql']) {
+                 '0016_multa_desde_las_cinco.sql', '0018_seguridad_antes_de_sumar_gente.sql']) {
   await db.exec(mig(f));
 }
 // En las pruebas la hora de Chile se fija a mano (por omisión, mediodía de hoy).
@@ -214,8 +214,10 @@ ok('Un jugador no abre listas de entrenamiento', /Solo quienes administran/.test
 x = await uno('doble', 'select entrenamiento_actual()');
 ok('Sin lista abierta, no hay entrenamiento', x.entrenamiento === null && x.puedo_administrar === false);
 r = await abrir('capi', manana);
+ok('Un encargado de plantel no abre listas de entrenamiento (0018)', /Solo quienes administran/.test(r.error ?? ''), r.error);
+r = await abrir('admin', manana);
 const ent = r.rows[0]?.id;
-ok('Un encargado abre la lista', !!ent, r.error);
+ok('Un administrador abre la lista', !!ent, r.error);
 x = await uno('doble', 'select entrenamiento_actual()');
 ok('Quien juega en un plantel senior paga precio senior', x.entrenamiento.mi_precio === 4000, String(x.entrenamiento.mi_precio));
 await db.query(`update personas set user_id = $1 where id = $2`, [U.junior, P.junior]);
@@ -312,7 +314,7 @@ ok('Al quitarle el permiso, deja de poder', /Solo quienes administran/.test(r.er
 
 // Los pagos no se pierden (0015)
 console.log('\nPagos de entrenamiento');
-r = await abrir('capi', manana, 5);
+r = await abrir('admin', manana, 5);
 const ent4 = r.rows[0]?.id;
 const filaDe = async (persona) => (await db.query(
   'select id, estado, monto, pagado from entrenamiento_inscritos where entrenamiento_id = $1 and persona_id = $2', [ent4, persona])).rows[0];
@@ -351,14 +353,14 @@ x = await uno('doble', 'select entrenamiento_actual()');
 ok('Al día siguiente, quien no pagó aparece en "Deben"', x.deben.some((d) => d.id === deCapi4 && d.monto === 4000 && !d.multa), JSON.stringify(x.deben));
 r = await como('teso', 'select entrenamiento_pago($1, true)', [deCapi4]);
 ok('…y se le marca el pago después', !r.error && !(await uno('doble', 'select entrenamiento_actual()')).deben.some((d) => d.id === deCapi4), r.error);
-r = await como('capi', 'select entrenamiento_eliminar($1)', [ent4]);
+r = await como('admin', 'select entrenamiento_eliminar($1)', [ent4]);
 ok('No se elimina la lista de un entrenamiento que ya pasó', /ya pasó/.test(r.error ?? ''), r.error);
-r = await abrir('capi', manana, 5, ent4);
+r = await abrir('admin', manana, 5, ent4);
 ok('…ni se cambia su fecha para poder eliminarla', /ya pasó/.test(r.error ?? ''), r.error);
 
 // La multa corre desde las 5:00 del día (0016)
 console.log('\nMulta desde las 5:00');
-r = await abrir('capi', manana, 5);
+r = await abrir('admin', manana, 5);
 const ent5 = r.rows[0]?.id;
 await db.query(`update entrenamientos set fecha = public.hoy() where id = $1`, [ent5]);
 const filaEn5 = async (persona) => (await db.query(
@@ -474,6 +476,125 @@ r = await como('intruso', 'select estadisticas()');
 ok('Ni las estadísticas', /no está en la nómina/.test(r.error ?? ''), r.error);
 r = await como('doble', 'select count(*) from partido_estadisticas');
 ok('Las tablas de estadística no se leen directamente', !!r.error);
+
+// ---------------------------------------------------------------------------
+// Seguridad antes de sumar gente (0018)
+console.log('\nM1 · Cada encargado gestiona su plantel');
+Object.assign(U, { nuevo2: '00000000-0000-0000-0000-000000000012', nuevo3: '00000000-0000-0000-0000-000000000013',
+                   nuevo4: '00000000-0000-0000-0000-000000000014', curioso: '00000000-0000-0000-0000-000000000015' });
+await db.query(`insert into auth.users (id, email) values ${['nuevo2', 'nuevo3', 'nuevo4', 'curioso'].map((k) => `('${U[k]}', '${correo(k)}')`).join(', ')}`);
+const entM1 = (await abrir('admin', await dia(6), 10)).rows[0]?.id;
+await como('doble', 'select entrenamiento_inscribirme($1)', [entM1]);
+const deDobleM1 = (await db.query('select id from entrenamiento_inscritos where entrenamiento_id = $1 and persona_id = $2', [entM1, P.doble])).rows[0].id;
+r = await como('capi', 'select entrenamiento_bajar($1)', [deDobleM1]);
+ok('Un encargado de plantel no baja a otros de la lista de entrenamiento', /Solo puedes bajarte/.test(r.error ?? ''), r.error);
+r = await abrir('capi', await dia(6), 12, entM1);
+ok('…ni edita la lista', /Solo quienes administran/.test(r.error ?? ''), r.error);
+r = await como('capi', 'select entrenamiento_eliminar($1)', [entM1]);
+ok('…ni la elimina', /Solo quienes administran/.test(r.error ?? '') && (await db.query('select 1 from entrenamientos where id = $1', [entM1])).rows.length === 1, r.error);
+ok('…y la app no le muestra que puede administrar', (await uno('capi', 'select entrenamiento_actual()')).puedo_administrar === false);
+await db.query(`update personas set administra_entrenamientos = true where id = $1`, [P.capi]);
+r = await abrir('capi', await dia(6), 12, entM1);
+ok('Con el permiso de entrenamientos, el mismo encargado sí la edita', !r.error, r.error);
+await db.query(`update personas set administra_entrenamientos = false where id = $1`, [P.capi]);
+
+r = await como('nuevo2', `select ingreso_solicitar(null, 'Nuevo Doble Inventado', $1::uuid[])`, [[EQ.jueves, EQ.junior]]);
+const solNuevo2 = (await uno('capi', 'select ingreso_pendientes()')).find((q) => q.nombre === 'Nuevo Doble Inventado')?.id;
+ok('El encargado del Jueves ve a quien pide entrar al Jueves y al Junior', !!solNuevo2, r.error);
+r = await como('capi', 'select ingreso_resolver($1, true)', [solNuevo2]);
+x = await uno('nuevo2', 'select mi_persona()');
+ok('Al aprobarlo, queda solo en el plantel del encargado que aprobó',
+   !r.error && x?.equipos.map((q) => q.nombre).join() === 'Senior Jueves', r.error || JSON.stringify(x?.equipos));
+r = await como('nuevo3', `select ingreso_solicitar(null, 'Otro Doble Inventado', $1::uuid[])`, [[EQ.jueves, EQ.junior]]);
+r = await como('admin', 'select ingreso_resolver($1, true)', [(await uno('admin', 'select ingreso_pendientes()')).find((q) => q.nombre === 'Otro Doble Inventado').id]);
+x = await uno('nuevo3', 'select mi_persona()');
+ok('Si lo aprueba un administrador, queda en los dos', !r.error && x?.equipos.length === 2, r.error || JSON.stringify(x?.equipos));
+
+// Quien es encargado de dos planteles gestiona los dos, y nada más.
+await db.query(`insert into persona_equipos (persona_id, equipo_id, rol) values ($1, $2, 'encargado'), ($1, $3, 'encargado')`, [P.doble, EQ.jueves, EQ.junior]);
+r = await guardarPartido('doble', EQ.jueves, 'Rival del Jueves', await dia(7));
+x = await guardarPartido('doble', EQ.junior, 'Rival del Junior', await dia(7));
+ok('Un encargado de dos planteles programa partidos en los dos', !r.error && !x.error, r.error || x.error);
+r = await guardarPartido('doble', EQ.sabado, 'Rival del Sábado', await dia(7));
+ok('…pero no en un tercero', /Solo el encargado/.test(r.error ?? ''), r.error);
+r = await como('doble', 'select partido_eliminar($1)', [x.rows[0].id]);
+ok('…y elimina los de sus planteles', !r.error, r.error);
+r = await como('nuevo4', `select ingreso_solicitar(null, 'Tercer Doble Inventado', $1::uuid[])`, [[EQ.jueves, EQ.junior]]);
+r = await como('doble', 'select ingreso_resolver($1, true)', [(await uno('doble', 'select ingreso_pendientes()')).find((q) => q.nombre === 'Tercer Doble Inventado').id]);
+x = await uno('nuevo4', 'select mi_persona()');
+ok('…y al aprobar un ingreso lo deja en sus dos planteles', !r.error && x?.equipos.length === 2, r.error || JSON.stringify(x?.equipos));
+
+console.log('\nM2 · Las tablas de 0001 y 0002 no se tocan directamente');
+for (const t of ['clubes', 'personas', 'persona_contactos', 'equipos', 'persona_equipos', 'areas', 'persona_areas',
+                 'solicitudes_compra', 'solicitud_adjuntos', 'solicitud_eventos']) {
+  r = await como('admin', `select count(*) from ${t}`);
+  ok(`Ni un socio ni un administrador leen "${t}" directamente`, /permission denied/.test(r.error ?? ''), r.error);
+}
+r = await como('doble', `update personas set es_admin = true where id = $1`, [P.doble]);
+ok('Nadie se da permisos de administrador escribiendo en la tabla', /permission denied/.test(r.error ?? ''), r.error);
+r = await como('capi', `insert into persona_equipos (persona_id, equipo_id, rol) values ($1, $2, 'encargado')`, [P.capi, EQ.sabado]);
+ok('Nadie se hace encargado de otro plantel escribiendo en la tabla', /permission denied/.test(r.error ?? ''), r.error);
+r = await como('doble', `insert into solicitudes_compra (club_id, solicitante_id, descripcion, actividad, monto, referencia, fecha_necesaria)
+                         values ($1, $2, 'x', 'y', 1000, 'z', '2026-11-20')`, [CLUB, P.doble]);
+ok('Nadie crea solicitudes de compra escribiendo en la tabla', /permission denied/.test(r.error ?? ''), r.error);
+x = await uno('doble', 'select mi_persona()');
+ok('La app sigue funcionando: mi_persona trae mis datos', x?.nombre === 'Bruno Dóble Inventado', JSON.stringify(x));
+ok('…y vincular_persona también', (await uno('doble', 'select vincular_persona()')) === P.doble);
+
+console.log('\nM3 · La nómina no se lleva completa');
+await db.query(`insert into personas (club_id, nombre) values
+  ($1, 'Mario Pérez Inventado'), ($1, 'Marta Soto Inventada'), ($1, 'Mauro Díaz Inventado'),
+  ($1, 'Mateo Rojas Inventado'), ($1, 'Matías Vera Inventado'), ($1, 'Maximiliano Cruz-Lagos Inventado')`, [CLUB]);
+x = await uno('curioso', `select nomina_buscar('per')`);
+ok('Busca por el comienzo de una palabra, sin tildes', x.length === 1 && x[0].nombre === 'Mario Pérez Inventado', JSON.stringify(x));
+x = await uno('curioso', `select nomina_buscar('ari')`);
+ok('Unas letras del medio del nombre no encuentran a nadie', Array.isArray(x) && x.length === 0, JSON.stringify(x));
+x = await uno('curioso', `select nomina_buscar('lag')`);
+ok('Un apellido compuesto se encuentra por su segunda parte', x.length === 1, JSON.stringify(x));
+x = await uno('curioso', `select nomina_buscar('%%%')`);
+ok('Los comodines no traen a todos', Array.isArray(x) && x.length === 0, JSON.stringify(x));
+x = await uno('curioso', `select nomina_buscar('a b c')`);
+ok('Sin una palabra de tres letras no busca', Array.isArray(x) && x.length === 0, JSON.stringify(x));
+x = await uno('curioso', `select nomina_buscar('inv')`);
+ok('Si calzan más de 5, no muestra a ninguno', x?.demasiados === true && !Array.isArray(x), JSON.stringify(x));
+x = await uno('curioso', `select nomina_buscar('ma inv')`);
+ok('…tampoco agregando una letra que no achica la lista', x?.demasiados === true, JSON.stringify(x));
+x = await uno('curioso', `select nomina_buscar('mat ver')`);
+ok('Con nombre y apellido encuentra a la persona', x.length === 1 && x[0].nombre === 'Matías Vera Inventado', JSON.stringify(x));
+const usadas = Number((await db.query('select count(*) from nomina_busquedas where user_id = $1', [U.curioso])).rows[0].count);
+ok('Las búsquedas sin tres letras no cuentan para el tope', usadas === 7, String(usadas));
+for (let i = usadas; i < 30; i++) await como('curioso', `select nomina_buscar('mar')`);
+r = await como('curioso', `select nomina_buscar('mar')`);
+ok('Pasadas 30 búsquedas en una hora, se pide esperar', /muchas búsquedas/.test(r.error ?? ''), r.error);
+r = await como('nuevo', `select nomina_buscar('mar')`);
+ok('El tope es por cuenta: otra cuenta sigue buscando', !r.error, r.error);
+await db.query(`update nomina_busquedas set creado_en = now() - interval '61 minutes' where user_id = $1`, [U.curioso]);
+r = await como('curioso', `select nomina_buscar('mar')`);
+ok('Pasada la hora, vuelve a poder', !r.error, r.error);
+r = await como('curioso', 'select count(*) from nomina_busquedas');
+ok('El registro de búsquedas no se lee directamente', /permission denied/.test(r.error ?? ''), r.error);
+await db.exec('set role anon');
+try { await db.query(`select nomina_buscar('mar')`); r = { error: null }; } catch (e) { r = { error: e.message }; }
+await db.exec('reset role');
+ok('Sin cuenta no se busca en la nómina', /permission denied/.test(r.error ?? ''), r.error);
+
+console.log('\nM5 · Sumar invitado dos veces');
+const invitados = async () => (await db.query(
+  `select invitado_nombre as n, invitado_por as por from entrenamiento_inscritos where entrenamiento_id = $1 and persona_id is null order by creado_en`, [entM1])).rows;
+r = await como('doble', `select entrenamiento_invitar($1, 'José Inventado')`, [entM1]);
+x = await como('doble', `select entrenamiento_invitar($1, 'José Inventado')`, [entM1]);
+ok('Dos toques seguidos anotan al invitado una sola vez', !r.error && !x.error && (await invitados()).length === 1, r.error || x.error);
+r = await como('doble', `select entrenamiento_invitar($1, '  jose   INVENTADO ')`, [entM1]);
+ok('…aunque cambien tildes, mayúsculas o espacios', !r.error && (await invitados()).length === 1, r.error);
+r = await como('doble', `select entrenamiento_invitar($1, 'Otro Invitado')`, [entM1]);
+ok('Un invitado con otro nombre sí se suma', !r.error && (await invitados()).length === 2, r.error);
+r = await como('capi', `select entrenamiento_invitar($1, 'José Inventado')`, [entM1]);
+x = await invitados();
+ok('Otra persona puede invitar a alguien con el mismo nombre', !r.error && x.length === 3 && x[2].por === P.capi, r.error);
+const elPrimero = (await db.query(`select id from entrenamiento_inscritos where entrenamiento_id = $1 and invitado_nombre = 'José Inventado' and invitado_por = $2`, [entM1, P.doble])).rows[0].id;
+await como('doble', 'select entrenamiento_bajar($1)', [elPrimero]);
+r = await como('doble', `select entrenamiento_invitar($1, 'José Inventado')`, [entM1]);
+ok('Si lo bajó, lo puede volver a sumar', !r.error && (await invitados()).filter((i) => i.por === P.doble).length === 2, r.error);
 
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

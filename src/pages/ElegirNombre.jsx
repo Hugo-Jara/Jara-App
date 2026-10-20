@@ -20,6 +20,7 @@ function Buscar({ alPedir }) {
     if (texto.trim().length < 3) { setResultados(null); return undefined; }
     let vigente = true;
     const espera = setTimeout(() => {
+      setError('');
       buscarEnNomina(texto).then((r) => vigente && setResultados(r), (e) => vigente && setError(e.message));
     }, 300);
     return () => { vigente = false; clearTimeout(espera); };
@@ -66,6 +67,9 @@ function Buscar({ alPedir }) {
             </li>
           ))}
         </ul>
+      )}
+      {resultados?.demasiados && (
+        <p className="ayuda abajo" role="status">Hay varias personas que calzan. Escribe también tu apellido.</p>
       )}
       {resultados && resultados.length === 0 && (
         <p className="ayuda abajo" role="status">
