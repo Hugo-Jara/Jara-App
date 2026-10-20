@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { useEntrenamiento, horario, recordatorioEntrenamiento } from '../lib/entrenamiento.js';
@@ -31,6 +31,8 @@ export default function Entrenar() {
   const e = t.entrenamiento;
   const [invitado, setInvitado] = useState('');
   const [invitando, setInvitando] = useState(false);
+  const [sumando, setSumando] = useState(false);
+  const enviando = useRef(false);
   const [error, setError] = useState('');
   const intentar = (accion) => async (...a) => { setError(''); try { await accion(...a); } catch (x) { setError(x.message); } };
 
@@ -103,11 +105,17 @@ export default function Entrenar() {
         <p className="conteo">{plural(t.libres, 'cupo libre', 'cupos libres')} de {e.cupo}. {multa}</p>
 
         {t.libres > 0 && (invitando ? (
-          <form onSubmit={async (ev) => { ev.preventDefault(); await intentar(t.invitar)(invitado.trim()); setInvitado(''); setInvitando(false); }}>
+          <form onSubmit={async (ev) => {
+            ev.preventDefault();
+            if (enviando.current) return;   // un segundo toque mientras se envía no anota otra vez
+            enviando.current = true; setSumando(true);
+            await intentar(t.invitar)(invitado.trim());
+            enviando.current = false; setSumando(false); setInvitado(''); setInvitando(false);
+          }}>
             <label htmlFor="invitado">Nombre del invitado</label>
             <input id="invitado" required minLength={2} value={invitado} onChange={(ev) => setInvitado(ev.target.value)} />
             <div className="botones chicos">
-              <button className="btn chico">Sumarlo · {pesos(e.precioInvitado)}</button>
+              <button className="btn chico" disabled={sumando}>Sumarlo · {pesos(e.precioInvitado)}</button>
               <button type="button" className="btn chico secundario" onClick={() => setInvitando(false)}>Cancelar</button>
             </div>
           </form>

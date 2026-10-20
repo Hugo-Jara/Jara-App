@@ -35,6 +35,7 @@ Las migraciones están en `supabase/migrations/` y se aplican en orden:
 | `0015_pagos_de_entrenamiento.sql` | Los pagos de entrenamiento no se pierden: se marcan desde el día del entrenamiento, bajarse o reinscribirse no borra un pago, bitácora `entrenamiento_pagos`, y no se eliminan listas pasadas o con pagos |
 | `0016_multa_desde_las_cinco.sql` | La multa por bajarse corre desde las 5:00 del día del entrenamiento, y desde la hora de inicio uno ya no se baja |
 | `0017_comprobantes_privados.sql` | Los comprobantes de transferencia van a un bucket privado; los ven con su cuenta administradores, Hacienda, tesoreros y quien tenga `ve_comprobantes` |
+| `0018_seguridad_antes_de_sumar_gente.sql` | Seguridad antes de sumar gente: las listas de entrenamiento las administran solo los administradores y quien tiene `administra_entrenamientos`; quien aprueba un ingreso suma a la persona solo a sus planteles; las tablas de 0001 y 0002 se cierran a la lectura y escritura directa; la búsqueda en la nómina va por comienzo de palabra, con máximo 5 resultados y 30 búsquedas por hora; y un invitado no se anota dos veces |
 
 `npm run test:db` y `npm run test:pedidos` aplican las migraciones en un Postgres en memoria y prueban los permisos, el flujo de cotizaciones, el ingreso por nombre, los partidos, los entrenamientos y los pedidos por link.
 
