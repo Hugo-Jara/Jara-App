@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
-import { supabase, esDemo } from './supabase.js';
+import { supabase, esDemo, llamar } from './supabase.js';
 
 // Pedido de compras: una lista por evento donde cada persona agrega lo que
 // quiere comprar con su cotización y su referencia. La suma es lo que se le
@@ -56,12 +56,6 @@ async function subir(carpeta, file, bucket = BUCKET) {
   const { error } = await supabase.storage.from(bucket).upload(ruta, file, { contentType: file.type });
   if (error) throw new Error('No se pudo subir el archivo. Revisa que sea una foto o un PDF de menos de 10 MB.');
   return { ruta, nombre: file.name };
-}
-
-async function llamar(funcion, parametros) {
-  const { data, error } = await supabase.rpc(funcion, parametros);
-  if (error) throw new Error(error.message);
-  return data;
 }
 
 function usePedidoReal(token) {
