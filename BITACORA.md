@@ -4,13 +4,18 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
-## 2026-10-20 · Plan: el Fondo real se adelanta
+## 2026-10-20 · Plan: Compras en tres partes antes de la Fase 4
 
 **Qué se hizo** (solo documentos, en el PR de la Fase 2):
-- `PLAN-JARA-APP.md`: la Fase 6 se divide en **6a – Fondo real** (compras con ítem del presupuesto, respaldos con archivos privados, honorarios, panel y permisos solo para el equipo del fondo; Opus; fecha límite lunes 27/10) y **6c – Rendiciones** (hoja tipo Anexo N°1 y registro de rendiciones presentadas; Opus; noviembre).
-- Orden nuevo: Fase 3 → Fase 6a → Fase 4 → hito 28/10 → Fase 5 → Fase 6c → Fase 6b → Fase 7 → Fase 8.
-- **Requisito de la 6a:** las respuestas de la reunión del fondo del 20/10 se anotan aquí, en la bitácora, antes de partir.
-- **Migraciones:** la de la 6a la revisa el administrador de la app (y Hacienda, si mueve plata) antes de aplicarla; la de la 6b la revisa el administrador de la app.
+- `PLAN-JARA-APP.md`: se reemplazan las fases 6a y 6c por tres, todas con Opus y conversación nueva:
+  - **Compras 1 – Compras integrado a la app:** reemplaza la pantalla "Llega el 19 de octubre"; los pedidos se ven y se crean desde la app con cuenta, con tópico (Fondo, 20 años, General); el link sin cuenta sigue funcionando sobre los mismos datos.
+  - **Compras 2 – Fondo:** ítems del presupuesto, respaldos con archivos privados, honorarios del entrenador, panel y permisos solo para el equipo del fondo.
+  - **Compras 3 – Rendiciones:** hoja tipo Anexo N°1 y registro de rendiciones presentadas.
+- Orden nuevo: Fase 3 → Compras 1 → Compras 2 → Compras 3 → Fase 4 → hito 28/10 → Fase 5 → Fase 6b → Fase 7 → Fase 8.
+- Sin fechas intermedias: solo quedan los hitos 28/10 y 21/11. Se sacaron las fechas límite de las fases 4 y 8.
+- **El equipo del fondo empieza a usarlo solo cuando estén cerradas las tres.**
+- **Requisito de Compras 2:** las respuestas de la reunión del fondo del 20/10 se anotan aquí, en la bitácora, antes de partir.
+- **Migraciones:** la de Compras 2 la revisan el administrador de la app y Hacienda antes de aplicarla; la de la Fase 6b la revisa el administrador de la app.
 
 **Pendiente para la Fase 8 (pulido):** las sugerencias de día de Entrenamiento (los botones de sugerencia del formulario de la lista) se dejan como están por ahora; se revisan en el pulido.
 

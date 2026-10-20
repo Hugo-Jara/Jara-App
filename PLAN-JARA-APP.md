@@ -75,9 +75,9 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 - **Listo cuando:** las pruebas cubren cada caso. El administrador de la app corre la migración y prueba con dos cuentas de planteles distintos.
 
 ## Orden de las fases (actualizado)
-Fase 3 → Fase 6a → Fase 4 → **hito 28/10** → Fase 5 → Fase 6c → Fase 6b → Fase 7 → Fase 8.
+Fase 3 → Compras 1 → Compras 2 → Compras 3 → Fase 4 → **hito 28/10** → Fase 5 → Fase 6b → Fase 7 → Fase 8 → **hito 21/11**.
 
-El Fondo real (6a) se adelanta a las fases 4 y 5. Las secciones de abajo siguen ese orden.
+Sin fechas intermedias: solo quedan los hitos 28/10 y 21/11. Las secciones de abajo siguen ese orden.
 
 ---
 
@@ -89,22 +89,34 @@ El Fondo real (6a) se adelanta a las fases 4 y 5. Las secciones de abajo siguen 
   - Checklist de pruebas en iPhone y Android.
 - **Listo cuando:** el administrador de la app entra desde los dos sistemas con Google y con el código.
 
-## Fase 6a — Fondo real
+## Compras 1 — Compras integrado a la app
 - **Modelo:** Opus · conversación nueva
-- **Fecha límite:** lunes 27/10.
-- **Requisito:** respuestas de la reunión del fondo del 20/10, anotadas en la bitácora antes de partir.
 - **Alcance:**
-  - Compras con ítem del presupuesto.
+  - Reemplaza la pantalla "Llega el 19 de octubre".
+  - Los pedidos se ven y se crean desde la app, con cuenta, con tópico (Fondo, 20 años, General).
+  - El link sin cuenta sigue funcionando sobre los mismos datos.
+
+## Compras 2 — Fondo
+- **Modelo:** Opus · conversación nueva
+- **Requisito:** Compras 1 terminada, y las respuestas de la reunión del fondo del 20/10 anotadas en la bitácora.
+- **Alcance:**
+  - Ítems del presupuesto.
   - Respaldos con archivos privados.
-  - Honorarios.
+  - Honorarios del entrenador.
   - Panel del fondo.
-  - Permisos solo para el equipo del fondo (administrador del fondo, tesorero, presidente, revisión, compras).
-  - Los reembolsos a particulares quedan marcados como no rendibles.
-- **Nota:** necesita migración nueva; la revisa el administrador de la app (y Hacienda, porque mueve plata) antes de aplicarla.
+  - Permisos solo para el equipo del fondo.
+- **Nota:** necesita migración nueva; la revisan el administrador de la app y Hacienda antes de aplicarla.
+
+## Compras 3 — Rendiciones
+- **Modelo:** Opus · conversación nueva
+- **Requisito:** Compras 2 terminada.
+- **Alcance:**
+  - Hoja tipo Anexo N°1.
+  - Registro de las rendiciones presentadas.
+- **Aviso:** el equipo del fondo empieza a usarlo solo cuando estén cerradas las tres (Compras 1, 2 y 3).
 
 ## Fase 4 — Tablero de tesoreros en modo demo
 - **Modelo:** Sonnet · /clear (el diseño se define antes en el chat)
-- **Fecha límite:** 27/10.
 - **Alcance:**
   - Un tablero por plantel: plata disponible, quién pagó y quién no, cuánto falta recaudar, ingresos y egresos.
   - Una vista de Hacienda con el aporte entregado y el pendiente de cada plantel, y Entrenamiento como línea aparte (solo lectura, sin aporte por jugador).
@@ -121,14 +133,6 @@ El Fondo real (6a) se adelanta a las fases 4 y 5. Las secciones de abajo siguen 
   - Conectar la nómina y los pagos desde la app de tesorería o sus planillas, según lo que se decida en la reunión.
   - Aplicar los ajustes que salgan de la reunión.
 - **Listo cuando:** cada tesorero ve los números reales de su plantel y estos cuadran con su planilla.
-
-## Fase 6c — Rendiciones
-- **Modelo:** Opus · conversación nueva
-- **Fecha límite:** noviembre.
-- **Requisito:** Fase 6a terminada.
-- **Alcance:**
-  - Hoja tipo Anexo N°1.
-  - Registro de las rendiciones presentadas.
 
 ## Fase 6b — Calendario de partidos
 - **Modelo:** Opus · conversación nueva
@@ -149,7 +153,6 @@ El Fondo real (6a) se adelanta a las fases 4 y 5. Las secciones de abajo siguen 
 
 ## Fase 8 — Pulido para la fiesta
 - **Modelo:** Sonnet · /clear
-- **Fecha límite:** 18/11.
 - **Alcance:**
   - Recorrido completo de la app como socio nuevo.
   - Arreglos visuales.
