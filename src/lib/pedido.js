@@ -96,6 +96,7 @@ function usePedidoReal(token) {
 
   return {
     ...estado,
+    recargar: cargar,
     agregar: async (d) => { await llamar('pedido_agregar', await datos(d)); await cargar(); },
     corregir: async (item, d) => { await llamar('pedido_corregir', { ...(await datos(d, item)), p_item: item.id }); await cargar(); },
     revisar: async (id, accion, comentario) => {
@@ -157,6 +158,7 @@ function usePedidoDemo(esHacienda) {
   return {
     cargando: false, error: '',
     pedido: { ...p, esHacienda },
+    recargar: async () => {},
     agregar: async (d) => guardar([...p.items, { ...desde(d), id: Date.now(), boleta: null, estado: 'pendiente' }]),
     corregir: async (item, d) => cambiar(item.id, { ...desde(d, item), estado: 'pendiente', comentario: undefined }),
     revisar: async (id, accion, comentario) =>

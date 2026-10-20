@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { usePedido, totales, pesos, ESTADOS, enlaceComprobante } from '../lib/pedido.js';
-import { esDemo } from '../lib/supabase.js';
+import { esDemo, SIN_CONEXION } from '../lib/supabase.js';
 import { ESCUDO, BASE } from '../lib/base.js';
 
 const esLink = (texto) => /^https?:\/\//i.test(texto.trim());
@@ -304,10 +304,21 @@ function Item({ item, hacienda, puedoVerComprobantes, acciones }) {
 export default function Pedido() {
   const token = useLocation().pathname.split('/')[2] || '';
   const [haciendaDemo, setHaciendaDemo] = useState(false);
-  const { cargando, error, pedido, ...acciones } = usePedido(token, haciendaDemo);
+  const { cargando, error, pedido, recargar, ...acciones } = usePedido(token, haciendaDemo);
   const [agregando, setAgregando] = useState(false);
+  const [reintentando, setReintentando] = useState(false);
+  const reintentar = async () => { setReintentando(true); await recargar(); setReintentando(false); };
 
   if (cargando) return <div className="cargando">Cargando…</div>;
+  // Sin señal el link puede estar bien: solo se pide revisar la señal.
+  if (!pedido && error === SIN_CONEXION) {
+    return (
+      <div className="pagina suelta">
+        <p className="vacio" role="alert">No pudimos conectar con el club. Revisa tu señal.</p>
+        <button className="btn" disabled={reintentando} onClick={reintentar}>{reintentando ? 'Reintentando…' : 'Reintentar'}</button>
+      </div>
+    );
+  }
   if (!pedido) {
     return (
       <div className="pagina suelta">
