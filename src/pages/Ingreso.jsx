@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { useSesion } from '../lib/sesion.jsx';
 import { ESCUDO } from '../lib/base.js';
+import { supabase } from '../lib/supabase.js';
 
 export default function Ingreso() {
   const { entrarConGoogle, entrarConCorreo, esDemo } = useSesion();
   const [email, setEmail] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [codigo, setCodigo] = useState('');
+  const [verificando, setVerificando] = useState(false);
   const [error, setError] = useState('');
 
   const conGoogle = async () => {
@@ -25,6 +28,27 @@ export default function Ingreso() {
     setEnviando(false);
     if (error) setError('No pudimos enviar el link. Revisa el correo e intenta de nuevo en unos minutos.');
     else setEnviado(true);
+  };
+
+  // La sesión nueva la recoge solo el escuchador de SIGNED_IN en sesion.jsx.
+  const conCodigo = async (e) => {
+    e.preventDefault();
+    if (esDemo) return;
+    setError('');
+    setVerificando(true);
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token: codigo,
+      type: 'email',
+    });
+    setVerificando(false);
+    if (error) setError('Ese código no sirve o ya venció. Revísalo o pide uno nuevo.');
+  };
+
+  const pedirOtro = () => {
+    setEnviado(false);
+    setCodigo('');
+    setError('');
   };
 
   return (
@@ -47,9 +71,21 @@ export default function Ingreso() {
         <div className="separador">o con tu correo</div>
 
         {enviado ? (
-          <p className="exito" role="status">
-            Te enviamos un link a <strong>{email}</strong>. Ábrelo en este mismo teléfono para entrar.
-          </p>
+          <form onSubmit={conCodigo}>
+            <p className="exito" role="status" style={{ marginTop: 0 }}>
+              Te enviamos un correo a <strong>{email}</strong>. Abre el link o escribe aquí el código de 6 dígitos.
+            </p>
+            <label htmlFor="codigo" style={{ marginTop: 14 }}>Código del correo</label>
+            <input id="codigo" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6}
+                   required placeholder="123456" value={codigo}
+                   onChange={(e) => setCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))} />
+            <button className="btn secundario" style={{ marginTop: 14 }} disabled={verificando || codigo.length !== 6}>
+              {verificando ? 'Revisando…' : 'Entrar con el código'}
+            </button>
+            <button type="button" className="enlace" style={{ display: 'block', margin: '14px auto 0' }} onClick={pedirOtro}>
+              Usar otro correo o pedir otro código
+            </button>
+          </form>
         ) : (
           <form onSubmit={conCorreo}>
             <label htmlFor="correo">Tu correo</label>

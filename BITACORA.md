@@ -4,6 +4,24 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-10-20 · Fase 3 — Ingreso a prueba de celulares
+
+**Qué se hizo:**
+- `src/pages/Ingreso.jsx`: después de pedir el correo, la pantalla muestra un campo para escribir el código de 6 dígitos (teclado numérico, autocompletado del código en iPhone) además del aviso del link. Usa `verifyOtp` de Supabase; la sesión nueva la toma el escuchador que ya existía. Hay un botón para usar otro correo o pedir otro código.
+- `src/lib/sesion.jsx` **no se tocó** (zona de revisión del administrador de la app).
+- `CLAUDE.md`: regla nueva, "Antes de empezar una fase, el PR de la fase anterior tiene que estar mergeado; parte siempre desde main actualizado."
+- `README.md`: se menciona el ingreso con código.
+
+**Sin migraciones.**
+
+**Manual, del administrador de la app:** pegar las plantillas de correo en Supabase (Authentication → Emails → "Confirm signup" y "Magic Link") con `{{ .Token }}`, y correr el checklist de iPhone y Android. El código dura lo que dure la expiración del OTP configurada en Supabase (por defecto 1 hora); el largo debe quedar en 6.
+
+**Comprobado:** `npm run build`, `npm run test:db` y `npm run test:pedidos` pasan.
+
+Siguiente: Compras 1 — Compras integrado a la app.
+
+---
+
 ## 2026-10-20 · Plan: Compras en tres partes antes de la Fase 4
 
 **Qué se hizo** (solo documentos, en el PR de la Fase 2):
