@@ -2,16 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { esDemo, llamar } from './supabase.js';
 import { desdeFila, subir, BUCKET_COMPROBANTES } from './pedido.js';
 
-// Compras dentro de la app, con cuenta. Son las mismas listas y compras del
-// link de pedido: lo que se pide acá aparece en el link y al revés.
+// Compras dentro de la app, con cuenta, organizadas por tópico (hoy, "Fiesta 20
+// años"). Detrás de cada tópico hay una lista interna que la app no muestra.
 // Cada socio ve sus compras; Hacienda, los administradores y quien tiene el
-// permiso 've_compras' ven todas.
+// permiso 've_compras' ven todas. El link público para quien no tiene cuenta
+// vive en solicitud.js.
 
-export const TOPICOS = { fondo: 'Fondo', veinte_anos: '20 años', general: 'General' };
+const topico = (t) => ({ slug: t.slug, nombre: t.nombre, activo: t.activo, carpeta: t.carpeta, token: t.token_envio });
 
-const lista = (l) => ({ id: l.id, nombre: l.nombre, topico: l.topico, abierto: l.abierto, carpeta: l.carpeta, token: l.token });
-
-// Los datos de una compra, con sus archivos ya subidos a la carpeta de la lista.
+// Los datos de una compra, con sus archivos ya subidos a la carpeta del tópico.
 async function datos(carpeta, d, anterior) {
   const cot = (await subir(carpeta, d.cotizacionArchivo)) || anterior?.cotizacion;
   const ref = (await subir(carpeta, d.referenciaArchivo)) || anterior?.referenciaArchivo;
@@ -32,7 +31,7 @@ function useComprasReal() {
       setEstado({
         cargando: false, error: '',
         datos: { veTodas: c.ve_todas, esHacienda: c.es_hacienda, puedoVerComprobantes: c.puedo_ver_comprobantes,
-                 listas: c.listas.map(lista), items: c.items.map(desdeFila) },
+                 topicos: c.topicos.map(topico), items: c.items.map(desdeFila) },
       });
     } catch (e) {
       setEstado((s) => ({ ...s, cargando: false, error: e.message }));
@@ -50,7 +49,7 @@ function useComprasReal() {
   return {
     ...estado,
     recargar: cargar,
-    agregar: y(async (l, d) => llamar('compra_agregar', { p_pedido: l.id, ...(await datos(l.carpeta, d)) })),
+    agregar: y(async (t, d) => llamar('compra_agregar', { p_topico: t.slug, ...(await datos(t.carpeta, d)) })),
     corregir: y(async (item, d) => llamar('compra_corregir', { p_item: item.id, ...(await datos(item.carpeta, d, item)) })),
     revisar: y((id, accion, comentario) => llamar('compra_revisar', { p_item: id, p_accion: accion, p_comentario: comentario ?? null })),
     subirBoleta: y(async (id, file) => {
@@ -65,27 +64,26 @@ function useComprasReal() {
       const c = await subir(item.carpeta, file, BUCKET_COMPROBANTES);
       await llamar('compra_comprobante', { p_item: id, p_ruta: c.ruta, p_nombre: c.nombre });
     }),
-    cambiarLista: y((id, topico, abierto) => llamar('lista_compras_cambiar', { p_pedido: id, p_topico: topico, p_abierto: abierto })),
+    cambiarTopico: y((slug, activo) => llamar('topico_cambiar', { p_slug: slug, p_activo: activo })),
   };
 }
 
 // --- Modo demostración: mismo comportamiento, en memoria --------------------
 const local = (file) => (file ? { nombre: file.name, url: URL.createObjectURL(file) } : null);
-const compraDemo = (id, pedidoId, quien, que, monto, estado, esMia = false, extra = {}) => ({
-  id, pedidoId, quien, que, monto, estado, esMia, referencia: 'https://ejemplo.cl',
+const compraDemo = (id, topico, quien, que, monto, estado, esMia = false, extra = {}) => ({
+  id, topico, quien, que, monto, estado, esMia, referencia: '',
   cotizacion: { nombre: 'cotizacion.pdf' }, referenciaArchivo: null, boleta: null, comprobante: null, conComprobante: false, ...extra,
 });
 let demo = {
   veTodas: true, esHacienda: true, puedoVerComprobantes: true,
-  listas: [
-    { id: 'l1', nombre: 'Fiesta 20 años', topico: 'veinte_anos', abierto: true, token: 'demo-20' },
-    { id: 'l2', nombre: 'Compras generales', topico: 'general', abierto: true, token: 'demo-general' },
-    { id: 'l3', nombre: 'Fondo Las Condes', topico: 'fondo', abierto: true, token: 'demo-fondo' },
+  topicos: [
+    { slug: 'veinte_anos', nombre: 'Fiesta 20 años', activo: true, carpeta: 'demo', token: 'demo-20-anos' },
+    { slug: 'fondo', nombre: 'Fondo', activo: false, carpeta: null, token: 'demo-fondo' },
   ],
   items: [
-    compraDemo(1, 'l1', 'Pancho', 'Carne para el asado (25 kg)', 187500, 'aprobado'),
-    compraDemo(2, 'l2', 'Jugador de ejemplo', 'Conos y petos', 45000, 'pendiente', true),
-    compraDemo(3, 'l3', 'Lalo', 'Balones de entrenamiento', 120000, 'devuelto', false, { comentario: 'Falta una segunda cotización.' }),
+    compraDemo(1, 'veinte_anos', 'Pancho', 'Carne para el asado (25 kg)', 187500, 'aprobado'),
+    compraDemo(2, 'veinte_anos', 'Jugador de ejemplo', 'Conos y petos', 45000, 'pendiente', true),
+    compraDemo(3, 'veinte_anos', 'Lalo', 'Arriendo de parlantes', 90000, 'devuelto', false, { comentario: 'Falta una segunda cotización.' }),
   ],
 };
 
@@ -100,7 +98,7 @@ function useComprasDemo() {
   });
   return {
     cargando: false, error: '', datos: d, recargar: async () => {},
-    agregar: async (l, x) => guardar({ items: [{ ...compraDemo(Date.now(), l.id, 'Jugador de ejemplo', '', 0, 'pendiente', true), ...desde(x) }, ...demo.items] }),
+    agregar: async (t, x) => guardar({ items: [{ ...compraDemo(Date.now(), t.slug, 'Jugador de ejemplo', '', 0, 'pendiente', true), ...desde(x) }, ...demo.items] }),
     corregir: async (item, x) => cambiar(item.id, { ...desde(x, item), estado: 'pendiente', comentario: undefined }),
     revisar: async (id, accion, comentario) =>
       cambiar(id, { estado: { aprobar: 'aprobado', devolver: 'devuelto', entregar: 'entregado' }[accion], comentario }),
@@ -111,7 +109,7 @@ function useComprasDemo() {
       const actual = demo.items.find((i) => i.id === id).estado;
       cambiar(id, { estado: actual === 'aprobado' ? 'entregado' : actual, comprobante: local(file), conComprobante: true });
     },
-    cambiarLista: async (id, topico, abierto) => guardar({ listas: demo.listas.map((l) => (l.id === id ? { ...l, topico, abierto } : l)) }),
+    cambiarTopico: async (slug, activo) => guardar({ topicos: demo.topicos.map((t) => (t.slug === slug ? { ...t, activo } : t)) }),
   };
 }
 

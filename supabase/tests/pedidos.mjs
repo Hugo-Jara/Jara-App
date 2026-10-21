@@ -200,7 +200,7 @@ console.log('\nComprobantes privados (0017)');
 await db.exec(`
   create schema storage;
   create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
-  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text);
+  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, metadata jsonb);
   alter table storage.objects enable row level security;
   create function storage.foldername(name text) returns text[] language sql immutable as $$
     select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
@@ -405,6 +405,259 @@ r = await como('hacienda', `select lista_compras_cambiar($1, 'general', true)`, 
 ok('Y la puede volver a abrir', !r.error && !(await pedirApp('socio', 'Conos nuevos')).error, r.error);
 r = await como('socio', `select count(*) from pedido_items`);
 ok('Las tablas de compras siguen sin leerse directamente', /permission denied/.test(r.error ?? ''), r.error);
+
+// ---------------------------------------------------------------------------
+console.log('\nCompras por tópico (0020)');
+let x;
+const falla = async (sql, params = []) => { try { await db.query(sql, params); return null; } catch (e) { return e.message; } };
+const obj = (nombre, mime = 'application/pdf', size = 1000, bucket = 'pedidos') =>
+  db.query(`insert into storage.objects (bucket_id, name, metadata) values ($1, $2, $3::jsonb)`,
+           [bucket, nombre, JSON.stringify({ mimetype: mime, size })]);
+const conteo = async (tabla) => (await db.query(`select count(*)::int n from ${tabla}`)).rows[0].n;
+const antes = { pedidos: await conteo('pedidos'), items: await conteo('pedido_items') };
+
+// Una base nueva con todo hasta la 0019, para probar que la 0020 no elige entre dos listas.
+async function baseHasta0019() {
+  const d = new PGlite();
+  await d.exec(`
+    create role anon nologin; create role authenticated nologin;
+    create schema auth; create table auth.users (id uuid primary key, email text);
+    create function auth.uid() returns uuid language sql stable as $$ select null::uuid $$;
+    create function auth.jwt() returns jsonb language sql stable as $$ select '{}'::jsonb $$;
+    grant usage on schema auth, public to anon, authenticated;
+    create schema storage;
+    create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
+    create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text, metadata jsonb);
+    alter table storage.objects enable row level security;
+    create function storage.foldername(name text) returns text[] language sql immutable as $$
+      select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
+    grant usage on schema storage to anon, authenticated;
+    grant select, insert on storage.objects to anon, authenticated;
+  `);
+  for (const f of ['0001_base.sql', '0002_cotizaciones.sql', '0004_funciones_de_trigger_privadas.sql', '0005_pedidos_de_compra.sql',
+                   '0007_comprobante_de_transferencia.sql', '0008_hacienda_edita_y_elimina.sql', '0017_comprobantes_privados.sql',
+                   '0019_compras_en_la_app.sql']) await d.exec(mig(f));
+  await d.exec(`insert into clubes (id, nombre, slug) values ('${CLUB}', 'Hugo Jara', 'hugo-jara')`);
+  return d;
+}
+let otra = await baseHasta0019();
+await otra.exec(`update pedidos set abierto = false`);
+await otra.exec(`insert into pedidos (club_id, nombre, topico) values ('${CLUB}', 'Fiesta 20 años', 'veinte_anos'), ('${CLUB}', 'Fiesta 20 años', 'veinte_anos')`);
+r = await otra.exec(mig('0020_compras_por_topico.sql')).then(() => ({ error: null }), (e) => ({ error: e.message }));
+ok('Si hay dos listas abiertas del mismo tópico, la migración falla en vez de elegir una', /duplicate key|unique/i.test(r.error ?? ''), r.error);
+r = await otra.query(`select count(*)::int n from information_schema.tables where table_name = 'topicos'`);
+ok('…y no deja nada a medias', r.rows[0].n === 0);
+otra = await baseHasta0019();
+await otra.exec(mig('0020_compras_por_topico.sql'));
+r = await otra.query(`select count(*)::int n from pedidos where abierto and topico = 'veinte_anos'`);
+ok('En una base sin listas, la migración crea la lista abierta del tópico activo', r.rows[0].n === 1);
+
+await db.exec(mig('0020_compras_por_topico.sql'));
+
+// Tópicos y listas
+r = await db.query(`select slug, activo, length(token_envio) as largo from topicos order by slug`);
+ok('Queda un solo tópico activo (Fiesta 20 años); General y Fondo, inactivos',
+   JSON.stringify(r.rows.map((x) => [x.slug, x.activo])) === JSON.stringify([['fondo', false], ['general', false], ['veinte_anos', true]]), JSON.stringify(r.rows));
+ok('Los códigos del link público son largos y distintos', r.rows.every((x) => x.largo === 64)
+   && (await db.query(`select count(distinct token_envio)::int n from topicos`)).rows[0].n === 3);
+r = await db.query(`select nombre, abierto, archivado from pedidos`);
+ok('Se archivan todas las listas menos las de "Fiesta 20 años"',
+   r.rows.some((x) => x.archivado) && r.rows.filter((x) => !x.archivado).every((x) => x.nombre === 'Fiesta 20 años')
+   && r.rows.filter((x) => x.archivado).every((x) => !x.abierto), JSON.stringify(r.rows));
+ok('…y no se borra ninguna lista ni compra', (await conteo('pedidos')) === antes.pedidos && (await conteo('pedido_items')) === antes.items);
+const abiertas = async (slug) => (await db.query(`select count(*)::int n from pedidos where abierto and topico = $1`, [slug])).rows[0].n;
+ok('Hay una lista abierta por cada tópico activo y ninguna de los inactivos',
+   (await abiertas('veinte_anos')) === 1 && (await abiertas('general')) === 0 && (await abiertas('fondo')) === 0);
+x = await falla(`insert into pedidos (club_id, nombre, topico) values ($1, 'Otra lista', 'veinte_anos')`, [CLUB]);
+ok('La base no deja abrir una segunda lista del mismo tópico', /duplicate key|unique/i.test(x ?? ''), x);
+x = await falla(`insert into pedidos (club_id, nombre, topico) values ($1, 'Rara', 'inventado')`, [CLUB]);
+ok('Ni una lista de un tópico que no existe', /foreign key|violates/i.test(x ?? ''), x);
+r = await anon(`select count(*) from topicos`);
+ok('Los tópicos no se leen directamente', /permission denied/.test(r.error ?? ''), r.error);
+
+const tok = Object.fromEntries((await db.query(`select slug, token_envio from topicos`)).rows.map((x) => [x.slug, x.token_envio]));
+const publico = (t) => anon(`select topico_publico($1) as p`, [t]);
+r = await publico(tok.veinte_anos);
+const pubVeinte = r.rows[0]?.p;
+const carpetaV = pubVeinte?.carpeta;
+ok('El link público abre el formulario del tópico: solo su nombre y la carpeta para subir',
+   pubVeinte?.nombre === 'Fiesta 20 años' && !!carpetaV && Object.keys(pubVeinte).sort().join() === 'carpeta,nombre', JSON.stringify(pubVeinte));
+const codigos = (await db.query(`select token, token_hacienda from pedidos`)).rows.flatMap((x) => [x.token, x.token_hacienda]);
+ok('…sin compras ni códigos de ninguna lista', !codigos.some((c) => JSON.stringify(pubVeinte).includes(c)));
+r = await publico('inventado');
+ok('Un código inventado no abre nada', /no es válido/.test(r.error ?? ''), r.error);
+r = await publico(tok.general);
+ok('El link de un tópico inactivo no recibe solicitudes', /ya no recibe/.test(r.error ?? ''), r.error);
+r = await anon(`select pedido_ver($1)`, [tok.veinte_anos]);
+ok('El código del link público no sirve para leer un pedido', /no es válido/.test(r.error ?? ''), r.error);
+
+// Enviar sin cuenta
+const enviar = (t, o = {}) => anon(`select topico_enviar($1, $2, $3, $4, $5, 'cot.pdf', $6, $7, $8)`,
+  [t, o.quien ?? 'Visita Prueba', o.que ?? 'Cinta y bolsas', o.monto ?? 12000,
+   o.cot !== undefined ? o.cot : `${carpetaV}/cot.pdf`, o.ref ?? null, o.refRuta ?? null, o.refRuta ? 'ref.pdf' : null]);
+await obj(`${carpetaV}/cot.pdf`);
+r = await enviar(tok.veinte_anos);
+ok('Sin cuenta se envía una solicitud, con la referencia vacía', !r.error, r.error);
+ok('…y no devuelve nada: quien envía no ve su solicitud', [null, ''].includes(r.rows[0]?.topico_enviar), JSON.stringify(r.rows));
+const nueva = (await compras('hacienda')).items.find((i) => i.que === 'Cinta y bolsas');
+ok('Hacienda la ve en el tópico, pendiente y sin cuenta de por medio',
+   nueva?.quien === 'Visita Prueba' && nueva.topico === 'veinte_anos' && nueva.estado === 'pendiente' && nueva.es_mia === false, JSON.stringify(nueva));
+ok('Un socio no la ve', !(await compras('socio')).items.some((i) => i.que === 'Cinta y bolsas'));
+r = await db.query(`select persona_id from pedido_items where que = 'Cinta y bolsas'`);
+ok('Queda sin persona: se pidió sin cuenta', r.rows[0]?.persona_id === null);
+
+// Lo que el link público no puede hacer
+r = await enviar('inventado');
+ok('Con un código inventado no se envía', /no es válido/.test(r.error ?? ''), r.error);
+r = await enviar(tok.general);
+ok('No se envía a un tópico inactivo', /ya no recibe/.test(r.error ?? ''), r.error);
+r = await enviar(tok.fondo);
+ok('…ni a Fondo, que todavía no está activo', /ya no recibe/.test(r.error ?? ''), r.error);
+await obj('carpeta2/de-otra-lista.pdf');
+r = await enviar(tok.veinte_anos, { cot: 'carpeta2/de-otra-lista.pdf' });
+ok('No se acepta un archivo guardado en otra lista', /Falta adjuntar la cotización/.test(r.error ?? ''), r.error);
+r = await enviar(tok.veinte_anos, { cot: null });
+ok('La cotización es obligatoria', /Falta adjuntar la cotización/.test(r.error ?? ''), r.error);
+r = await enviar(tok.veinte_anos, { cot: `${carpetaV}/no-subida.pdf` });
+ok('…y el archivo tiene que estar de verdad subido', /Falta adjuntar la cotización/.test(r.error ?? ''), r.error);
+for (const fn of ['pedido_agregar', 'pedido_corregir', 'pedido_boleta', 'pedido_revisar']) {
+  const args = { pedido_agregar: `'x', 'Visita', 'Cosa', 1000, '${carpetaV}/cot.pdf', 'c.pdf'`,
+                 pedido_corregir: `'x', '${nueva.id}', 'Visita', 'Cosa', 1000, '${carpetaV}/cot.pdf', 'c.pdf'`,
+                 pedido_boleta: `'x', '${nueva.id}', '${carpetaV}/b.pdf', 'b.pdf'`, pedido_revisar: `'x', '${nueva.id}', 'aprobar'` }[fn];
+  r = await anon(`select ${fn}(${args})`);
+  ok(`${fn} con un código inventado se rechaza`, /no es válido|Solo Hacienda/.test(r.error ?? ''), r.error);
+}
+r = await anon(`select count(*) from pedido_items`);
+ok('Las tablas de compras siguen cerradas', /permission denied/.test(r.error ?? ''), r.error);
+
+// Límites
+const largo = (n) => 'a'.repeat(n);
+r = await enviar(tok.veinte_anos, { quien: largo(81) });
+ok('Un nombre de más de 80 letras se rechaza', /nombre es demasiado largo/.test(r.error ?? ''), r.error);
+r = await enviar(tok.veinte_anos, { quien: '   ' });
+ok('…y sin nombre tampoco', /Falta tu nombre/.test(r.error ?? ''), r.error);
+r = await enviar(tok.veinte_anos, { quien: largo(80), que: largo(200), ref: largo(300) });
+ok('80, 200 y 300 letras justas se aceptan', !r.error, r.error);
+r = await enviar(tok.veinte_anos, { que: largo(201) });
+ok('Qué: más de 200 letras se rechaza', /descripción es demasiado larga/.test(r.error ?? ''), r.error);
+r = await enviar(tok.veinte_anos, { ref: largo(301) });
+ok('Referencia: más de 300 letras se rechaza', /referencia es demasiado larga/.test(r.error ?? ''), r.error);
+r = await enviar(tok.veinte_anos, { monto: 5000001 });
+ok('Un monto sobre $5.000.000 se rechaza', /demasiado alto/.test(r.error ?? ''), r.error);
+r = await enviar(tok.veinte_anos, { monto: 5000000 });
+ok('…y $5.000.000 justos se acepta', !r.error, r.error);
+for (const m of [0, -5]) {
+  r = await enviar(tok.veinte_anos, { monto: m });
+  ok(`Un monto de ${m} se rechaza`, /mayor que cero/.test(r.error ?? ''), r.error);
+}
+const subida = async (nombre, mime, size) => { await obj(`${carpetaV}/${nombre}`, mime, size); return `${carpetaV}/${nombre}`; };
+for (const [nombre, mime, size] of [['a.zip', 'application/zip', 1000], ['a.html', 'text/html', 1000], ['a.exe', 'application/x-msdownload', 1000],
+                                   ['a.svg', 'image/svg+xml', 1000], ['a.gif', 'image/gif', 1000]]) {
+  r = await enviar(tok.veinte_anos, { cot: await subida(nombre, mime, size) });
+  ok(`Una cotización ${mime} se rechaza: solo PDF y fotos`, /PDF o una foto/.test(r.error ?? ''), r.error);
+}
+r = await enviar(tok.veinte_anos, { cot: await subida('grande.pdf', 'application/pdf', 10485761) });
+ok('Una cotización de más de 10 MB se rechaza', /10 MB/.test(r.error ?? ''), r.error);
+r = await enviar(tok.veinte_anos, { cot: await subida('vacio.pdf', 'application/pdf', 0) });
+ok('…y un archivo vacío también', /PDF o una foto/.test(r.error ?? ''), r.error);
+for (const [nombre, mime, size] of [['justo.pdf', 'application/pdf', 10485760], ['foto.jpg', 'image/jpeg', 2000], ['foto.png', 'image/png', 2000],
+                                   ['foto.webp', 'image/webp', 2000], ['foto.heic', 'image/heic', 2000]]) {
+  r = await enviar(tok.veinte_anos, { cot: await subida(nombre, mime, size) });
+  ok(`Una cotización ${mime} de ${size} bytes se acepta`, !r.error, r.error);
+}
+r = await enviar(tok.veinte_anos, { refRuta: await subida('ref.zip', 'application/zip', 1000) });
+ok('El archivo de referencia tiene los mismos límites', /archivo de referencia tiene que ser/.test(r.error ?? ''), r.error);
+r = await enviar(tok.veinte_anos, { refRuta: await subida('ref.png', 'image/png', 1000) });
+ok('…y con una foto se acepta', !r.error, r.error);
+
+// Los links viejos por lista
+r = await anon(`select pedido_ver('tok-otro')`);
+ok('El link viejo de pedir ya no deja leer la lista', /ya no recibe solicitudes/.test(r.error ?? ''), r.error);
+r = await anon(`select pedido_ver('tok-pedir')`);
+ok('…en ninguna de las listas', /ya no recibe solicitudes/.test(r.error ?? ''), r.error);
+r = await agregar('tok-otro', 'Visita', 'Agua', 5000, 'carpeta2/cot.pdf', 'https://x.cl', null);
+ok('…ni deja pedir', /ya no recibe solicitudes/.test(r.error ?? ''), r.error);
+r = await anon(`select pedido_corregir('tok-otro', $1, 'Visita', 'Agua', 5000, 'carpeta2/cot.pdf', 'c.pdf')`, [agua]);
+ok('…ni corregir', /ya no recibe solicitudes/.test(r.error ?? ''), r.error);
+r = await anon(`select pedido_boleta('tok-otro', $1, 'carpeta2/b.pdf', 'b.pdf')`, [agua]);
+ok('…ni subir una boleta', /ya no recibe solicitudes/.test(r.error ?? ''), r.error);
+p = await ver('tok-otro-h');
+ok('El link de Hacienda sigue funcionando igual', p?.es_hacienda === true && p.items.some((i) => i.id === pelotas), JSON.stringify(p));
+r = await revisar('tok-otro-h', agua, 'devolver', 'Falta el detalle');
+ok('…y Hacienda sigue revisando con su link', !r.error && (await item('tok-otro-h', agua)).estado === 'devuelto', r.error);
+r = await anon(`select pedido_editar('tok-otro-h', $1, 'Visita', 'Agua con gas', 6000)`, [agua]);
+ok('…y editando', !r.error, r.error);
+
+// La app con cuenta
+r = await anon(`select compras_ver()`);
+ok('Sin cuenta no se llama a compras_ver', /permission denied/.test(r.error ?? ''), r.error);
+r = await anon(`select compra_agregar('veinte_anos', 'x', 1000, 'a/b.pdf', 'b.pdf')`);
+ok('…ni a compra_agregar', /permission denied/.test(r.error ?? ''), r.error);
+r = await anon(`select topico_cambiar('veinte_anos', false)`);
+ok('…ni a topico_cambiar', /permission denied/.test(r.error ?? ''), r.error);
+let cv = await compras('socio');
+ok('Un socio ve solo el tópico activo, sin el código del link y sin listas',
+   cv.topicos.length === 1 && cv.topicos[0].slug === 'veinte_anos' && !cv.topicos[0].token_envio && cv.topicos[0].carpeta === carpetaV && !('listas' in cv), JSON.stringify(cv.topicos));
+ok('…y las compras de las listas archivadas ya no le aparecen', !cv.items.some((i) => i.que === 'Pelotas n° 5' || i.que === 'Pelotas'));
+cv = await compras('hacienda');
+ok('Hacienda ve los tres tópicos, con el código del link público',
+   cv.topicos.length === 3 && cv.topicos.find((t) => t.slug === 'veinte_anos').token_envio === tok.veinte_anos
+   && cv.topicos.find((t) => t.slug === 'general').carpeta === null, JSON.stringify(cv.topicos));
+ok('…y tampoco ve las compras de las listas archivadas', !cv.items.some((i) => i.que === 'Pelotas n° 5'));
+cv = await compras('vecompras');
+ok('Quien ve todas pero no es Hacienda no recibe el código', cv.topicos.every((t) => !t.token_envio) && cv.topicos.length === 1);
+ok('Un tesorero de plantel tampoco', (await compras('teso')).topicos.every((t) => !t.token_envio));
+
+const pedirTopico = (quien, topico, o = {}) => como(quien,
+  `select compra_agregar($1, $2, $3, $4, 'cot.pdf', $5) as id`, [topico, o.que ?? 'Petos nuevos', o.monto ?? 15000, `${carpetaV}/cot.pdf`, o.ref ?? null]);
+r = await pedirTopico('socio', 'veinte_anos');
+const petos = r.rows[0]?.id;
+ok('Un socio pide una compra en el tópico, sin referencia', !!petos, r.error);
+cv = await compras('socio');
+ok('Queda a su nombre y es lo único que ve', cv.items.length === 1 && cv.items[0].id === petos && cv.items[0].es_mia && cv.items[0].quien === 'Socio Prueba' && cv.items[0].topico === 'veinte_anos', JSON.stringify(cv.items));
+r = await pedirTopico('socio', 'general');
+ok('No se pide en un tópico inactivo', /no recibe solicitudes/.test(r.error ?? ''), r.error);
+r = await pedirTopico('socio', 'inventado');
+ok('…ni en uno que no existe', /no recibe solicitudes/.test(r.error ?? ''), r.error);
+r = await pedirTopico('socio', 'veinte_anos', { monto: 5000001 });
+ok('Los límites valen también en la app', /demasiado alto/.test(r.error ?? ''), r.error);
+r = await pedirTopico('socio', 'veinte_anos', { que: largo(201) });
+ok('…y en los textos', /descripción es demasiado larga/.test(r.error ?? ''), r.error);
+r = await como('hacienda', `select compra_revisar($1, 'aprobar')`, [petos]);
+ok('Hacienda sigue aprobando desde la app', !r.error, r.error);
+r = await como('socio', `select compra_corregir($1, 'Petos', 15000, $2, 'c.pdf')`, [petos, `${carpetaV}/cot.pdf`]);
+ok('Una compra aprobada no se corrige', /Solo se puede corregir/.test(r.error ?? ''), r.error);
+
+// Hacienda cierra y reabre un tópico
+r = await como('socio', `select topico_cambiar('veinte_anos', false)`);
+ok('Un socio no cierra un tópico', /Solo Hacienda/.test(r.error ?? ''), r.error);
+r = await como('vecompras', `select topico_cambiar('veinte_anos', false)`);
+ok('Quien solo ve todas tampoco', /Solo Hacienda/.test(r.error ?? ''), r.error);
+r = await como('hacienda', `select topico_cambiar('inventado', true)`);
+ok('No se cambia un tópico que no existe', /no existe/.test(r.error ?? ''), r.error);
+r = await como('hacienda', `select topico_cambiar('veinte_anos', false)`);
+ok('Hacienda cierra el tópico', !r.error, r.error);
+r = await enviar(tok.veinte_anos);
+ok('…y el link público deja de recibir', /ya no recibe/.test(r.error ?? ''), r.error);
+r = await pedirTopico('socio', 'veinte_anos');
+ok('…y la app también', /no recibe solicitudes/.test(r.error ?? ''), r.error);
+ok('…y el socio ya no lo ve entre los tópicos, pero conserva su compra',
+   (await compras('socio')).topicos.length === 0 && (await compras('socio')).items.some((i) => i.id === petos));
+r = await como('hacienda', `select topico_cambiar('veinte_anos', true)`);
+r = await enviar(tok.veinte_anos);
+ok('Al reabrirlo vuelve a recibir, en la misma lista', !r.error && (await abiertas('veinte_anos')) === 1, r.error);
+r = await como('hacienda', `select topico_cambiar('general', true)`);
+ok('Al activar un tópico sin lista abierta se crea la suya', !r.error && (await abiertas('general')) === 1, r.error);
+r = await publico(tok.general);
+ok('…y su link público funciona', !r.error && r.rows[0].p.nombre === 'General', r.error);
+await como('hacienda', `select topico_cambiar('general', false)`);
+await como('hacienda', `select topico_cambiar('general', true)`);
+ok('Cerrarlo y reabrirlo no duplica la lista', (await abiertas('general')) === 1);
+await como('hacienda', `select topico_cambiar('general', false)`);
+await db.query(`insert into topicos (club_id, slug, nombre) values ($1, 'proyectos', 'Proyectos')`, [CLUB]);
+ok('Agregar un tópico nuevo es insertar una fila: su lista abierta se crea sola', (await abiertas('proyectos')) === 1);
+r = await como('socio', `select count(*) from topicos`);
+ok('Los tópicos siguen sin leerse directamente con cuenta', /permission denied/.test(r.error ?? ''), r.error);
 
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

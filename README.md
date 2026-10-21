@@ -37,6 +37,7 @@ Las migraciones están en `supabase/migrations/` y se aplican en orden:
 | `0017_comprobantes_privados.sql` | Los comprobantes de transferencia van a un bucket privado; los ven con su cuenta administradores, Hacienda, tesoreros y quien tenga `ve_comprobantes` |
 | `0018_seguridad_antes_de_sumar_gente.sql` | Seguridad antes de sumar gente: las listas de entrenamiento las administran solo los administradores y quien tiene `administra_entrenamientos`; quien aprueba un ingreso suma a la persona solo a sus planteles; las tablas de 0001 y 0002 se cierran a la lectura y escritura directa; la búsqueda en la nómina va por comienzo de palabra, con máximo 5 resultados y 30 búsquedas por hora; y un invitado no se anota dos veces |
 | `0019_compras_en_la_app.sql` | Compras dentro de la app: tópico por lista (Fondo, 20 años, General), compras a nombre de la cuenta, permiso `ve_compras` para ver todas, y Hacienda revisa, entrega, edita, elimina y corrige listas desde la app; el link sin cuenta sigue igual |
+| `0020_compras_por_topico.sql` | Compras por tópico en vez de por lista: tabla `topicos`, una sola lista abierta por tópico (asegurada con un índice único), link público por tópico solo para enviar solicitudes sin cuenta, links viejos por lista cerrados (el de Hacienda sigue), y límites de largo, monto y archivo al crear una compra |
 
 `npm run test:db` y `npm run test:pedidos` aplican las migraciones en un Postgres en memoria y prueban los permisos, el flujo de cotizaciones, el ingreso por nombre, los partidos, los entrenamientos y los pedidos por link.
 
