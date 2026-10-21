@@ -4,6 +4,33 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-10-21 · Fase 4 — Tablero de tesoreros (demo)
+
+**Qué se hizo** (solo frontend, **sin migración** y sin tocar `sesion.jsx` ni permisos):
+- Ruta `/tablero` y entrada "Tablero de tesorería" en Más, visible solo para quien tiene rol de tesorero de plantel o es Hacienda (`apruebaCompras`, que incluye al administrador). Los demás son redirigidos al inicio. Es un guard de pantalla: como los datos son inventados no hay nada que proteger en la base. **En la Fase 5, el permiso real tiene que venir de la base.**
+- **Tesorero de plantel:** ve solo su plantel (con selector si es tesorero de más de uno). **Hacienda:** pestaña Consolidado (total, aporte entregado y pendiente por plantel) y una por plantel, más Entrenamiento como línea aparte de solo lectura, sin aporte por jugador.
+- **Cada plantel muestra:** plata disponible, por recaudar, ingresos y egresos de la temporada 2026 acumulada hasta octubre, grilla de cuotas mensuales por jugador (marzo a diciembre) con "al día" o "debe N meses", movimientos de octubre, y aporte al club (corresponde, entregado y falta entregar).
+- Etiqueta fija "Datos de ejemplo" en todo el tablero.
+- **Datos separados de la presentación:**
+  - `src/lib/tableroDemo.js`: datos inventados (jugadores genéricos "Jugador 01", etc.). Cuotas mensuales de $50.000 (Senior Sábado) y $35.000 (Senior Jueves y Junior Sábado); aporte de $4.000 por jugador al mes (inventado).
+  - `src/lib/tablero.js`: la forma de los datos (documentada arriba del archivo), los cálculos (por recaudar y estado del jugador salen de la grilla de cuotas) y `useTablero()`.
+  - `src/components/tablero/`: componentes que solo reciben datos ya calculados.
+- **Conexión a datos reales (Fase 5):** cambiar el cuerpo de `useTablero()` por una llamada con `llamar()` que devuelva la misma forma; las pantallas y los componentes no cambian.
+- Solo en modo demostración, `/tablero?como=senior-jueves` (o `senior-sabado`, `junior-sabado`) muestra la vista de un tesorero.
+
+**Supuestos a confirmar:**
+- Los planteles se reconocen por el nombre del equipo en la base ("Senior Sábado", "Senior Jueves", "Junior Sábado"). Si el nombre cambia, el tesorero no verá su tablero.
+- El aporte por jugador ($4.000 al mes) es inventado: la regla real se define en la reunión.
+- El Fondo de Las Condes no está en este tablero; sigue en `/fondo`.
+
+**Manual, del administrador de la app:** crear las cuentas de los tesoreros con su rol de tesorero en el plantel que corresponde, y probar con cada una.
+
+**Comprobado:** `npm run build`, `npm run test:db` (174 pruebas) y `npm run test:pedidos` (215 pruebas) pasan. Revisado a 375 px de ancho, sin scroll horizontal.
+
+Siguiente: hito 28/10 (reunión con los tesoreros) y después Fase 5.
+
+---
+
 ## 2026-10-21 · Compras 1b — Compras por tópico
 
 **Qué se hizo** (migración `0020_compras_por_topico.sql`, que el administrador de la app y Hacienda revisan y corren en Supabase antes del merge):
