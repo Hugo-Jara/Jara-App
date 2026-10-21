@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { usePedido, totales, pesos, ESTADOS, enlaceComprobante } from '../lib/pedido.js';
-import { esDemo } from '../lib/supabase.js';
+import { esDemo, SIN_CONEXION } from '../lib/supabase.js';
 import { ESCUDO, BASE } from '../lib/base.js';
 
 const esLink = (texto) => /^https?:\/\//i.test(texto.trim());
@@ -63,7 +63,7 @@ function BotonArchivo({ className, disabled, onArchivo, children }) {
 }
 
 // Sirve para agregar una compra y para corregir una devuelta (`inicial`).
-function Formulario({ inicial, onGuardar, onCancelar }) {
+export function Formulario({ inicial, onGuardar, onCancelar, conNombre = true }) {
   const [d, setD] = useState({
     quien: inicial?.quien ?? nombreRecordado(), que: inicial?.que ?? '',
     monto: inicial?.monto ?? '', referencia: inicial?.referencia ?? '',
@@ -84,7 +84,7 @@ function Formulario({ inicial, onGuardar, onCancelar }) {
     }
     setError(''); setGuardando(true);
     try {
-      recordarNombre(d.quien.trim());
+      if (conNombre) recordarNombre(d.quien.trim());
       await onGuardar({
         quien: d.quien.trim(), que: d.que.trim(), monto, referencia: d.referencia.trim(),
         cotizacionArchivo: cotizacion, referenciaArchivo: refArchivo,
@@ -98,8 +98,12 @@ function Formulario({ inicial, onGuardar, onCancelar }) {
   return (
     <form className="card" onSubmit={enviar}>
       <div className="sobretitulo">{inicial ? 'Corregir compra' : 'Nueva compra'}</div>
-      <label htmlFor="quien">Tu nombre</label>
-      <input id="quien" required value={d.quien} onChange={set('quien')} autoComplete="name" />
+      {conNombre && (
+        <>
+          <label htmlFor="quien">Tu nombre</label>
+          <input id="quien" required value={d.quien} onChange={set('quien')} autoComplete="name" />
+        </>
+      )}
       <label htmlFor="que">Qué quieres comprar</label>
       <input id="que" required value={d.que} onChange={set('que')} placeholder="Ej.: carne para el asado, 25 kg" />
       <label htmlFor="monto">Cuánto sale (en pesos)</label>
@@ -171,7 +175,9 @@ function Edicion({ item, onGuardar, onCancelar }) {
   );
 }
 
-function Item({ item, hacienda, puedoVerComprobantes, acciones }) {
+// `propia`: quien mira pidió esta compra y puede corregirla o subir la boleta.
+// Con el link es todo el que no es Hacienda; en la app, quien la pidió con su cuenta.
+export function Item({ item, hacienda, puedoVerComprobantes, acciones, propia = !hacienda, detalle, conNombre = true }) {
   const [comentario, setComentario] = useState('');
   const [modo, setModo] = useState(null); // 'devolver' | 'corregir' | 'editar' | 'eliminar'
   const [error, setError] = useState('');
@@ -186,7 +192,7 @@ function Item({ item, hacienda, puedoVerComprobantes, acciones }) {
   if (modo === 'corregir') {
     return (
       <li className="item">
-        <Formulario inicial={item} onCancelar={() => setModo(null)}
+        <Formulario inicial={item} conNombre={conNombre} onCancelar={() => setModo(null)}
                     onGuardar={async (d) => { await acciones.corregir(item, d); setModo(null); }} />
       </li>
     );
@@ -207,7 +213,7 @@ function Item({ item, hacienda, puedoVerComprobantes, acciones }) {
         <span className="item-monto">{pesos(item.monto)}</span>
       </div>
       <div className="item-meta">
-        {item.quien} · <span className={`estado ${item.estado}`}>{ESTADOS[item.estado]}</span>
+        {item.quien} · <span className={`estado ${item.estado}`}>{ESTADOS[item.estado]}</span>{detalle ? ` · ${detalle}` : ''}
       </div>
       {item.comentario && item.estado === 'devuelto' && <p className="item-comentario">{item.comentario}</p>}
       <div className="item-links">
@@ -284,12 +290,12 @@ function Item({ item, hacienda, puedoVerComprobantes, acciones }) {
           </div>
         </div>
       )}
-      {!hacienda && item.estado === 'devuelto' && (
+      {propia && item.estado === 'devuelto' && (
         <div className="botones chicos">
           <button className="btn chico" onClick={() => setModo('corregir')}>Corregir y reenviar</button>
         </div>
       )}
-      {!hacienda && item.estado === 'entregado' && (
+      {propia && item.estado === 'entregado' && (
         <label className="foto-agregar boleta">
           {ocupado ? 'Subiendo…' : 'Subir boleta'}
           <input type="file" accept="image/*,application/pdf" hidden disabled={ocupado}
@@ -304,10 +310,21 @@ function Item({ item, hacienda, puedoVerComprobantes, acciones }) {
 export default function Pedido() {
   const token = useLocation().pathname.split('/')[2] || '';
   const [haciendaDemo, setHaciendaDemo] = useState(false);
-  const { cargando, error, pedido, ...acciones } = usePedido(token, haciendaDemo);
+  const { cargando, error, pedido, recargar, ...acciones } = usePedido(token, haciendaDemo);
   const [agregando, setAgregando] = useState(false);
+  const [reintentando, setReintentando] = useState(false);
+  const reintentar = async () => { setReintentando(true); await recargar(); setReintentando(false); };
 
   if (cargando) return <div className="cargando">Cargando…</div>;
+  // Sin señal el link puede estar bien: solo se pide revisar la señal.
+  if (!pedido && error === SIN_CONEXION) {
+    return (
+      <div className="pagina suelta">
+        <p className="vacio" role="alert">No pudimos conectar con el club. Revisa tu señal.</p>
+        <button className="btn" disabled={reintentando} onClick={reintentar}>{reintentando ? 'Reintentando…' : 'Reintentar'}</button>
+      </div>
+    );
+  }
   if (!pedido) {
     return (
       <div className="pagina suelta">

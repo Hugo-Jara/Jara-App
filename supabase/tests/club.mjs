@@ -2,7 +2,7 @@
 // Postgres en memoria (PGlite), simulando las cuentas de Supabase.
 //   npm run test:club
 import { PGlite } from '@electric-sql/pglite';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -25,12 +25,23 @@ await db.exec(`
     select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb $$;
   grant usage on schema auth, public to anon, authenticated;
 `);
-for (const f of ['0001_base.sql', '0002_cotizaciones.sql', '0004_funciones_de_trigger_privadas.sql',
-                 '0009_ingreso_por_nombre.sql', '0010_partidos.sql', '0011_entrenamientos.sql', '0012_resultado_y_estadisticas.sql',
-                 '0013_administra_entrenamientos.sql', '0014_hora_de_inicio.sql', '0015_pagos_de_entrenamiento.sql',
-                 '0016_multa_desde_las_cinco.sql', '0018_seguridad_antes_de_sumar_gente.sql']) {
+// Storage de Supabase simulado, para poder aplicar todas las migraciones en orden.
+await db.exec(`
+  create schema storage;
+  create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
+  create table storage.objects (id uuid primary key default gen_random_uuid(), bucket_id text, name text);
+  alter table storage.objects enable row level security;
+  create function storage.foldername(name text) returns text[] language sql immutable as $$
+    select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
+  grant usage on schema storage to anon, authenticated;
+  grant select, insert on storage.objects to anon, authenticated;
+`);
+for (const f of readdirSync(join(here, '..', 'migrations')).filter((f) => f.endsWith('.sql')).sort()) {
   await db.exec(mig(f));
 }
+const r0 = await db.query(`select count(*)::int n from pg_policies where schemaname = 'storage' and tablename = 'objects' and policyname like '%solicitudes visibles'`);
+console.log('Migraciones 0001 a la última, aplicadas en orden');
+ok('La 0018 quitó las reglas de Storage del bucket compras', r0.rows[0].n === 0, JSON.stringify(r0.rows));
 // En las pruebas la hora de Chile se fija a mano (por omisión, mediodía de hoy).
 await db.exec(`create or replace function public.ahora_chile() returns timestamp language sql stable as $$
   select public.hoy() + coalesce(nullif(current_setting('prueba.hora', true), ''), '12:00')::time $$;`);

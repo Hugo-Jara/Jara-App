@@ -272,5 +272,139 @@ ok('Un tesorero con su cuenta recibe la ruta, aun con el link de pedir', deConos
 p = await ver('tok-otro-h');
 ok('Con el link de Hacienda y sin cuenta llega la ruta, pero la app sabe que no puede abrirla', deConos(p).comprobante_ruta === 'carpeta2/c1.jpg' && p.puedo_ver_comprobantes === false);
 
+// ---------------------------------------------------------------------------
+console.log('\nCompras en la app (0019)');
+Object.assign(U, { hacienda: '00000000-0000-0000-0000-0000000000b1', socio: '00000000-0000-0000-0000-0000000000b2',
+                   socio2: '00000000-0000-0000-0000-0000000000b3', vecompras: '00000000-0000-0000-0000-0000000000b4' });
+const PER = { teso: '20000000-0000-0000-0000-0000000000a2', presi: '20000000-0000-0000-0000-0000000000a3',
+              hacienda: '20000000-0000-0000-0000-0000000000b1', socio: '20000000-0000-0000-0000-0000000000b2',
+              socio2: '20000000-0000-0000-0000-0000000000b3', vecompras: '20000000-0000-0000-0000-0000000000b4' };
+await db.exec(`
+  insert into auth.users (id, email) values ${['hacienda', 'socio', 'socio2', 'vecompras'].map((k) => `('${U[k]}', '${k}@correo.cl')`).join(', ')};
+  insert into personas (id, club_id, nombre, user_id) values
+    ('${PER.hacienda}', '${CLUB}', 'Hacienda Prueba', '${U.hacienda}'),
+    ('${PER.socio}', '${CLUB}', 'Socio Prueba', '${U.socio}'),
+    ('${PER.socio2}', '${CLUB}', 'Otro Socio Prueba', '${U.socio2}'),
+    ('${PER.vecompras}', '${CLUB}', 'Revisor Prueba', '${U.vecompras}');
+  insert into areas (id, club_id, nombre, aprueba_compras) values ('30000000-0000-0000-0000-000000000001', '${CLUB}', 'Hacienda', true);
+  insert into persona_areas (persona_id, area_id, rol) values ('${PER.hacienda}', '30000000-0000-0000-0000-000000000001', 'ministro');
+`);
+await db.exec(mig('0019_compras_en_la_app.sql'));
+await db.query(`update personas set ve_compras = true where id = $1`, [PER.vecompras]);
+
+r = await db.query(`select nombre, topico, abierto from pedidos order by creado_en`);
+const lista = (nombre) => r.rows.find((x) => x.nombre === nombre);
+ok('Las listas con "20 años" en el nombre quedan en 20 años y el resto en General',
+   lista('Fiesta 20 años')?.topico === 'veinte_anos' && lista('Otro evento')?.topico === 'general', JSON.stringify(r.rows));
+ok('Se crea una lista abierta de cada tópico que no tenía ninguna abierta',
+   r.rows.filter((x) => x.abierto && x.topico === 'fondo').length === 1
+   && r.rows.filter((x) => x.abierto && x.topico === 'veinte_anos').length === 1
+   && r.rows.filter((x) => x.abierto && x.topico === 'general').length === 1
+   && !lista('Compras generales'), JSON.stringify(r.rows));
+r = await db.query(`select ve_compras from personas where id = $1`, [PER.presi]);
+ok('Quien tenía ve_comprobantes queda también con ve_compras', r.rows[0]?.ve_compras === true);
+
+const compras = async (quien) => { const x = await como(quien, 'select compras_ver() as c'); return x.error ? { error: x.error } : x.rows[0].c; };
+const listaOtro = (await db.query(`select id from pedidos where token = 'tok-otro'`)).rows[0].id;
+const pedirApp = (quien, que, monto = 10000, pedido = listaOtro) =>
+  como(quien, `select compra_agregar($1, $2, $3, 'carpeta2/cot-app.pdf', 'cot.pdf', 'https://x.cl') as id`, [pedido, que, monto]);
+
+r = await anon(`select compras_ver()`);
+ok('Sin cuenta no se ven las compras de la app', /permission denied/.test(r.error ?? ''), r.error);
+r = await anon(`select compra_agregar($1, 'x', 1, 'carpeta2/a.pdf', 'a.pdf', 'https://x.cl')`, [listaOtro]);
+ok('…ni se piden', /permission denied/.test(r.error ?? ''), r.error);
+r = await pedirApp('socio', 'Pelotas');
+const pelotas = r.rows[0]?.id;
+ok('Un socio pide una compra desde la app', !!pelotas, r.error);
+await pedirApp('socio2', 'Petos');
+r = await pedirApp('teso', 'Botiquín');
+const botiquin = r.rows[0]?.id;
+r = await db.query(`select quien, persona_id from pedido_items where id = $1`, [pelotas]);
+ok('La compra queda a nombre de la cuenta', r.rows[0]?.quien === 'Socio Prueba' && r.rows[0].persona_id === PER.socio, JSON.stringify(r.rows));
+r = await db.query(`select persona_id from pedido_item_eventos where item_id = $1`, [pelotas]);
+ok('El historial anota quién la pidió', r.rows[0]?.persona_id === PER.socio);
+
+const todas = (await db.query(`select count(*)::int n from pedido_items where estado <> 'eliminado'`)).rows[0].n;
+let vc = await compras('socio');
+ok('Un socio no ve compras ajenas: solo la suya', vc.items.length === 1 && vc.items[0].que === 'Pelotas' && vc.items[0].es_mia && vc.ve_todas === false, JSON.stringify(vc.items.map((i) => i.que)));
+ok('…ni recibe el link de las listas', vc.listas.length > 0 && vc.listas.every((l) => l.token === null) && !JSON.stringify(vc).includes('tok-'));
+vc = await compras('teso');
+ok('Un tesorero de plantel solo ve las suyas', vc.items.length === 1 && vc.items[0].que === 'Botiquín' && vc.ve_todas === false, JSON.stringify(vc.items.map((i) => i.que)));
+vc = await compras('vecompras');
+const deConosApp = vc.items.find((i) => i.id === conos);
+ok('Quien tiene ve_compras ve todas, también las que llegaron por link',
+   vc.ve_todas === true && vc.items.length === todas && !!deConosApp, JSON.stringify(vc.items.map((i) => i.que)));
+ok('…pero sin ve_comprobantes no recibe la ruta del comprobante', deConosApp.con_comprobante === true && deConosApp.comprobante_ruta === null && vc.puedo_ver_comprobantes === false);
+ok('…ni puede abrir el archivo', (await cuantos('vecompras')) === 0);
+ok('…ni es Hacienda', vc.es_hacienda === false && vc.listas.every((l) => l.token === null));
+vc = await compras('presi');
+ok('Con ve_compras y ve_comprobantes ve todas y recibe la ruta', vc.items.length === todas && vc.items.find((i) => i.id === conos).comprobante_ruta === 'carpeta2/c1.jpg');
+vc = await compras('hacienda');
+ok('Hacienda ve todas y recibe el link de pedir de cada lista',
+   vc.es_hacienda && vc.items.length === todas && vc.listas.find((l) => l.id === listaOtro)?.token === 'tok-otro', JSON.stringify(vc.listas));
+ok('…pero no el link de Hacienda', !JSON.stringify(vc).includes('tok-otro-h'));
+
+r = await como('socio', `select compra_revisar($1, 'aprobar')`, [pelotas]);
+ok('Un socio no aprueba', /Solo Hacienda/.test(r.error ?? ''), r.error);
+r = await como('vecompras', `select compra_revisar($1, 'aprobar')`, [pelotas]);
+ok('Quien solo ve todas tampoco', /Solo Hacienda/.test(r.error ?? ''), r.error);
+r = await como('hacienda', `select compra_revisar($1, 'devolver', 'Falta otra cotización')`, [pelotas]);
+ok('Hacienda devuelve con motivo desde la app', !r.error, r.error);
+r = await db.query(`select por, persona_id from pedido_item_eventos where item_id = $1 order by id desc limit 1`, [pelotas]);
+ok('…y el historial dice quién de Hacienda fue', r.rows[0]?.por === 'hacienda' && r.rows[0].persona_id === PER.hacienda, JSON.stringify(r.rows));
+r = await como('socio2', `select compra_corregir($1, 'Pelotas', 12000, 'carpeta2/cot2.pdf', 'cot2.pdf', 'https://x.cl')`, [pelotas]);
+ok('Otro socio no corrige una compra ajena', /Solo quien pidió/.test(r.error ?? ''), r.error);
+r = await como('socio', `select compra_corregir($1, 'Pelotas n° 5', 12000, 'carpeta2/cot2.pdf', 'cot2.pdf', 'https://x.cl')`, [pelotas]);
+ok('Quien la pidió la corrige y vuelve a quedar por revisar', !r.error && (await compras('socio')).items[0].estado === 'pendiente', r.error);
+r = await como('hacienda', `select compra_revisar($1, 'aprobar')`, [pelotas]);
+await db.query(`insert into storage.objects (bucket_id, name) values ('comprobantes', 'carpeta2/c-app.jpg')`);
+r = await como('socio', `select compra_comprobante($1, 'carpeta2/c-app.jpg', 'transferencia.jpg')`, [pelotas]);
+ok('Un socio no sube el comprobante', /Solo Hacienda/.test(r.error ?? ''), r.error);
+r = await como('hacienda', `select compra_comprobante($1, 'carpeta2/c-app.jpg', 'transferencia.jpg')`, [pelotas]);
+ok('Hacienda entrega con comprobante desde la app', !r.error && (await compras('socio')).items[0].estado === 'entregado', r.error);
+ok('El socio ve que hay comprobante, pero sin la ruta', (await compras('socio')).items[0].con_comprobante && (await compras('socio')).items[0].comprobante_ruta === null);
+r = await como('socio2', `select compra_boleta($1, 'carpeta2/boleta.jpg', 'boleta.jpg')`, [pelotas]);
+ok('Otro socio no sube la boleta', /Solo quien pidió/.test(r.error ?? ''), r.error);
+r = await como('socio', `select compra_boleta($1, 'carpeta2/boleta.jpg', 'boleta.jpg')`, [pelotas]);
+ok('Quien la pidió sube la boleta', !r.error && (await compras('socio')).items[0].estado === 'respaldado', r.error);
+r = await como('vecompras', `select compra_editar($1, 'X', 'Y', 1)`, [botiquin]);
+ok('Quien solo ve todas no edita', /Solo Hacienda/.test(r.error ?? ''), r.error);
+r = await como('hacienda', `select compra_editar($1, 'Tesorero Prueba', 'Botiquín completo', 25000)`, [botiquin]);
+ok('Hacienda edita glosa y monto desde la app', !r.error && (await compras('teso')).items[0].monto === 25000, r.error);
+r = await como('hacienda', `select compra_eliminar($1)`, [botiquin]);
+ok('Hacienda elimina, y deja de verse', !r.error && (await compras('teso')).items.length === 0, r.error);
+
+// El link sin cuenta sigue funcionando igual, sobre los mismos datos.
+p = await ver('tok-otro');
+ok('Por el link se ven las compras pedidas en la app, con el nombre de la cuenta',
+   p.items.some((i) => i.id === pelotas && i.quien === 'Socio Prueba' && i.estado === 'respaldado'), JSON.stringify(p.items.map((i) => i.quien)));
+ok('…con las mismas columnas de siempre', !('persona_id' in p.items[0]) && !('es_mia' in p.items[0]));
+r = await agregar('tok-otro', 'Visita', 'Agua', 5000, 'carpeta2/cot.pdf', 'https://x.cl', null);
+const agua = r.rows[0]?.id;
+ok('Por el link se sigue agregando sin cuenta', !!agua, r.error);
+r = await revisar('tok-otro-h', agua, 'aprobar');
+ok('…y Hacienda sigue aprobando con su link', !r.error, r.error);
+vc = await compras('hacienda');
+ok('Lo pedido por link aparece en la app de Hacienda', vc.items.some((i) => i.id === agua && i.estado === 'aprobado' && !i.es_mia));
+ok('…pero no en la de un socio', !(await compras('socio')).items.some((i) => i.id === agua));
+
+// Hacienda corrige el tópico de una lista y la cierra.
+r = await como('socio', `select lista_compras_cambiar($1, 'fondo', false)`, [listaOtro]);
+ok('Un socio no cambia una lista', /Solo Hacienda/.test(r.error ?? ''), r.error);
+r = await como('hacienda', `select lista_compras_cambiar($1, 'otro', true)`, [listaOtro]);
+ok('No se acepta un tópico inventado', /no existe/.test(r.error ?? ''), r.error);
+r = await como('hacienda', `select lista_compras_cambiar($1, 'fondo', false)`, [listaOtro]);
+ok('Hacienda cambia el tópico y cierra la lista', !r.error && (await compras('hacienda')).listas.some((l) => l.id === listaOtro && l.topico === 'fondo' && !l.abierto), r.error);
+r = await pedirApp('socio', 'Conos nuevos');
+ok('A una lista cerrada no se le piden compras desde la app', /cerrado/.test(r.error ?? ''), r.error);
+r = await agregar('tok-otro', 'Visita', 'Hielo', 5000, 'carpeta2/cot.pdf', 'https://x.cl', null);
+ok('…ni por el link', /cerrado/.test(r.error ?? ''), r.error);
+ok('Una lista cerrada le aparece a quien tiene compras en ella', (await compras('socio2')).listas.some((l) => l.id === listaOtro));
+ok('…y no a quien no tiene', !(await compras('jugador')).listas.some((l) => l.id === listaOtro));
+r = await como('hacienda', `select lista_compras_cambiar($1, 'general', true)`, [listaOtro]);
+ok('Y la puede volver a abrir', !r.error && !(await pedirApp('socio', 'Conos nuevos')).error, r.error);
+r = await como('socio', `select count(*) from pedido_items`);
+ok('Las tablas de compras siguen sin leerse directamente', /permission denied/.test(r.error ?? ''), r.error);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);
