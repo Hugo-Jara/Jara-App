@@ -32,11 +32,11 @@ export const pesos = (n) => `$${Math.round(n).toLocaleString('es-CL')}`;
 const BUCKET = 'pedidos';
 // Los comprobantes de transferencia van aparte, en un bucket privado: se abren
 // con una dirección que dura 10 minutos y solo con una cuenta que puede verlos.
-const BUCKET_COMPROBANTES = 'comprobantes';
+export const BUCKET_COMPROBANTES = 'comprobantes';
 const archivo = (ruta, nombre) =>
   ruta ? { nombre, url: supabase.storage.from(BUCKET).getPublicUrl(ruta).data.publicUrl, ruta } : null;
 
-const desdeFila = (f) => ({
+export const desdeFila = (f) => ({
   id: f.id, quien: f.quien, que: f.que, monto: f.monto,
   referencia: f.referencia || '',
   cotizacion: archivo(f.cotizacion_ruta, f.cotizacion_nombre),
@@ -47,9 +47,11 @@ const desdeFila = (f) => ({
   comprobante: f.comprobante_ruta ? { nombre: f.comprobante_nombre, ruta: f.comprobante_ruta, privado: true } : null,
   conComprobante: !!f.con_comprobante,
   estado: f.estado, comentario: f.comentario,
+  // Solo en Compras de la app: de qué lista es y si la pedí yo.
+  pedidoId: f.pedido_id, carpeta: f.carpeta, esMia: !!f.es_mia,
 });
 
-async function subir(carpeta, file, bucket = BUCKET) {
+export async function subir(carpeta, file, bucket = BUCKET) {
   if (!file) return null;
   const limpio = file.name.normalize('NFD').replace(/[^\w.-]+/g, '_').slice(-60);
   const ruta = `${carpeta}/${crypto.randomUUID()}-${limpio}`;

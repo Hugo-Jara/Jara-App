@@ -4,6 +4,29 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-10-21 · Compras 1 — Compras integrado a la app
+
+**Qué se hizo:**
+- Migración `0019_compras_en_la_app.sql` (propuesta aprobada por el administrador de la app, con sus ajustes):
+  - Cada lista de compras tiene tópico: Fondo, 20 años o General. Las listas con "20 años" en el nombre quedan en 20 años y el resto en General. Se crea una lista abierta de cada tópico que no tenía ninguna abierta ("Compras generales", "Fondo Las Condes" y, si faltara, "Fiesta 20 años").
+  - Las compras pedidas desde la app quedan a nombre de la cuenta (`pedido_items.persona_id`), y el historial anota quién hizo cada paso (`pedido_item_eventos.persona_id`).
+  - Permiso personal nuevo `personas.ve_compras` ("ve todas las compras"). `puedo_ver_todas_las_compras()` deja pasar a administradores, Hacienda y quien tenga `ve_compras`. `ve_comprobantes` queda solo para abrir comprobantes de transferencia. A quien tenía `ve_comprobantes` se le dio también `ve_compras`.
+  - Funciones nuevas, solo con cuenta: `compras_ver`, `compra_agregar`, `compra_corregir`, `compra_boleta` (quien la pidió o Hacienda) y `compra_revisar`, `compra_comprobante`, `compra_editar`, `compra_eliminar`, `lista_compras_cambiar` (solo Hacienda). Revisan quién llama y usan las mismas funciones del link, que no cambiaron.
+- `src/pages/Compras.jsx` reemplaza la pantalla "Llega el 19 de octubre": pedir una compra eligiendo tópico (y lista, si hay más de una abierta), filtro por tópico, totales y la lista de compras. Hacienda tiene además todo lo del link y puede cambiar el tópico de una lista, cerrarla o volver a abrirla y copiar el link de pedir para quien no tiene cuenta.
+- `src/pages/Pedido.jsx` exporta el formulario y la tarjeta de compra para usarlos en las dos pantallas; el link se ve y funciona igual.
+- Sin señal, el link de pedido dice solo que revises la señal y tiene botón Reintentar (pendiente de la Fase 8, resuelto).
+- Pruebas nuevas en `supabase/tests/pedidos.mjs`: un socio no ve compras ajenas, un tesorero de plantel solo ve las suyas, quien tiene `ve_compras` ve todas pero sin `ve_comprobantes` no recibe ni abre comprobantes, Hacienda hace todo desde la app y el link sin cuenta sigue funcionando sobre los mismos datos. `supabase/tests/club.mjs` ahora aplica todas las migraciones en orden.
+
+**Revisión:** la 0019 mueve plata. La revisión de Hacienda la hace el administrador de la app, que es también Hacienda.
+
+**Comprobado:** `npm run build`, `npm run test:db` (34 + 174 pruebas) y `npm run test:pedidos` (122 pruebas) pasan. Pantalla revisada en modo demostración a ancho de celular.
+
+**Pendiente:** hay listas de prueba que la migración puede clasificar mal; Hacienda las corrige o cierra desde Compras > "Ver y corregir las listas".
+
+Siguiente: Compras 2 — Fondo.
+
+---
+
 ## 2026-10-20 · Fase 3 — Ingreso a prueba de celulares
 
 **Qué se hizo:**
