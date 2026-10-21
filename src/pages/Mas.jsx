@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
+import { accesoTablero } from '../lib/tablero.js';
 import Icono from '../components/Icono.jsx';
 
 // Lo administrativo del club vive acá, fuera de la pantalla de inicio.
@@ -16,6 +17,9 @@ export default function Mas() {
   // Solo para encargados y administradores.
   if (persona.esEncargado) {
     FILAS.unshift({ a: '/ingresos', icono: 'club', nombre: 'Pases de ingreso', desc: 'Aprobar a quienes pidieron entrar a la app' });
+  }
+  if (accesoTablero(persona).puedeVer) {
+    FILAS.splice(2, 0, { a: '/tablero', icono: 'cuota', nombre: 'Tablero de tesorería', desc: 'Cuotas, saldo y aporte al club · Datos de ejemplo' });
   }
   return (
     <>
