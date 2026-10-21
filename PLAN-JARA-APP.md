@@ -75,7 +75,7 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 - **Listo cuando:** las pruebas cubren cada caso. El administrador de la app corre la migración y prueba con dos cuentas de planteles distintos.
 
 ## Orden de las fases (actualizado)
-Fase 3 → Compras 1 → Compras 2 → Compras 3 → Fase 4 → **hito 28/10** → Fase 5 → Fase 6b → Fase 7 → Fase 8 → **hito 21/11**.
+Fase 3 → Compras 1 → Compras 1b → Compras 2 → Compras 3 → Fase 4 → **hito 28/10** → Fase 5 → Fase 6b → Fase 7 → Fase 8 → **hito 21/11**.
 
 Sin fechas intermedias: solo quedan los hitos 28/10 y 21/11. Las secciones de abajo siguen ese orden.
 
@@ -95,6 +95,15 @@ Sin fechas intermedias: solo quedan los hitos 28/10 y 21/11. Las secciones de ab
   - Reemplaza la pantalla "Llega el 19 de octubre".
   - Los pedidos se ven y se crean desde la app, con cuenta, con tópico (Fondo, 20 años, General).
   - El link sin cuenta sigue funcionando sobre los mismos datos.
+
+## Compras 1b — Compras por tópico
+- **Modelo:** Opus · conversación nueva
+- **Alcance:**
+  - Se entra por tópico y no por lista; las listas quedan por dentro y la app no las muestra. Hoy hay un solo tópico activo: "Fiesta 20 años".
+  - Link público por tópico para enviar solicitudes sin cuenta: solo sirve para enviar, no deja leer nada. Los links viejos por lista dejan de servir; el de Hacienda sigue.
+  - Formulario: qué, monto, cotización (obligatoria) y referencia (opcional), con límites de largo, monto y archivo.
+  - Se archivan las listas de prueba.
+- **Nota:** necesita migración nueva; la revisan el administrador de la app y Hacienda antes de aplicarla. El tópico "Fondo" se activa en Compras 2.
 
 ## Compras 2 — Fondo
 - **Modelo:** Opus · conversación nueva

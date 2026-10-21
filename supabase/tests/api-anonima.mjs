@@ -6,7 +6,8 @@ let mal = 0;
 
 // Tablas de 0001 y 0002 (cerradas en 0018) y el registro de búsquedas de la nómina.
 for (const t of ['clubes', 'personas', 'persona_contactos', 'equipos', 'persona_equipos', 'areas', 'persona_areas',
-                 'solicitudes_compra', 'solicitud_adjuntos', 'solicitud_eventos', 'nomina_busquedas']) {
+                 'solicitudes_compra', 'solicitud_adjuntos', 'solicitud_eventos', 'nomina_busquedas',
+                 'pedidos', 'pedido_items', 'pedido_item_eventos', 'topicos']) {
   const { data, error } = await sb.from(t).select('*').limit(5);
   const filas = data?.length ?? 0;
   if (error && !error.code) {
@@ -40,6 +41,11 @@ const funciones = [
   ['entrenamiento_eliminar', { p_id: NADA }],
   ['entrenamiento_bajar', { p_inscrito: NADA }],
   ['entrenamiento_invitar', { p_id: NADA, p_nombre: 'Invitado de prueba' }],
+  // Compras por tópico (0020): la app con cuenta.
+  ['compras_ver', {}],
+  ['compra_agregar', { p_topico: 'veinte_anos', p_que: 'x', p_monto: 1000, p_cotizacion_ruta: 'a/b.pdf', p_cotizacion_nombre: 'b.pdf' }],
+  ['compra_revisar', { p_item: NADA, p_accion: 'aprobar' }],
+  ['topico_cambiar', { p_slug: 'veinte_anos', p_activo: false }],
 ];
 for (const [f, params] of funciones) {
   const r = await sb.rpc(f, params);
@@ -47,5 +53,20 @@ for (const [f, params] of funciones) {
   const rechazado = r.error?.code === '42501';
   if (!rechazado) mal++;
   console.log(`rpc ${f}`.padEnd(28), rechazado ? 'rechazado (42501)' : `ABIERTO: ${r.error?.message ?? JSON.stringify(r.data)}`);
+}
+
+// El link público de un tópico no necesita cuenta, pero con un código inventado
+// no abre ni envía nada, y los links viejos por lista ya no leen ni piden.
+const publicas = [
+  ['topico_publico', { p_token: 'codigo-inventado' }],
+  ['topico_enviar', { p_token: 'codigo-inventado', p_quien: 'Prueba', p_que: 'x', p_monto: 1000, p_cotizacion_ruta: 'a/b.pdf', p_cotizacion_nombre: 'b.pdf' }],
+  ['pedido_ver', { p_token: 'codigo-inventado' }],
+  ['pedido_agregar', { p_token: 'codigo-inventado', p_quien: 'Prueba', p_que: 'x', p_monto: 1000, p_cotizacion_ruta: 'a/b.pdf', p_cotizacion_nombre: 'b.pdf' }],
+];
+for (const [f, params] of publicas) {
+  const r = await sb.rpc(f, params);
+  const rechazado = !!r.error && !r.data;
+  if (!rechazado) mal++;
+  console.log(`rpc ${f}`.padEnd(28), rechazado ? `rechazado (${r.error.message})` : `ABIERTO: ${JSON.stringify(r.data)}`);
 }
 process.exit(mal ? 1 : 0);

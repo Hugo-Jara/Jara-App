@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { usePedido, totales, pesos, ESTADOS, enlaceComprobante } from '../lib/pedido.js';
+import { usePedido, totales, pesos, ESTADOS, enlaceComprobante, MONTO_MAXIMO } from '../lib/pedido.js';
 import { esDemo, SIN_CONEXION } from '../lib/supabase.js';
 import { ESCUDO, BASE } from '../lib/base.js';
 
@@ -63,7 +63,7 @@ function BotonArchivo({ className, disabled, onArchivo, children }) {
 }
 
 // Sirve para agregar una compra y para corregir una devuelta (`inicial`).
-export function Formulario({ inicial, onGuardar, onCancelar, conNombre = true }) {
+export function Formulario({ inicial, onGuardar, onCancelar, conNombre = true, enviarTexto, ocultarCancelar = false }) {
   const [d, setD] = useState({
     quien: inicial?.quien ?? nombreRecordado(), que: inicial?.que ?? '',
     monto: inicial?.monto ?? '', referencia: inicial?.referencia ?? '',
@@ -78,10 +78,8 @@ export function Formulario({ inicial, onGuardar, onCancelar, conNombre = true })
     e.preventDefault();
     const monto = Number(String(d.monto).replace(/\D/g, ''));
     if (!monto) return setError('Escribe el monto en pesos, solo números.');
+    if (monto > MONTO_MAXIMO) return setError(`El monto máximo es ${pesos(MONTO_MAXIMO)}. Si necesitas más, habla con Hacienda.`);
     if (!cotizacion && !inicial?.cotizacion) return setError('Falta adjuntar la cotización: foto, PDF o pantallazo.');
-    if (!d.referencia.trim() && !refArchivo && !inicial?.referenciaArchivo) {
-      return setError('Falta la referencia: pega un link o un contacto, o adjunta un archivo.');
-    }
     setError(''); setGuardando(true);
     try {
       if (conNombre) recordarNombre(d.quien.trim());
@@ -101,11 +99,11 @@ export function Formulario({ inicial, onGuardar, onCancelar, conNombre = true })
       {conNombre && (
         <>
           <label htmlFor="quien">Tu nombre</label>
-          <input id="quien" required value={d.quien} onChange={set('quien')} autoComplete="name" />
+          <input id="quien" required maxLength={80} value={d.quien} onChange={set('quien')} autoComplete="name" />
         </>
       )}
       <label htmlFor="que">Qué quieres comprar</label>
-      <input id="que" required value={d.que} onChange={set('que')} placeholder="Ej.: carne para el asado, 25 kg" />
+      <input id="que" required maxLength={200} value={d.que} onChange={set('que')} placeholder="Ej.: carne para el asado, 25 kg" />
       <label htmlFor="monto">Cuánto sale (en pesos)</label>
       <input id="monto" required inputMode="numeric" value={d.monto} onChange={set('monto')} placeholder="187500" />
 
@@ -116,10 +114,10 @@ export function Formulario({ inicial, onGuardar, onCancelar, conNombre = true })
              onChange={(e) => { setCotizacion(e.target.files[0] || null); setError(''); }} />
 
       <fieldset className="bloque">
-        <legend>Referencia</legend>
-        <p className="ayuda">Un link, un contacto o un archivo. Con uno basta.</p>
+        <legend>Referencia (opcional)</legend>
+        <p className="ayuda">Un link, un contacto o un archivo que ayude a ubicar lo que quieres comprar.</p>
         <label htmlFor="referencia">Link del producto o contacto del proveedor</label>
-        <input id="referencia" value={d.referencia} onChange={set('referencia')} placeholder="https://…" />
+        <input id="referencia" maxLength={300} value={d.referencia} onChange={set('referencia')} placeholder="https://…" />
         <label htmlFor="ref-archivo">
           O adjunta un archivo{inicial?.referenciaArchivo ? `. Ya tiene: ${inicial.referenciaArchivo.nombre}` : ''}
         </label>
@@ -129,8 +127,8 @@ export function Formulario({ inicial, onGuardar, onCancelar, conNombre = true })
 
       {error && <p className="error" role="alert">{error}</p>}
       <div className="botones">
-        <button className="btn" disabled={guardando}>{guardando ? 'Guardando…' : inicial ? 'Reenviar' : 'Agregar'}</button>
-        <button type="button" className="btn secundario" onClick={onCancelar} disabled={guardando}>Cancelar</button>
+        <button className="btn" disabled={guardando}>{guardando ? 'Enviando…' : enviarTexto ?? (inicial ? 'Reenviar' : 'Agregar')}</button>
+        {!ocultarCancelar && <button type="button" className="btn secundario" onClick={onCancelar} disabled={guardando}>Cancelar</button>}
       </div>
     </form>
   );

@@ -24,6 +24,8 @@ export function totales(items) {
   };
 }
 
+// El tope que pone la base al crear una compra.
+export const MONTO_MAXIMO = 5000000;
 export const pesos = (n) => `$${Math.round(n).toLocaleString('es-CL')}`;
 
 // ---------------------------------------------------------------------------
@@ -48,11 +50,15 @@ export const desdeFila = (f) => ({
   conComprobante: !!f.con_comprobante,
   estado: f.estado, comentario: f.comentario,
   // Solo en Compras de la app: de qué lista es y si la pedí yo.
-  pedidoId: f.pedido_id, carpeta: f.carpeta, esMia: !!f.es_mia,
+  pedidoId: f.pedido_id, carpeta: f.carpeta, esMia: !!f.es_mia, topico: f.topico,
 });
 
+// Lo mismo que comprueba la base: PDF o foto, de menos de 10 MB.
+export const MAX_ARCHIVO = 10 * 1024 * 1024;
 export async function subir(carpeta, file, bucket = BUCKET) {
   if (!file) return null;
+  if (!/^image\/|^application\/pdf$/.test(file.type)) throw new Error('El archivo tiene que ser una foto o un PDF.');
+  if (file.size > MAX_ARCHIVO) throw new Error('El archivo pesa más de 10 MB. Prueba con una foto más liviana o un PDF más chico.');
   const limpio = file.name.normalize('NFD').replace(/[^\w.-]+/g, '_').slice(-60);
   const ruta = `${carpeta}/${crypto.randomUUID()}-${limpio}`;
   const { error } = await supabase.storage.from(bucket).upload(ruta, file, { contentType: file.type });

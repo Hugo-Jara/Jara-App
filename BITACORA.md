@@ -4,6 +4,29 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-10-21 · Compras 1b — Compras por tópico
+
+**Qué se hizo** (migración `0020_compras_por_topico.sql`, que el administrador de la app y Hacienda revisan y corren en Supabase antes del merge):
+- **Tópicos:** tabla `topicos` (un tópico por fila, con su código de link público). Queda activo "Fiesta 20 años"; "General" queda inactivo y "Fondo" queda creado e inactivo, listo para Compras 2. Agregar un tópico es insertar una fila: su lista abierta se crea sola. No se borra nada.
+- **Listas por dentro:** cada tópico activo tiene una sola lista abierta, asegurada con un índice único parcial. Si hubiera dos, la migración falla en vez de elegir una (no se usa "la más antigua"). Se archivan (se cierran y se ocultan) todas las listas menos las que se llaman "Fiesta 20 años"; sus compras no se borran.
+- **Link público por tópico** (`/solicitar/<código>`): `topico_publico` entrega solo el nombre y la carpeta donde subir la cotización; `topico_enviar` crea la solicitud y no devuelve nada. El código no se puede adivinar (dos UUID al azar) ni sirve para leer pedidos. Quien envía no ve ni corrige su solicitud; la pantalla de confirmación dice "Si hay algún problema con tu solicitud, te contactamos".
+- **Links viejos por lista:** `pedido_ver`, `pedido_agregar`, `pedido_corregir` y `pedido_boleta` ya no aceptan el código de pedir (antes `pedido_ver` mostraba a cualquiera con el link todas las compras de la lista: quién, qué, monto y archivos). El link de Hacienda sigue igual.
+- **Límites** al crear una compra (link público, app y link de Hacienda): nombre hasta 80 letras, qué hasta 200, referencia hasta 300, monto hasta $5.000.000, y la cotización tiene que ser PDF o foto de menos de 10 MB; la base lo comprueba mirando el archivo que quedó en Storage. La referencia pasa a ser opcional; la cotización sigue siendo obligatoria.
+- **App con cuenta:** Compras parte en el tópico (con uno solo abierto, entra directo; con varios, se elige) y no muestra ningún concepto de lista. Hacienda copia el link público, cierra el tópico y lo reabre. `compras_ver` entrega los tópicos y el código del link solo a Hacienda. Se retiraron `lista_compras_cambiar` y la versión de `compra_agregar` que recibía una lista.
+- `supabase/tests/pedidos.mjs`: pruebas de tópicos, índice único, migración que falla ante dos listas abiertas, link público, links viejos, límites, y permisos con cuenta. `supabase/tests/api-anonima.mjs`: sin sesión, las tablas nuevas y las funciones de Compras.
+
+**Revisión:** mueve plata. La revisión de Hacienda la hace el administrador de la app, que es también Hacienda.
+
+**Orden al publicar:** correr la migración y subir la app enseguida: la versión anterior de Compras deja de funcionar apenas se corre la 0020.
+
+**Comprobado:** `npm run build`, `npm run test:db` y `npm run test:pedidos` pasan. Pantallas revisadas en modo demostración a ancho de celular.
+
+**Pendiente:** el link público no pide un dato de contacto, así que "te contactamos" depende de que Hacienda reconozca el nombre. Sin seguimiento por ahora, a pedido del administrador de la app.
+
+Siguiente: Compras 2 — Fondo.
+
+---
+
 ## 2026-10-21 · Compras 1 — Compras integrado a la app
 
 **Qué se hizo:**
