@@ -24,7 +24,12 @@ export default function Noticias() {
         ))}
       </div>
 
-      {visibles.length === 0 && <p className="vacio suelto">Todavía no hay publicaciones acá.</p>}
+      {visibles.length === 0 && (filtro === 'todo' ? (
+        <section className="card">
+          <h2 className="noticia-titulo">Se viene El Jara Informa</h2>
+          <p className="noticia-bajada">El boletín del club llega a la app para la fiesta de los 20 años. Acá vas a encontrar las ediciones del boletín, las entrevistas Cortita y al pie y los avisos del club.</p>
+        </section>
+      ) : <p className="vacio suelto">Todavía no hay publicaciones acá.</p>)}
 
       {visibles.map((p) => {
         const foto = portada(p);
