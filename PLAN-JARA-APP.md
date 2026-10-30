@@ -75,9 +75,11 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 - **Listo cuando:** las pruebas cubren cada caso. El administrador de la app corre la migración y prueba con dos cuentas de planteles distintos.
 
 ## Orden de las fases (actualizado)
-Fase 3 → Compras 1 → Compras 1b → Compras 2 → Compras 3 → Fase 4 → **hito 28/10** → Fase 5 → Fase 6b → Fase 7 → Fase 8 → **hito 21/11**.
+Fase 4 → **hito 3/11** → Fase 3 → Compras 1 → Compras 1b → Compras 2 → Compras 3 → Fase 5 → Fase 6b → Fase 7 → Fase 8 → **hito sáb 21/11**.
 
-Sin fechas intermedias: solo quedan los hitos 28/10 y 21/11. Las secciones de abajo siguen ese orden.
+**Cambio del 30/10/2026:** el 29/10 se priorizó Compras y Tesorería, y la reunión con los tesoreros pasó al **martes 3 de noviembre**. Por eso la Fase 4 (tablero demo) va antes de la Fase 3, y después de la Fase 4 viene la Fase 3 y luego la cadena de Compras (Compras 1 y 1b ya están hechas). El orden anterior era: Fase 3 → Compras 1 → Compras 1b → Compras 2 → Compras 3 → Fase 4 → hito 28/10 → Fase 5 → Fase 6b → Fase 7 → Fase 8 → hito 21/11.
+
+Sin fechas intermedias: solo quedan los hitos 3/11 y sáb 21/11. Las secciones de abajo siguen el orden anterior; el orden vigente es el de esta línea.
 
 ---
 
@@ -134,7 +136,7 @@ Sin fechas intermedias: solo quedan los hitos 28/10 y 21/11. Las secciones de ab
 - **Fuera:** los datos reales, que van en la Fase 5.
 - **Listo cuando:** el administrador de la app entra como cada tesorero y ve solo su plantel, y como Hacienda ve el consolidado.
 
-**▶ Hito 28/10: reunión con los tesoreros.** El administrador de la app trae al chat los comentarios de la reunión.
+**▶ Hito 3/11 (antes 28/10): reunión con los tesoreros.** El administrador de la app trae al chat los comentarios de la reunión.
 
 ## Fase 5 — Tablero de tesoreros con datos reales
 - **Modelo:** Opus · conversación nueva
