@@ -77,7 +77,11 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 ## Orden de las fases (actualizado)
 **Hecho:** Fases 0, 1, 2, 2b y 3 (20/10), Compras 1, Compras 1b y Fase 4 (21/10).
 
-**Lo que queda:** Compras 2 → Compras 3 → Fase 5 → Fase 6b → Fase 7 → Fase 8 → **hito sáb 21/11**. La reunión con los tesoreros es el **martes 3/11** y llega con la Fase 4 (tablero demo) ya en main; lo que salga de ahí entra en la Fase 5.
+**Lo que queda** (traspaso del chat del 29-30/10):
+- **Carril de Compras y datos** (administrador de la app; todo lo que toca la base): Compras 2 (PR abierto el 30/10) → Compras 3 → Fase 7 (perfil, partidos jugados y asistencia) → Fase 7b (comentarios y reacciones) → **hito 3/11** → Fase 5 (con lo que digan los tesoreros) → Fase 6b → Fase 8 → **hito sáb 21/11**.
+- **Carril de Comunicaciones** (voluntario de Comunicaciones, sin base de datos): Fase F (galería de fotos conectada al Drive del club).
+
+La reunión con los tesoreros es el **martes 3/11** y llega con la Fase 4 (tablero demo) ya en main; lo que salga de ahí entra en la Fase 5. Se mantiene el método: una fase por sesión y un PR por fase.
 
 **Corrección del 30/10/2026:** el cambio de orden anterior (Fase 4 antes de la Fase 3) se escribió sin ver que las dos ya estaban hechas desde el 20 y el 21 de octubre. El 29/10 se priorizó Compras y Tesorería, así que lo siguiente es Compras 2.
 
@@ -156,13 +160,28 @@ Sin fechas intermedias: solo quedan los hitos 3/11 y sáb 21/11. Las secciones d
   - Carga del fixture completo de una vez: el encargado pega la tabla de la liga (fecha, hora, rival, cancha).
 - **Nota:** necesita migración nueva (estado, motivo y fecha original); la revisa el administrador de la app antes de aplicarla.
 
-## Fase 7 — Perfil del jugador
+## Fase 7 — Perfil del jugador, partidos jugados y asistencia
 - **Modelo:** Sonnet · /clear (el modelo de datos se define antes en el chat)
 - **Alcance:**
-  - Foto, posición, pie hábil y dorsal por plantel.
+  - Foto, posición, pie hábil y dorsal por plantel. Cada jugador edita solo lo suyo.
   - Estatura y peso opcionales, con visibilidad elegida por el jugador.
-  - Estadísticas individuales.
-- **Listo cuando:** el administrador de la app edita su perfil y lo ve desde otra cuenta.
+  - Estadísticas individuales, que controlan los estadísticos (no el jugador).
+  - **Partidos jugados** por jugador en la tabla general, calculados desde la lista de asistentes del partido. Los confirma quien anota goles, asistencias y tarjetas: puede ser más de una persona, incluido el cuerpo técnico (rol nuevo "estadístico").
+  - **Asistencia a entrenamientos:** lista por sesión y porcentaje por jugador.
+- **Nota:** necesita migración nueva (rol estadístico y asistencia); la revisa el administrador de la app antes de aplicarla.
+- **Listo cuando:** el administrador de la app edita su perfil y lo ve desde otra cuenta, y un estadístico confirma los partidos jugados de un partido.
+
+## Fase 7b — Comentarios y reacciones por partido
+- **Modelo:** Sonnet · /clear
+- **Alcance:** comentarios en cada partido y reacciones al partido y a cada comentario.
+- **Por decidir antes de partir:** si hay moderación (que un administrador borre comentarios).
+- **Nota:** necesita migración nueva; la revisa el administrador de la app.
+
+## Fase F — Fotos conectadas al Drive del club (carril de Comunicaciones)
+- **Modelo:** Opus para el diseño · después Sonnet
+- **Alcance:** galería de fotos de partidos en la app, leyendo las carpetas del Drive del club (unidad de fotos y videos). Sin base de datos nueva.
+- **Quién:** el voluntario de Comunicaciones, en su propia rama y PR. Lo revisa el administrador de la app.
+- **Listo cuando:** las fotos del último partido se ven en la app sin subirlas dos veces.
 
 ## Fase 8 — Pulido para la fiesta
 - **Modelo:** Sonnet · /clear
@@ -185,6 +204,7 @@ Sin fechas intermedias: solo quedan los hitos 3/11 y sáb 21/11. Las secciones d
 - Historias de 24 horas.
 - Canchas de Huechuraba.
 - Importar automáticamente el fixture desde las páginas de las ligas (temporada 2027), investigando antes qué publica cada liga.
+- **Detector facial ("fotos tuyas"):** el jugador sube selfies y la app le muestra las fotos de partidos donde aparece, para confirmar o rechazar. Es viable (AWS Rekognition o librerías abiertas). **Privacidad:** la cara es un dato biométrico, así que es solo para quien se inscribe (opt-in), las selfies se pueden borrar y nunca se reconoce a quien no se inscribió. No aplica a menores (el club exige 18 años o más). Requiere la Fase F terminada y fotos cargadas.
 
 ## Tareas manuales del administrador de la app (fuera del código)
 - **Antes de la Fase 3:**
