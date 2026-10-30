@@ -4,6 +4,12 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-10-30 · Anuncio del boletín
+
+Noticias anuncia El Jara Informa cuando no hay publicaciones; Inicio también anticipa su llegada.
+
+---
+
 ## 2026-10-21 · Fase 4 — Tablero de tesoreros (demo)
 
 **Qué se hizo** (solo frontend, **sin migración** y sin tocar `sesion.jsx` ni permisos):

@@ -163,7 +163,7 @@ function Noticias({ noticias }) {
         {noticias.length > 0 && <Link to="/noticias" className="enlace">Ver todas</Link>}
       </div>
       {noticias.length === 0 ? (
-        <p className="vacio suelto">Acá va a aparecer el boletín del club.</p>
+        <p className="vacio suelto">Se viene El Jara Informa: el boletín del club llega a la app para la fiesta de los 20 años.</p>
       ) : (
         <div className="card lista">
           {noticias.map((n) => (
