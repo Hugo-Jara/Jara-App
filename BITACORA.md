@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-10-30 · Orden del plan corregido
+
+**Qué se hizo** (solo documentos): el PR #16 dejó en el plan "Fase 4 antes de la Fase 3", pero las dos ya estaban en main desde el 20 y el 21/10, igual que Compras 1 y 1b. Se corrigió el orden en `PLAN-JARA-APP.md`: lo que queda es Compras 2 → Compras 3 → Fase 5 → 6b → 7 → 8. La reunión con los tesoreros pasa al martes 3/11 en todo el plan.
+
+**Por confirmar con el administrador de la app:** si las migraciones 0019 y 0020 ya se corrieron en Supabase (la bitácora solo registra la 0018), y si las cuentas de los tesoreros ya están creadas para mostrar el tablero el 3/11.
+
+Siguiente: Compras 2 — Fondo.
+
+---
+
 ## 2026-10-21 · Fase 4 — Tablero de tesoreros (demo)
 
 **Qué se hizo** (solo frontend, **sin migración** y sin tocar `sesion.jsx` ni permisos):

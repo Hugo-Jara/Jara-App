@@ -4,7 +4,7 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 
 - **Repo:** Hugo-Jara/Jara-App (Supabase propio del club, dominio hugojara.cl)
 - **Hitos:**
-  - **28/10/2026:** reunión con los tesoreros. Ese día tienen que poder entrar a la app y ver su tablero.
+  - **3/11/2026 (antes 28/10):** reunión con los tesoreros. Ese día tienen que poder entrar a la app y ver su tablero.
   - **21/11/2026:** fiesta de los 20 años y presentación de la app a todo el club.
 - **Forma de trabajo:**
   - Sesión de Claude Code en la nube conectada al repo.
@@ -75,11 +75,13 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 - **Listo cuando:** las pruebas cubren cada caso. El administrador de la app corre la migración y prueba con dos cuentas de planteles distintos.
 
 ## Orden de las fases (actualizado)
-Fase 4 → **hito 3/11** → Fase 3 → Compras 1 → Compras 1b → Compras 2 → Compras 3 → Fase 5 → Fase 6b → Fase 7 → Fase 8 → **hito sáb 21/11**.
+**Hecho:** Fases 0, 1, 2, 2b y 3 (20/10), Compras 1, Compras 1b y Fase 4 (21/10).
 
-**Cambio del 30/10/2026:** el 29/10 se priorizó Compras y Tesorería, y la reunión con los tesoreros pasó al **martes 3 de noviembre**. Por eso la Fase 4 (tablero demo) va antes de la Fase 3, y después de la Fase 4 viene la Fase 3 y luego la cadena de Compras (Compras 1 y 1b ya están hechas). El orden anterior era: Fase 3 → Compras 1 → Compras 1b → Compras 2 → Compras 3 → Fase 4 → hito 28/10 → Fase 5 → Fase 6b → Fase 7 → Fase 8 → hito 21/11.
+**Lo que queda:** Compras 2 → Compras 3 → Fase 5 → Fase 6b → Fase 7 → Fase 8 → **hito sáb 21/11**. La reunión con los tesoreros es el **martes 3/11** y llega con la Fase 4 (tablero demo) ya en main; lo que salga de ahí entra en la Fase 5.
 
-Sin fechas intermedias: solo quedan los hitos 3/11 y sáb 21/11. Las secciones de abajo siguen el orden anterior; el orden vigente es el de esta línea.
+**Corrección del 30/10/2026:** el cambio de orden anterior (Fase 4 antes de la Fase 3) se escribió sin ver que las dos ya estaban hechas desde el 20 y el 21 de octubre. El 29/10 se priorizó Compras y Tesorería, así que lo siguiente es Compras 2.
+
+Sin fechas intermedias: solo quedan los hitos 3/11 y sáb 21/11. Las secciones de abajo siguen el orden anterior; el orden vigente es el de esta sección.
 
 ---
 
@@ -188,7 +190,7 @@ Sin fechas intermedias: solo quedan los hitos 3/11 y sáb 21/11. Las secciones d
 - **Antes de la Fase 3:**
   - Google OAuth en producción.
   - Borrar la cuenta de prueba en Supabase.
-- **Antes del 28/10:**
+- **Antes del 3/11:**
   - Correos de los tesoreros.
 - **Cuando haya tiempo:**
   - DMARC.
