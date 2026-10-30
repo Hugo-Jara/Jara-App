@@ -1,11 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { accesoTablero } from '../lib/tablero.js';
+import { useAccesoFondo } from '../lib/fondo.js';
 import Icono from '../components/Icono.jsx';
 
 // Lo administrativo del club vive acá, fuera de la pantalla de inicio.
 export default function Mas() {
   const { persona } = useSesion();
+  const veFondo = useAccesoFondo();
   const area = persona.club?.etiqueta_area || 'Ministerio';
   const FILAS = [
     { a: '/noticias', icono: 'noticias', nombre: 'Noticias', desc: 'Fotos, novedades y el boletín del club' },
@@ -20,6 +22,10 @@ export default function Mas() {
   }
   if (accesoTablero(persona).puedeVer) {
     FILAS.splice(2, 0, { a: '/tablero', icono: 'cuota', nombre: 'Tablero de tesorería', desc: 'Cuotas, saldo y aporte al club · Datos de ejemplo' });
+  }
+  // Solo para el equipo del fondo, Hacienda y los administradores.
+  if (veFondo) {
+    FILAS.splice(3, 0, { a: '/fondo', icono: 'compras', nombre: 'Fondo Las Condes', desc: 'Gastos, respaldos y rendiciones del fondo' });
   }
   return (
     <>

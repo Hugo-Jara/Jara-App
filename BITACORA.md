@@ -4,6 +4,40 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-10-30 · Compras 2 — Fondo Las Condes de verdad
+
+**Qué se hizo** (migración `0021_fondo.sql`, que el administrador de la app y Hacienda revisan y corren en Supabase antes del merge). Requisitos sacados de la ficha del fondo en el Drive del club (formulario, matriz y respuestas de la reunión del 20/10):
+- **Presupuesto** en `fondo_items`, con los montos del formulario: Personal $637.500, Bienes $1.848.000, Materiales $0 y Otros $602.000. Si la Municipalidad aprobó otro monto, se corrige la fila.
+- **Gastos del fondo** (`fondo_gastos`): las compras se siguen pidiendo por Compras, en el tópico **"Fondo Las Condes"**, que esta migración activa (queda con su lista abierta y su link público). En `/fondo`, el equipo las pasa al fondo eligiendo el ítem; la cotización, la boleta y el comprobante que ya están en Compras cuentan como respaldo solos. También se puede cargar un gasto directo. Una compra entra al fondo una sola vez; si se saca, vuelve a quedar por clasificar.
+- **Honorarios:** quedan creadas las tres cuotas del entrenador (oct, nov y dic), que no se quitan ni cambian de ítem.
+- **Respaldos** según el reglamento, con o sin archivo, en el bucket privado `fondo`. **La nómina de entrega y el original firmado se marcan sin archivo:** la nómina trae cédula y domicilio de los participantes y queda solo en papel.
+- **Estado de cada gasto** calculado en la base (`fondo_estado`), igual que antes en la vista previa: no rendible si lo pagó un particular o la boleta es anterior al 1/10; lista para rendir con pago del club y todos los respaldos.
+- **Rendiciones:** al presentar una entran todos los gastos listos, quedan amarrados a ella y ya no se cambian, desmarcan ni quitan. Se presentan en orden y no vacías. Se marca cuando se subió al portal.
+- **Permisos:** solo administradores, Hacienda y quien tenga el permiso nuevo `personas.equipo_fondo`. Las tablas no se leen directamente. `fondo_acceso()` le dice a la app si mostrar el fondo en Más.
+- **App:** `/fondo` pasa a estar dentro de la app, con cuenta (ya no es una página suelta). `src/lib/fondo.js` tiene la versión real y la de demostración con la misma forma. Se sacó la pestaña Dudas (ya respondidas en la reunión del 20/10).
+
+**Comprobado:** `npm run build`, `npm run test:db` (174 pruebas) y `npm run test:pedidos` (274 pruebas, 59 nuevas del fondo) pasan. Pantallas revisadas en modo demostración a 375 px, sin scroll horizontal. `api-anonima.mjs` suma las tablas y funciones del fondo; lo corre el administrador de la app después de aplicar la migración.
+
+**Manual, del administrador de la app:**
+- Dar `equipo_fondo` a quien administra el fondo (y al presidente, si corresponde): Table Editor > personas > equipo_fondo.
+- Probar con esa cuenta y con una de socio (que no debe ver el fondo).
+
+**Pendiente (fuera del código):** confirmar con qué monto y con qué lista aprobó la Municipalidad los bienes; las cotizaciones suman más que lo solicitado (ver la sección 5 de la ficha del fondo). Los honorarios se cargan como bruto de la boleta hasta confirmar si son bruto o líquido.
+
+Siguiente: Compras 3 — Rendiciones (hoja tipo Anexo N°1 y registro de las rendiciones presentadas). Parte de eso ya quedó aquí.
+
+---
+
+## 2026-10-30 · Orden del plan corregido
+
+**Qué se hizo** (solo documentos): el PR #16 dejó en el plan "Fase 4 antes de la Fase 3", pero las dos ya estaban en main desde el 20 y el 21/10, igual que Compras 1 y 1b. Se corrigió el orden en `PLAN-JARA-APP.md`: lo que queda es Compras 2 → Compras 3 → Fase 5 → 6b → 7 → 8. La reunión con los tesoreros pasa al martes 3/11 en todo el plan.
+
+**Por confirmar con el administrador de la app:** si las migraciones 0019 y 0020 ya se corrieron en Supabase (la bitácora solo registra la 0018), y si las cuentas de los tesoreros ya están creadas para mostrar el tablero el 3/11.
+
+Siguiente: Compras 2 — Fondo.
+
+---
+
 ## 2026-10-21 · Fase 4 — Tablero de tesoreros (demo)
 
 **Qué se hizo** (solo frontend, **sin migración** y sin tocar `sesion.jsx` ni permisos):
