@@ -19,7 +19,7 @@ export const PLANTILLA_ENTREVISTA = {
       titulo: 'Hablemos de fútbol',
       preguntas: [
         '¿De qué club eres hincha?',
-        '¿Quién es tu partner del equipo?',
+        '¿Quién es tu yunta en el equipo?',
         '¿Cuál es el mejor partido que has jugado?',
         '¿Cuál es el mejor triunfo colectivo con el Jara?',
         '¿Qué referente tienes en tu posición?',
