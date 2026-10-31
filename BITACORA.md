@@ -4,6 +4,12 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-10-31 · Resultado del día visible al tiro
+
+Un partido jugado hoy seguía como "próximo" hasta la medianoche aunque ya tuviera el resultado anotado, así que no aparecía en "Ya jugados" ni en el último resultado de Inicio. Ahora pasa a jugados apenas se anota el marcador (`src/lib/partidos.js`). Solo frontend, sin migración.
+
+---
+
 ## 2026-10-30 · Anuncio del boletín
 
 Noticias anuncia El Jara Informa cuando no hay publicaciones; Inicio también anticipa su llegada.

@@ -134,9 +134,11 @@ export function usePartidos(yo) {
   const partidos = (datos ?? []).map((p) => ({ ...p, miRespuesta: p.respuestas.find((r) => r.personaId === yo.id) ?? null }));
   const y = (accion) => async (...a) => { await accion(...a); await almacen.recargar(); };
   const hoy = hoyIso();
-  // Un partido sigue "próximo" hasta que termina su día.
-  const proximos = partidos.filter((p) => p.fecha >= hoy);
-  const jugados = partidos.filter((p) => p.fecha < hoy).sort((a, b) => b.fecha.localeCompare(a.fecha));
+  // Un partido sigue "próximo" hasta que termina su día, salvo que ya tenga el
+  // resultado anotado: ahí pasa a "jugados" en el acto, sin esperar la medianoche.
+  const yaJugado = (p) => p.fecha < hoy || (p.fecha === hoy && tieneResultado(p));
+  const proximos = partidos.filter((p) => !yaJugado(p));
+  const jugados = partidos.filter(yaJugado).sort((a, b) => b.fecha.localeCompare(a.fecha));
   return {
     cargando, error, recargar: almacen.recargar, todos: partidos, partidos: proximos, jugados,
     mios: proximos.filter((p) => p.esMio),
