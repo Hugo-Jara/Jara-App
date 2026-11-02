@@ -4,7 +4,6 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
-
 ## 2026-11-02 · Comunicaciones — Ajustes de revisión de El Jara Informa
 
 **Fotos mientras cargan otras:** antes, si se ajustaba el encuadre o el pie de una foto mientras se leían otras, al terminar la carga se volvía a la lista vieja y se perdía el ajuste. Ahora cada cambio se aplica sobre la lista vigente y ubica la foto por su id; cada foto se agrega apenas se lee, una foto dañada no descarta las demás y no se puede salir del editor (ni cerrar la pestaña sin aviso) con fotos cargando.
@@ -30,6 +29,13 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 **Compatibilidad:** rama propia desde `e4cf691`; no se modifican los PR #17, #18 ni #21. Solo se agrega esta entrada a la bitácora existente. Sin cambios en Inicio, App, Más, autenticación, áreas financieras ni Supabase.
 
 ---
+
+## 2026-10-31 · Resultado del día visible al tiro
+
+Un partido jugado hoy seguía como "próximo" hasta la medianoche aunque ya tuviera el resultado anotado, así que no aparecía en "Ya jugados" ni en el último resultado de Inicio. Ahora pasa a jugados apenas se anota el marcador (`src/lib/partidos.js`). Solo frontend, sin migración.
+
+---
+
 ## 2026-10-30 · Anuncio del boletín
 
 Noticias anuncia El Jara Informa cuando no hay publicaciones; Inicio también anticipa su llegada.
