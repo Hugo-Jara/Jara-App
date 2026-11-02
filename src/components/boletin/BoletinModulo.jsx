@@ -21,6 +21,9 @@ export default function BoletinModulo({ administrar = false }) {
   useEffect(() => { if (editor && esDemo) recargar(); }, [editor]);
   const accion = async fn => { setOcupado(true); try { await fn(); setError(''); } catch (e) { setError(e.message); } finally { setOcupado(false); } };
   if (edicion) return <BoletinEditor key={edicion.id} inicial={edicion} salir={() => { setEdicion(null); recargar(); }} />;
+  // Con la base real (producción) no se muestran las ediciones ficticias: los
+  // socios ven el anuncio hasta que exista publicación oficial.
+  if (!esDemo && !editor) return <section className="card"><h2 className="noticia-titulo">Se viene El Jara Informa</h2><p className="noticia-bajada">El boletín del club llega a la app para la fiesta de los 20 años. Acá vas a encontrar sus ediciones para leerlas a tu ritmo.</p>{params.has('edicion') && <Link className="volver" to="/noticias">← Noticias</Link>}</section>;
   if (params.has('edicion')) return <><Link className="volver" to="/noticias">← Catálogo de ediciones</Link>{demo ? <BoletinVista edicion={demo} /> : <p role="alert">Esta edición no existe en el catálogo demostrativo.</p>}</>;
   if (editor) return <section className="noticias-boletin">
     <Link className="volver" to="/noticias">← Noticias</Link><p className="noticias-etiqueta">COMUNICACIONES · DEMO LOCAL</p><h2>Mis borradores</h2>

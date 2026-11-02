@@ -12,6 +12,8 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 **Pruebas reproducibles:** `npm run test:boletin` (modelo, sin navegador) y `npm run test:boletin:e2e` (Chromium con perfiles iPhone 13 y Pixel 7: catálogo, reemplazo, lector con botones, deslizamiento, ampliación y lectura móvil, editor con carga lenta simulada y recarga). El recorrido falla con el código anterior a este ajuste. Sigue pendiente probar en celulares físicos.
 
+**Producción:** con la base real (sin modo demo) Noticias no muestra el catálogo ficticio ni abre sus ediciones: se ve el anuncio «Se viene El Jara Informa» hasta que exista publicación oficial. Decisión del administrador, 2 nov.
+
 ---
 
 ## 2026-11-02 · Comunicaciones — Editor y lector de El Jara Informa (demo)
