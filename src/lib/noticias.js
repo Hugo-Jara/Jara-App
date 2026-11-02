@@ -52,30 +52,6 @@ const EJEMPLOS = [
     fotos: [{ demo: 1 }],
   },
   {
-    id: 'boletin-2',
-    tipo: 'boletin',
-    fecha: '28 de septiembre',
-    titulo: 'El Jara Informa N°2',
-    bajada: 'Primera asamblea general, entrenamientos más baratos y la fiesta de los 20 años.',
-    notas: [
-      {
-        titulo: 'Más de 40 socios en la primera asamblea general',
-        texto: 'Nos conectamos más de 40 socios. Cada ministerio presentó su trabajo y los hitos que quedan para el año.',
-        fotos: [{ demo: 0, pie: 'Asamblea general' }, { demo: 2 }, { demo: 3 }],
-      },
-      {
-        titulo: 'Bajan los precios de los entrenamientos',
-        texto: 'Por demanda popular, desde este lunes los junior pagan $2.000 y los senior $4.000.',
-        fotos: [{ demo: 1 }, { demo: 0 }],
-      },
-      {
-        titulo: 'Se viene la fiesta',
-        texto: 'El 21 de noviembre celebramos los 20 años del Jara con jugadores y ex jugadores.',
-        fotos: [{ demo: 3 }],
-      },
-    ],
-  },
-  {
     id: 'cortita-2',
     tipo: 'entrevista',
     fecha: '20 de septiembre',
@@ -126,11 +102,4 @@ export function portada(p) {
   if (p.fotos?.length) return p.fotos[0];
   const conFoto = p.notas?.find((n) => n.fotos?.length);
   return conFoto ? conFoto.fotos[0] : null;
-}
-
-export function siguienteNumeroBoletin(publicaciones) {
-  const numeros = publicaciones
-    .filter((p) => p.tipo === 'boletin')
-    .map((p) => Number(/N°\s*(\d+)/.exec(p.titulo)?.[1] ?? 0));
-  return Math.max(0, ...numeros) + 1;
 }

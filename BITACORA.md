@@ -5,6 +5,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 ---
 
 
+## 2026-11-02 · Comunicaciones — Ajustes de revisión de El Jara Informa
+
+**Fotos mientras cargan otras:** antes, si se ajustaba el encuadre o el pie de una foto mientras se leían otras, al terminar la carga se volvía a la lista vieja y se perdía el ajuste. Ahora cada cambio se aplica sobre la lista vigente y ubica la foto por su id; cada foto se agrega apenas se lee, una foto dañada no descarta las demás y no se puede salir del editor (ni cerrar la pestaña sin aviso) con fotos cargando.
+
+**Reemplazo del boletín anterior:** se quitó el boletín viejo de ejemplo (N°2 en formato de notas) y su numerador, que seguían apareciendo en Inicio. El catálogo se ordena por número: la edición más alta es la «última» y las demás pasan al historial.
+
+**Pruebas reproducibles:** `npm run test:boletin` (modelo, sin navegador) y `npm run test:boletin:e2e` (Chromium con perfiles iPhone 13 y Pixel 7: catálogo, reemplazo, lector con botones, deslizamiento, ampliación y lectura móvil, editor con carga lenta simulada y recarga). El recorrido falla con el código anterior a este ajuste. Sigue pendiente probar en celulares físicos.
+
+---
+
 ## 2026-11-02 · Comunicaciones — Editor y lector de El Jara Informa (demo)
 
 **Qué se hizo:** catálogo ficticio propio en Noticias, separado de Cortita y al pie y Avisos. Editor local con múltiples borradores en IndexedDB, guardado automático y estado visible, duplicación, eliminación confirmada y respaldo/importación JSON. Cinco tipos de bloques, orden editable, agenda y fotografías originales con orden y encuadre ajustable. Sin Supabase ni publicación oficial.

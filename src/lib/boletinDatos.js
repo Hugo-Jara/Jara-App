@@ -16,7 +16,22 @@ const demo = (numero, periodo) => {
   e.bloques[4].eventos = [{ id: idNuevo(), fecha: 'Fecha de ejemplo', descripcion: 'Encuentro recreativo ficticio. Horario por confirmar.' }];
   return e;
 };
-export const CATALOGO = [demo(3, 'Noviembre 2026 · DEMO'), demo(2, 'Octubre 2026 · DEMO')];
+// Catálogo ordenado por número, del más nuevo al más antiguo: la edición de
+// número mayor es siempre la «última» y reemplaza a la anterior en portada.
+export const ordenarCatalogo = lista => [...lista].sort((a, b) => b.numero - a.numero);
+export const CATALOGO = ordenarCatalogo([demo(2, 'Octubre 2026 · DEMO'), demo(3, 'Noviembre 2026 · DEMO')]);
+
+// Operaciones sobre las fotos de una noticia. Siempre reciben la lista vigente
+// (no una copia vieja) y ubican cada foto por su id, no por su posición, para
+// que una carga lenta no pise ajustes hechos mientras tanto.
+export const agregarFotos = (fotos, nuevas) => [...fotos, ...nuevas.filter(n => !fotos.some(f => f.id === n.id))];
+export const actualizarFoto = (fotos, id, cambios) => fotos.map(f => f.id === id ? { ...f, ...cambios } : f);
+export const quitarFoto = (fotos, id) => fotos.filter(f => f.id !== id);
+export function moverFoto(fotos, id, delta) {
+  const i = fotos.findIndex(f => f.id === id), j = i + delta;
+  if (i < 0 || j < 0 || j >= fotos.length) return fotos;
+  const nueva = [...fotos]; [nueva[i], nueva[j]] = [nueva[j], nueva[i]]; return nueva;
+}
 export function validarEdicion(e) {
   if (!e || e.version !== 1 || typeof e.id !== 'string' || !Number.isInteger(e.numero) || e.numero < 1 || typeof e.nombre !== 'string' || typeof e.periodo !== 'string' || typeof e.resumen !== 'string' || !Array.isArray(e.bloques) || e.bloques.length > 200) throw new Error('El respaldo no contiene una edición compatible.');
   const cadena = v => typeof v === 'string' && v.length <= 200000;
