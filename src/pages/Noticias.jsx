@@ -1,12 +1,15 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import BoletinModulo from '../components/boletin/BoletinModulo.jsx';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useNoticias, TIPOS, portada } from '../lib/noticias.js';
 import { Foto } from '../components/Carrusel.jsx';
 
 export default function Noticias() {
   const { publicaciones, puedePublicar } = useNoticias();
-  const [filtro, setFiltro] = useState('todo');
-  const visibles = publicaciones.filter((p) => filtro === 'todo' || p.tipo === filtro);
+  const [filtro, setFiltro] = useState('boletin');
+  const [params] = useSearchParams();
+  if (params.has('editor') || params.has('edicion')) return <BoletinModulo />;
+  const visibles = publicaciones.filter((p) => p.tipo !== 'boletin' && (filtro === 'todo' || p.tipo === filtro));
 
   return (
     <>
@@ -16,7 +19,7 @@ export default function Noticias() {
       </div>
 
       <div className="filtros" role="tablist" aria-label="Tipo de publicación">
-        {[['todo', 'Todo'], ...Object.entries(TIPOS)].map(([clave, texto]) => (
+        {[['todo', 'Todo'], ...Object.entries(TIPOS).map(([k, v]) => [k, k === 'boletin' ? 'El Jara Informa' : k === 'aviso' ? 'Avisos' : v])].map(([clave, texto]) => (
           <button key={clave} role="tab" aria-selected={filtro === clave}
                   className={`filtro ${filtro === clave ? 'activo' : ''}`} onClick={() => setFiltro(clave)}>
             {texto}
@@ -24,12 +27,9 @@ export default function Noticias() {
         ))}
       </div>
 
-      {visibles.length === 0 && (filtro === 'todo' ? (
-        <section className="card">
-          <h2 className="noticia-titulo">Se viene El Jara Informa</h2>
-          <p className="noticia-bajada">El boletín del club llega a la app para la fiesta de los 20 años. Acá vas a encontrar las ediciones del boletín, las entrevistas Cortita y al pie y los avisos del club.</p>
-        </section>
-      ) : <p className="vacio suelto">Todavía no hay publicaciones acá.</p>)}
+      {(filtro === 'todo' || filtro === 'boletin') && <BoletinModulo />}
+
+      {filtro !== 'boletin' && visibles.length === 0 && <p className="vacio suelto">Todavía no hay publicaciones acá.</p>}
 
       {visibles.map((p) => {
         const foto = portada(p);

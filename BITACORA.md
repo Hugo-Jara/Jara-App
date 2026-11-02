@@ -4,6 +4,34 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-02 · Comunicaciones — Ajustes de revisión de El Jara Informa
+
+**Fotos mientras cargan otras:** antes, si se ajustaba el encuadre o el pie de una foto mientras se leían otras, al terminar la carga se volvía a la lista vieja y se perdía el ajuste. Ahora cada cambio se aplica sobre la lista vigente y ubica la foto por su id; cada foto se agrega apenas se lee, una foto dañada no descarta las demás y no se puede salir del editor (ni cerrar la pestaña sin aviso) con fotos cargando.
+
+**Reemplazo del boletín anterior:** se quitó el boletín viejo de ejemplo (N°2 en formato de notas) y su numerador, que seguían apareciendo en Inicio. El catálogo se ordena por número: la edición más alta es la «última» y las demás pasan al historial.
+
+**Pruebas reproducibles:** `npm run test:boletin` (modelo, sin navegador) y `npm run test:boletin:e2e` (Chromium con perfiles iPhone 13 y Pixel 7: catálogo, reemplazo, lector con botones, deslizamiento, ampliación y lectura móvil, editor con carga lenta simulada y recarga). El recorrido falla con el código anterior a este ajuste. Sigue pendiente probar en celulares físicos.
+
+**Producción:** con la base real (sin modo demo) Noticias no muestra el catálogo ficticio ni abre sus ediciones: se ve el anuncio «Se viene El Jara Informa» hasta que exista publicación oficial. Decisión del administrador, 2 nov.
+
+---
+
+## 2026-11-02 · Comunicaciones — Editor y lector de El Jara Informa (demo)
+
+**Qué se hizo:** catálogo ficticio propio en Noticias, separado de Cortita y al pie y Avisos. Editor local con múltiples borradores en IndexedDB, guardado automático y estado visible, duplicación, eliminación confirmada y respaldo/importación JSON. Cinco tipos de bloques, orden editable, agenda y fotografías originales con orden y encuadre ajustable. Sin Supabase ni publicación oficial.
+
+**Periódico:** composición compartida por vista previa, lector y exportación PNG de 1280 × 1600 por página. Agrega páginas, continúa noticias entre oraciones y prefiere párrafos completos; las fotos no se dividen. Avisa y bloquea exportaciones si una palabra, oración, titular o pie no cabe. Lector con navegación, deslizamiento lateral, ampliación y lectura móvil del mismo contenido.
+
+**Acceso en modo demo:** Noticias → El Jara Informa → Administrar ediciones demo (`/noticias?editor=1`). El catálogo abre el lector con «Leer edición» (`/noticias?edicion=demo-3`). También se accede al editor desde Publicar → Boletín. Los borradores nunca aparecen en el catálogo de los socios.
+
+**Comprobado:** `npm run build` y `npm run test:db` pasan (34 + 174 pruebas). Recorridos en Chromium a 375 px: crear los cinco bloques, escribir, cargar dos fotos sintéticas, ajustar/restablecer encuadre, ordenar fotos y bloques, guardar, recuperar tras recargar y cerrar pestaña, duplicar, eliminar con confirmación, quitar bloques y respaldar/importar. Edición de prueba de cuatro páginas: descarga individual y cuatro PNG independientes, resolución comprobada. Lector: botones, deslizamiento, zoom y cambio de modalidad; sin desplazamiento horizontal de la página. Creación y lectura de entrevistas y avisos conservadas. Sin errores de JavaScript. Prueba de diez páginas con continuidad del texto y límites geométricos; bloqueos por palabra/oración excesiva y errores simulados de cuota e IndexedDB no disponible.
+
+**Límites:** datos solo en este navegador; borrar su almacenamiento elimina los borradores. No editar la misma edición en varias pestañas. Hasta 20 MB y 40 megapíxeles por foto, 40 páginas por edición; PNG separados, con descarga individual si el navegador bloquea las múltiples. No se probó en dispositivos físicos iOS/Android. Publicación compartida y permisos reales quedan para el administrador. Sin dependencias nuevas.
+
+**Compatibilidad:** rama propia desde `e4cf691`; no se modifican los PR #17, #18 ni #21. Solo se agrega esta entrada a la bitácora existente. Sin cambios en Inicio, App, Más, autenticación, áreas financieras ni Supabase.
+
+---
+
 ## 2026-10-31 · Resultado del día visible al tiro
 
 Un partido jugado hoy seguía como "próximo" hasta la medianoche aunque ya tuviera el resultado anotado, así que no aparecía en "Ya jugados" ni en el último resultado de Inicio. Ahora pasa a jugados apenas se anota el marcador (`src/lib/partidos.js`). Solo frontend, sin migración.

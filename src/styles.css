@@ -423,3 +423,49 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .plantel-resumen { display: block; width: 100%; text-align: left; color: inherit; font: inherit; cursor: pointer; }
 .plantel-resumen:active { background: var(--bg-card-alt); }
 @media (max-width: 380px) { .total-monto { font-size: 32px; } .total-detalle dd { font-size: 14px; } }
+
+/* El Jara Informa: estilos aislados del editor y lector demostrativo. */
+.noticias-boletin { min-width: 0; margin: 24px 0; }
+.noticias-boletin h2 { margin: 16px 0 8px; }
+.noticias-masthead { font-family: Georgia, serif; font-size: clamp(30px, 7vw, 52px); line-height: 1.08; }
+.noticias-etiqueta { color: #d9584e; font-size: 12px; font-weight: 800; letter-spacing: .1em; }
+.noticias-edicion-card { display: grid; grid-template-columns: minmax(95px, 35%) minmax(0, 1fr); gap: 18px; padding: 16px; border: 1px solid #685448; border-radius: 12px; margin: 18px 0; align-items: center; }
+.noticias-portada { width: 100%; height: auto; box-shadow: 0 3px 12px #0005; }
+.noticias-edicion-card h3, .noticias-borrador h3 { margin-top: 0; }
+.noticias-herramientas { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 14px 0; }
+.noticias-herramientas .btn { width: auto; margin: 0; max-width: 100%; white-space: normal; }
+.noticias-campo { display: flex; flex-direction: column; gap: 6px; margin: 14px 0; font-size: 14px; font-weight: 600; min-width: 0; }
+.noticias-campo input, .noticias-campo textarea { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; margin: 0; }
+.noticias-campo input[type=file] { font-size: 12px; overflow: hidden; }
+.noticias-campo input[type=range] { padding: 0; accent-color: #c74438; min-height: 36px; }
+.noticias-campo textarea { resize: vertical; }
+.noticias-ayuda { font-size: 13px; line-height: 1.6; opacity: .85; }
+.noticias-error { border: 1px solid #ef8e80; border-radius: 8px; padding: 14px; color: #ffb1a5; overflow-wrap: anywhere; }
+.noticias-bloque-editor { min-width: 0; margin: 24px 0; border: 1px solid #685448; border-radius: 12px; padding: 14px; }
+.noticias-bloque-editor legend { padding: 0 6px; font-weight: 700; max-width: 95%; }
+.noticias-metadatos, .noticias-borrador { border-bottom: 1px solid #685448; padding: 10px 0 20px; }
+.noticias-nota-editor + .noticias-nota-editor, .noticias-evento + .noticias-evento { border-top: 1px solid #685448; margin-top: 24px; padding-top: 16px; }
+.noticias-foto-editor { border: 1px solid #685448; padding: 10px; margin: 15px 0; border-radius: 8px; }
+.noticias-fotos-lectura figure { margin: 12px 0; }
+.noticias-fotos-lectura figcaption { font-size: 13px; margin: 7px 0; }
+.noticias-foto-marco { aspect-ratio: 10 / 7; overflow: hidden; background: #bcb89b; }
+.noticias-ilustracion { display: grid; place-items: center; height: 100%; padding: 20px; background: linear-gradient(#cbcbb5 55%, #375744 55%); color: #101910; font-family: Georgia, serif; }
+.noticias-visor { width: 100%; overflow: auto; background: #201a16; border: 1px solid #685448; overscroll-behavior: contain; max-height: 80vh; }
+.noticias-pagina canvas { display: block; width: 100%; height: auto; }
+.noticias-miniaturas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px 0; }
+.noticias-miniaturas button { padding: 0; background: transparent; border: 2px solid #685448; }
+.noticias-miniaturas img { width: 100%; height: auto; display: block; }
+.noticias-lectura { background: #f7efdd; color: #17130f; padding: 22px; border-radius: 4px; line-height: 1.7; }
+.noticias-lectura h3 { font-family: Georgia, serif; font-size: 26px; line-height: 1.18; }
+.noticias-lectura p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.noticias-lectura article, .noticias-lectura section { margin-bottom: 28px; }
+.noticias-lectura-destacada { border: 2px solid #a92520; padding: 14px; }
+.noticias-agregar { border-top: 2px solid #a92520; padding-top: 14px; }
+@media (max-width: 480px) {
+  .noticias-edicion-card { grid-template-columns: minmax(80px, 32%) minmax(0, 1fr); padding: 12px; gap: 12px; }
+  .noticias-edicion-card h3 { font-size: 20px; }
+  .noticias-edicion-card p { font-size: 13px; }
+  .noticias-bloque-editor { padding: 10px; }
+  .noticias-herramientas .btn { font-size: 13px; padding: 10px 12px; }
+  .noticias-lectura { padding: 16px; }
+}
