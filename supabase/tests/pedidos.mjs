@@ -659,5 +659,167 @@ ok('Agregar un tópico nuevo es insertar una fila: su lista abierta se crea sola
 r = await como('socio', `select count(*) from topicos`);
 ok('Los tópicos siguen sin leerse directamente con cuenta', /permission denied/.test(r.error ?? ''), r.error);
 
+// ---------------------------------------------------------------------------
+console.log('\nFondo Las Condes (0021)');
+Object.assign(U, { fondo: '00000000-0000-0000-0000-0000000000c1' });
+PER.fondo = '20000000-0000-0000-0000-0000000000c1';
+await db.exec(`
+  insert into auth.users (id, email) values ('${U.fondo}', 'fondo@correo.cl');
+  insert into personas (id, club_id, nombre, user_id) values ('${PER.fondo}', '${CLUB}', 'Equipo Fondo Prueba', '${U.fondo}');
+`);
+await db.exec(mig('0021_fondo.sql'));
+await db.query(`update personas set equipo_fondo = true where id = $1`, [PER.fondo]);
+const fondo = async (quien) => { const x = await como(quien, 'select fondo_ver() as f'); return x.error ? { error: x.error } : x.rows[0].f; };
+
+r = await db.query(`select slug, aprobado from fondo_items order by orden`);
+ok('El presupuesto queda con los cuatro ítems del formulario',
+   JSON.stringify(r.rows.map((x) => [x.slug, x.aprobado])) === JSON.stringify([['personal', 637500], ['bienes', 1848000], ['materiales', 0], ['otros', 602000]]), JSON.stringify(r.rows));
+r = await db.query(`select activo, nombre from topicos where slug = 'fondo'`);
+ok('El tópico Fondo queda activo, con su lista abierta', r.rows[0]?.activo === true && r.rows[0].nombre === 'Fondo Las Condes' && (await abiertas('fondo')) === 1);
+r = await db.query(`select public from storage.buckets where id = 'fondo'`);
+ok('El bucket del fondo es privado', r.rows[0]?.public === false);
+
+r = await anon(`select fondo_ver()`);
+ok('Sin cuenta no se ve el fondo', /permission denied/.test(r.error ?? ''), r.error);
+ok('Un socio no ve el fondo', /Solo el equipo del fondo/.test((await fondo('socio')).error ?? ''));
+ok('Un tesorero de plantel tampoco', /Solo el equipo del fondo/.test((await fondo('teso')).error ?? ''));
+ok('Quien solo ve todas las compras tampoco', /Solo el equipo del fondo/.test((await fondo('vecompras')).error ?? ''));
+ok('fondo_acceso dice que no a un socio', (await como('socio', 'select fondo_acceso() as a')).rows[0]?.a === false);
+ok('…y que sí al equipo del fondo', (await como('fondo', 'select fondo_acceso() as a')).rows[0]?.a === true);
+let f = await fondo('fondo');
+ok('El equipo del fondo lo ve, con las tres cuotas de honorarios creadas',
+   f.items?.length === 4 && f.gastos.filter((g) => g.item === 'personal').map((g) => g.mes).join() === '10,11,12'
+   && f.gastos.every((g) => g.estado === 'pendiente'), JSON.stringify(f).slice(0, 300));
+ok('Hacienda también lo ve', !(await fondo('hacienda')).error);
+ok('…y trae los dos documentos y las dos rendiciones', f.documentos.length === 2 && f.rendiciones.length === 2 && f.rendiciones.every((x) => !x.presentada));
+for (const t of ['fondo_items', 'fondo_gastos', 'fondo_respaldos', 'fondo_documentos', 'fondo_rendiciones']) {
+  r = await como('fondo', `select count(*) from ${t}`);
+  if (r.error === null) { ok(`La tabla ${t} no se lee directamente`, false); }
+}
+ok('Las tablas del fondo no se leen directamente, ni con permiso', true);
+
+// Una compra pedida por Compras en el tópico Fondo
+const carpetaF = (await db.query(`select carpeta from pedidos where topico = 'fondo' and abierto`)).rows[0].carpeta;
+await obj(`${carpetaF}/cot-balones.pdf`);
+r = await como('socio', `select compra_agregar('fondo', 'Balones n° 5 (22)', 550000, $1, 'cot.pdf') as id`, [`${carpetaF}/cot-balones.pdf`]);
+const balones = r.rows[0]?.id;
+ok('Un socio pide una compra en el tópico Fondo', !!balones, r.error);
+f = await fondo('fondo');
+ok('Aparece en el fondo como compra por clasificar', f.por_clasificar.length === 1 && f.por_clasificar[0].id === balones);
+r = await como('socio', `select fondo_clasificar($1, 'bienes')`, [balones]);
+ok('Un socio no la pasa al fondo', /Solo el equipo del fondo/.test(r.error ?? ''), r.error);
+r = await como('fondo', `select fondo_clasificar($1, 'inventado')`, [balones]);
+ok('No se pasa a un ítem que no existe', /no está en el presupuesto/.test(r.error ?? ''), r.error);
+r = await como('fondo', `select fondo_clasificar($1, 'personal')`, [balones]);
+ok('…ni a honorarios', /honorarios ya están creados/.test(r.error ?? ''), r.error);
+r = await como('fondo', `select fondo_clasificar($1, 'bienes') as id`, [balones]);
+const gBalones = r.rows[0]?.id;
+ok('El equipo del fondo la pasa a Bienes', !!gBalones, r.error);
+r = await como('fondo', `select fondo_clasificar($1, 'bienes')`, [balones]);
+ok('Una compra entra al fondo una sola vez', /ya está en el fondo/.test(r.error ?? ''), r.error);
+f = await fondo('fondo');
+let g = f.gastos.find((x) => x.id === gBalones);
+ok('Toma qué y monto de la compra, y la cotización cuenta como respaldo sola',
+   g?.que === 'Balones n° 5 (22)' && g.monto === 550000 && g.marcados.includes('cotizacion') && g.compra?.quien === 'Socio Prueba'
+   && f.por_clasificar.length === 0, JSON.stringify(g));
+
+// Respaldos
+const respaldo = (quien, gasto, tipo, marcado = true, ruta = null) =>
+  como(quien, `select fondo_respaldo($1, $2, $3, $4, 'archivo.pdf')`, [gasto, tipo, marcado, ruta]);
+r = await respaldo('fondo', gBalones, 'f29');
+ok('No se marca un respaldo que no corresponde', /no corresponde/.test(r.error ?? ''), r.error);
+r = await respaldo('fondo', gBalones, 'nomina');
+ok('La nómina solo se pide si se entrega a los participantes', /no corresponde/.test(r.error ?? ''), r.error);
+r = await respaldo('fondo', gBalones, 'boleta', true, 'fondo/no-existe.pdf');
+ok('No se acepta un archivo que no está en el bucket del fondo', /Falta el archivo/.test(r.error ?? ''), r.error);
+r = await como('socio', `insert into storage.objects (bucket_id, name) values ('fondo', 'g/boleta.pdf')`);
+ok('Un socio no sube archivos al bucket del fondo', !!r.error);
+r = await como('fondo', `insert into storage.objects (bucket_id, name) values ('fondo', $1)`, [`${gBalones}/boleta.pdf`]);
+ok('El equipo del fondo sí', !r.error, r.error);
+const veFondo = async (quien) => { const x = await como(quien, `select count(*)::int n from storage.objects where bucket_id = 'fondo'`); return x.rows[0]?.n ?? x.error; };
+ok('Un tesorero de plantel no abre los archivos del fondo', (await veFondo('teso')) === 0);
+ok('El equipo del fondo sí', (await veFondo('fondo')) === 1);
+r = await respaldo('fondo', gBalones, 'boleta', true, `${gBalones}/boleta.pdf`);
+ok('Se marca la boleta con su archivo', !r.error, r.error);
+for (const t of ['comprobante', 'certificacion', 'original']) await respaldo('fondo', gBalones, t);
+r = await respaldo('fondo', gBalones, 'original', true, `${gBalones}/boleta.pdf`);
+ok('El original firmado no acepta archivo', /solo en papel/.test(r.error ?? ''), r.error);
+f = await fondo('fondo');
+g = f.gastos.find((x) => x.id === gBalones);
+ok('Con todos los respaldos pero sin forma de pago sigue pendiente', g.estado === 'pendiente' && g.respaldos.boleta?.ruta === `${gBalones}/boleta.pdf`, JSON.stringify(g));
+
+const guardar = (quien, gasto, o = {}) => como(quien,
+  `select fondo_gasto_guardar($1, $2, $3, $4, $5, $6, $7, $8, $9) as id`,
+  [gasto, o.item ?? 'bienes', o.que ?? 'Balones n° 5 (22)', o.monto ?? 550000, o.proveedor ?? 'Proveedor Prueba',
+   o.documento ?? '1234', o.fecha ?? '2026-10-15', o.pago === undefined ? 'transferencia' : o.pago, o.entrega ?? false]);
+r = await guardar('socio', gBalones);
+ok('Un socio no corrige un gasto del fondo', /Solo el equipo del fondo/.test(r.error ?? ''), r.error);
+r = await guardar('fondo', gBalones, { item: 'personal' });
+ok('Un gasto no pasa a honorarios', /no cambian de ítem/.test(r.error ?? ''), r.error);
+r = await guardar('fondo', gBalones, { monto: 0 });
+ok('No se deja el monto en cero', /Falta el monto/.test(r.error ?? ''), r.error);
+r = await guardar('fondo', gBalones);
+ok('El equipo completa proveedor, boleta, fecha y pago', !r.error, r.error);
+g = (await fondo('fondo')).gastos.find((x) => x.id === gBalones);
+ok('…y queda lista para rendir', g.estado === 'lista', JSON.stringify(g));
+r = await guardar('fondo', gBalones, { entrega: true });
+g = (await fondo('fondo')).gastos.find((x) => x.id === gBalones);
+ok('Si se entrega a los participantes, pide la nómina y vuelve a pendiente', g.estado === 'pendiente', JSON.stringify(g));
+r = await respaldo('fondo', gBalones, 'nomina', true, `${gBalones}/boleta.pdf`);
+ok('La nómina no acepta archivo (trae cédula y domicilio)', /solo en papel/.test(r.error ?? ''), r.error);
+await respaldo('fondo', gBalones, 'nomina');
+ok('Marcada la nómina en papel, vuelve a estar lista', (await fondo('fondo')).gastos.find((x) => x.id === gBalones).estado === 'lista');
+
+r = await guardar('fondo', null, { que: 'Botiquín', monto: 38000, item: 'otros', pago: 'particular' });
+const gBotiquin = r.rows[0]?.id;
+ok('Se puede cargar un gasto directo, sin pasar por Compras', !!gBotiquin, r.error);
+ok('Pagado por un particular no se puede rendir', (await fondo('fondo')).gastos.find((x) => x.id === gBotiquin).estado === 'no_rendible');
+r = await guardar('fondo', gBotiquin, { que: 'Botiquín', monto: 38000, item: 'otros', fecha: '2026-09-30', pago: 'debito' });
+ok('…ni con boleta anterior al 1 de octubre', (await fondo('fondo')).gastos.find((x) => x.id === gBotiquin).estado === 'no_rendible');
+r = await guardar('fondo', null, { item: 'personal' });
+ok('Los honorarios no se crean a mano', /honorarios ya están creados/.test(r.error ?? ''), r.error);
+
+// Rendiciones
+r = await como('fondo', `select fondo_presentar(2)`);
+ok('No se presenta la rendición 2 antes de la 1', /anterior/.test(r.error ?? ''), r.error);
+r = await como('socio', `select fondo_presentar(1)`);
+ok('Un socio no presenta rendiciones', /Solo el equipo del fondo/.test(r.error ?? ''), r.error);
+r = await como('fondo', `select fondo_presentar(1) as n`);
+ok('Al presentar la rendición 1 entran los gastos listos', r.rows[0]?.n === 1, r.error);
+f = await fondo('fondo');
+g = f.gastos.find((x) => x.id === gBalones);
+ok('…y quedan rendidos en ella', g.estado === 'rendida' && g.rendicion === 1 && f.rendiciones[0].presentada, JSON.stringify(g));
+r = await guardar('fondo', gBalones, { monto: 1 });
+ok('Un gasto rendido no se cambia', /rendición presentada/.test(r.error ?? ''), r.error);
+r = await respaldo('fondo', gBalones, 'boleta', false);
+ok('…ni se le desmarcan respaldos', /rendición presentada/.test(r.error ?? ''), r.error);
+r = await como('fondo', `select fondo_gasto_quitar($1)`, [gBalones]);
+ok('…ni se quita del fondo', /rendición presentada/.test(r.error ?? ''), r.error);
+r = await como('fondo', `select fondo_presentar(1)`);
+ok('Una rendición no se presenta dos veces', /ya está presentada/.test(r.error ?? ''), r.error);
+r = await como('fondo', `select fondo_presentar(2)`);
+ok('No se presenta una rendición vacía', /No hay gastos listos/.test(r.error ?? ''), r.error);
+r = await como('fondo', `select fondo_subida(1, true)`);
+ok('Se marca la rendición como subida al portal', !r.error && (await fondo('fondo')).rendiciones[0].subida === true, r.error);
+r = await como('fondo', `select fondo_subida(2, true)`);
+ok('…pero no una que no se ha presentado', /no está presentada/.test(r.error ?? ''), r.error);
+
+// Quitar un gasto y documentos
+await obj(`${carpetaF}/cot-conos.pdf`);
+const conosF = (await como('socio', `select compra_agregar('fondo', 'Conos (30)', 75000, $1, 'cot.pdf') as id`, [`${carpetaF}/cot-conos.pdf`])).rows[0]?.id;
+const gConos = (await como('fondo', `select fondo_clasificar($1, 'bienes') as id`, [conosF])).rows[0]?.id;
+r = await como('fondo', `select fondo_gasto_quitar($1)`, [gConos]);
+ok('Se quita un gasto del fondo y la compra vuelve a quedar por clasificar',
+   !r.error && (await fondo('fondo')).por_clasificar.some((x) => x.id === conosF), r.error);
+r = await como('fondo', `select fondo_clasificar($1, 'otros') as id`, [conosF]);
+ok('…y se puede volver a pasar, a otro ítem', !!r.rows[0]?.id, r.error);
+const honorOct = f.gastos.find((x) => x.mes === 10).id;
+r = await como('fondo', `select fondo_gasto_quitar($1)`, [honorOct]);
+ok('Las cuotas de honorarios no se quitan', /no se quitan/.test(r.error ?? ''), r.error);
+r = await como('fondo', `select fondo_documento('cartola', true)`);
+ok('Se marca la cartola como lista', !r.error && (await fondo('fondo')).documentos.find((d) => d.id === 'cartola').listo, r.error);
+r = await como('socio', `select fondo_documento('cartola', false)`);
+ok('Un socio no cambia los documentos', /Solo el equipo del fondo/.test(r.error ?? ''), r.error);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

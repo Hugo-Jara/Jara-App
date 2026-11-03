@@ -33,8 +33,6 @@ export default function App() {
   if (pathname.startsWith('/pedido/')) return <Pedido />;
   // Link público de un tópico de Compras: solo sirve para enviar una solicitud.
   if (pathname.startsWith('/solicitar/')) return <Solicitar />;
-  // Vista previa del Fondo Las Condes: datos de ejemplo, se abre con el link y sin cuenta.
-  if (pathname === '/fondo') return <Fondo />;
 
   // En modo demostración, /ingreso muestra la pantalla de entrada para revisarla.
   if (esDemo && pathname === '/ingreso') return <Ingreso />;
@@ -67,6 +65,7 @@ export default function App() {
         <Route path="/cuota" element={<Cuota />} />
         <Route path="/compras" element={<Compras />} />
         <Route path="/tablero" element={<Tablero />} />
+        <Route path="/fondo" element={<Fondo />} />
         <Route path="/club" element={<Club />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

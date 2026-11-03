@@ -7,7 +7,8 @@ let mal = 0;
 // Tablas de 0001 y 0002 (cerradas en 0018) y el registro de búsquedas de la nómina.
 for (const t of ['clubes', 'personas', 'persona_contactos', 'equipos', 'persona_equipos', 'areas', 'persona_areas',
                  'solicitudes_compra', 'solicitud_adjuntos', 'solicitud_eventos', 'nomina_busquedas',
-                 'pedidos', 'pedido_items', 'pedido_item_eventos', 'topicos']) {
+                 'pedidos', 'pedido_items', 'pedido_item_eventos', 'topicos',
+                 'fondo_items', 'fondo_gastos', 'fondo_respaldos', 'fondo_documentos', 'fondo_rendiciones']) {
   const { data, error } = await sb.from(t).select('*').limit(5);
   const filas = data?.length ?? 0;
   if (error && !error.code) {
@@ -46,6 +47,13 @@ const funciones = [
   ['compra_agregar', { p_topico: 'veinte_anos', p_que: 'x', p_monto: 1000, p_cotizacion_ruta: 'a/b.pdf', p_cotizacion_nombre: 'b.pdf' }],
   ['compra_revisar', { p_item: NADA, p_accion: 'aprobar' }],
   ['topico_cambiar', { p_slug: 'veinte_anos', p_activo: false }],
+  // Fondo Las Condes (0021): solo con cuenta del equipo del fondo.
+  ['fondo_acceso', {}],
+  ['fondo_ver', {}],
+  ['fondo_gasto_guardar', { p_gasto: null, p_item: 'bienes', p_que: 'x', p_monto: 1000 }],
+  ['fondo_clasificar', { p_compra: NADA, p_item: 'bienes' }],
+  ['fondo_respaldo', { p_gasto: NADA, p_tipo: 'boleta', p_marcado: true }],
+  ['fondo_presentar', { p_rendicion: 1 }],
 ];
 for (const [f, params] of funciones) {
   const r = await sb.rpc(f, params);

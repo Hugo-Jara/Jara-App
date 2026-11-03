@@ -4,7 +4,7 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 
 - **Repo:** Hugo-Jara/Jara-App (Supabase propio del club, dominio hugojara.cl)
 - **Hitos:**
-  - **28/10/2026:** reunión con los tesoreros. Ese día tienen que poder entrar a la app y ver su tablero.
+  - **3/11/2026 (antes 28/10):** reunión con los tesoreros. Ese día tienen que poder entrar a la app y ver su tablero.
   - **21/11/2026:** fiesta de los 20 años y presentación de la app a todo el club.
 - **Forma de trabajo:**
   - Sesión de Claude Code en la nube conectada al repo.
@@ -75,11 +75,17 @@ Plan vigente de Jara App. Se trabaja **una fase por sesión de Claude Code** y c
 - **Listo cuando:** las pruebas cubren cada caso. El administrador de la app corre la migración y prueba con dos cuentas de planteles distintos.
 
 ## Orden de las fases (actualizado)
-Fase 4 → **hito 3/11** → Fase 3 → Compras 1 → Compras 1b → Compras 2 → Compras 3 → Fase 5 → Fase 6b → Fase 7 → Fase 8 → **hito sáb 21/11**.
+**Hecho:** Fases 0, 1, 2, 2b y 3 (20/10), Compras 1, Compras 1b y Fase 4 (21/10).
 
-**Cambio del 30/10/2026:** el 29/10 se priorizó Compras y Tesorería, y la reunión con los tesoreros pasó al **martes 3 de noviembre**. Por eso la Fase 4 (tablero demo) va antes de la Fase 3, y después de la Fase 4 viene la Fase 3 y luego la cadena de Compras (Compras 1 y 1b ya están hechas). El orden anterior era: Fase 3 → Compras 1 → Compras 1b → Compras 2 → Compras 3 → Fase 4 → hito 28/10 → Fase 5 → Fase 6b → Fase 7 → Fase 8 → hito 21/11.
+**Lo que queda** (traspaso del chat del 29-30/10):
+- **Carril de Compras y datos** (administrador de la app; todo lo que toca la base): Compras 2 (PR abierto el 30/10) → Compras 3 → Fase 7 (perfil, partidos jugados y asistencia) → Fase 7b (comentarios y reacciones) → **hito 3/11** → Fase 5 (con lo que digan los tesoreros) → Fase 6b → Fase 8 → **hito sáb 21/11**.
+- **Carril de Comunicaciones** (voluntario de Comunicaciones, sin base de datos): Fase F (galería de fotos conectada al Drive del club).
 
-Sin fechas intermedias: solo quedan los hitos 3/11 y sáb 21/11. Las secciones de abajo siguen el orden anterior; el orden vigente es el de esta línea.
+La reunión con los tesoreros es el **martes 3/11** y llega con la Fase 4 (tablero demo) ya en main; lo que salga de ahí entra en la Fase 5. Se mantiene el método: una fase por sesión y un PR por fase.
+
+**Corrección del 30/10/2026:** el cambio de orden anterior (Fase 4 antes de la Fase 3) se escribió sin ver que las dos ya estaban hechas desde el 20 y el 21 de octubre. El 29/10 se priorizó Compras y Tesorería, así que lo siguiente es Compras 2.
+
+Sin fechas intermedias: solo quedan los hitos 3/11 y sáb 21/11. Las secciones de abajo siguen el orden anterior; el orden vigente es el de esta sección.
 
 ---
 
@@ -154,13 +160,28 @@ Sin fechas intermedias: solo quedan los hitos 3/11 y sáb 21/11. Las secciones d
   - Carga del fixture completo de una vez: el encargado pega la tabla de la liga (fecha, hora, rival, cancha).
 - **Nota:** necesita migración nueva (estado, motivo y fecha original); la revisa el administrador de la app antes de aplicarla.
 
-## Fase 7 — Perfil del jugador
+## Fase 7 — Perfil del jugador, partidos jugados y asistencia
 - **Modelo:** Sonnet · /clear (el modelo de datos se define antes en el chat)
 - **Alcance:**
-  - Foto, posición, pie hábil y dorsal por plantel.
+  - Foto, posición, pie hábil y dorsal por plantel. Cada jugador edita solo lo suyo.
   - Estatura y peso opcionales, con visibilidad elegida por el jugador.
-  - Estadísticas individuales.
-- **Listo cuando:** el administrador de la app edita su perfil y lo ve desde otra cuenta.
+  - Estadísticas individuales, que controlan los estadísticos (no el jugador).
+  - **Partidos jugados** por jugador en la tabla general, calculados desde la lista de asistentes del partido. Los confirma quien anota goles, asistencias y tarjetas: puede ser más de una persona, incluido el cuerpo técnico (rol nuevo "estadístico").
+  - **Asistencia a entrenamientos:** lista por sesión y porcentaje por jugador.
+- **Nota:** necesita migración nueva (rol estadístico y asistencia); la revisa el administrador de la app antes de aplicarla.
+- **Listo cuando:** el administrador de la app edita su perfil y lo ve desde otra cuenta, y un estadístico confirma los partidos jugados de un partido.
+
+## Fase 7b — Comentarios y reacciones por partido
+- **Modelo:** Sonnet · /clear
+- **Alcance:** comentarios en cada partido y reacciones al partido y a cada comentario.
+- **Por decidir antes de partir:** si hay moderación (que un administrador borre comentarios).
+- **Nota:** necesita migración nueva; la revisa el administrador de la app.
+
+## Fase F — Fotos conectadas al Drive del club (carril de Comunicaciones)
+- **Modelo:** Opus para el diseño · después Sonnet
+- **Alcance:** galería de fotos de partidos en la app, leyendo las carpetas del Drive del club (unidad de fotos y videos). Sin base de datos nueva.
+- **Quién:** el voluntario de Comunicaciones, en su propia rama y PR. Lo revisa el administrador de la app.
+- **Listo cuando:** las fotos del último partido se ven en la app sin subirlas dos veces.
 
 ## Fase 8 — Pulido para la fiesta
 - **Modelo:** Sonnet · /clear
@@ -183,12 +204,13 @@ Sin fechas intermedias: solo quedan los hitos 3/11 y sáb 21/11. Las secciones d
 - Historias de 24 horas.
 - Canchas de Huechuraba.
 - Importar automáticamente el fixture desde las páginas de las ligas (temporada 2027), investigando antes qué publica cada liga.
+- **Detector facial ("fotos tuyas"):** el jugador sube selfies y la app le muestra las fotos de partidos donde aparece, para confirmar o rechazar. Es viable (AWS Rekognition o librerías abiertas). **Privacidad:** la cara es un dato biométrico, así que es solo para quien se inscribe (opt-in), las selfies se pueden borrar y nunca se reconoce a quien no se inscribió. No aplica a menores (el club exige 18 años o más). Requiere la Fase F terminada y fotos cargadas.
 
 ## Tareas manuales del administrador de la app (fuera del código)
 - **Antes de la Fase 3:**
   - Google OAuth en producción.
   - Borrar la cuenta de prueba en Supabase.
-- **Antes del 28/10:**
+- **Antes del 3/11:**
   - Correos de los tesoreros.
 - **Cuando haya tiempo:**
   - DMARC.
