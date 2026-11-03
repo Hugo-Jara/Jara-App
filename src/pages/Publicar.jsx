@@ -1,6 +1,7 @@
+import BoletinModulo from '../components/boletin/BoletinModulo.jsx';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useNoticias, TIPOS, PLANTILLA_ENTREVISTA, siguienteNumeroBoletin } from '../lib/noticias.js';
+import { useNoticias, TIPOS, PLANTILLA_ENTREVISTA } from '../lib/noticias.js';
 import { Foto } from '../components/Carrusel.jsx';
 
 // Selector de fotos: muestra las elegidas y deja quitar una.
@@ -26,43 +27,6 @@ function Fotos({ fotos, onChange, etiqueta = 'Fotos' }) {
         </label>
       </div>
     </div>
-  );
-}
-
-function FormBoletin({ numero, onPublicar }) {
-  const [bajada, setBajada] = useState('');
-  const [notas, setNotas] = useState([{ titulo: '', texto: '', fotos: [] }]);
-  const cambiar = (i, campo, valor) => setNotas(notas.map((n, j) => (j === i ? { ...n, [campo]: valor } : n)));
-  const enviar = (e) => {
-    e.preventDefault();
-    onPublicar({ tipo: 'boletin', titulo: `El Jara Informa N°${numero}`, bajada, notas });
-  };
-  return (
-    <form onSubmit={enviar}>
-      <p className="ayuda">Esta edición será <strong>El Jara Informa N°{numero}</strong>.</p>
-      <label htmlFor="bajada">Resumen de la edición</label>
-      <input id="bajada" required value={bajada} onChange={(e) => setBajada(e.target.value)}
-             placeholder="Lo más importante, en una línea" />
-      {notas.map((n, i) => (
-        <fieldset className="bloque" key={i}>
-          <legend>Nota {i + 1}</legend>
-          <label htmlFor={`t${i}`}>Título</label>
-          <input id={`t${i}`} required value={n.titulo} onChange={(e) => cambiar(i, 'titulo', e.target.value)} />
-          <label htmlFor={`x${i}`}>Texto</label>
-          <textarea id={`x${i}`} rows="4" required value={n.texto} onChange={(e) => cambiar(i, 'texto', e.target.value)} />
-          <Fotos fotos={n.fotos} onChange={(f) => cambiar(i, 'fotos', f)} />
-          {notas.length > 1 && (
-            <button type="button" className="enlace" onClick={() => setNotas(notas.filter((_, j) => j !== i))}>
-              Quitar esta nota
-            </button>
-          )}
-        </fieldset>
-      ))}
-      <button type="button" className="btn secundario" onClick={() => setNotas([...notas, { titulo: '', texto: '', fotos: [] }])}>
-        Agregar otra nota
-      </button>
-      <button className="btn publicar">Publicar boletín</button>
-    </form>
   );
 }
 
@@ -137,7 +101,7 @@ function FormAviso({ onPublicar }) {
 }
 
 export default function Publicar() {
-  const { publicaciones, publicar, puedePublicar } = useNoticias();
+  const { publicar, puedePublicar } = useNoticias();
   const [tipo, setTipo] = useState('boletin');
   const ir = useNavigate();
 
@@ -164,7 +128,7 @@ export default function Publicar() {
         ))}
       </div>
       <div className="card">
-        {tipo === 'boletin' && <FormBoletin numero={siguienteNumeroBoletin(publicaciones)} onPublicar={alPublicar} />}
+        {tipo === 'boletin' && <BoletinModulo administrar />}
         {tipo === 'entrevista' && <FormEntrevista onPublicar={alPublicar} />}
         {tipo === 'aviso' && <FormAviso onPublicar={alPublicar} />}
       </div>

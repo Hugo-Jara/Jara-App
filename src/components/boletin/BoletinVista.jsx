@@ -1,0 +1,60 @@
+import { useEffect, useRef, useState } from 'react';
+import { componerEdicion } from '../../lib/boletinComposicion.js';
+import { descargar } from '../../lib/boletinStorage.js';
+import { nombreEdicion } from '../../lib/boletinDatos.js';
+
+export function useComposicion(edicion) {
+  const [estado, setEstado] = useState({ paginas: [], error: '', cargando: true });
+  useEffect(() => {
+    let vigente = true;
+    setEstado({ paginas: [], error: '', cargando: true });
+    const timer = setTimeout(() => componerEdicion(edicion).then(paginas => { if (vigente) setEstado({ paginas, error: '', cargando: false }); }).catch(e => { if (vigente) setEstado({ paginas: [], error: `No podemos diagramar esta edición: ${e.message}`, cargando: false }); }), 350);
+    return () => { vigente = false; clearTimeout(timer); };
+  }, [edicion]);
+  return estado;
+}
+function Pagina({ canvas, numero }) {
+  const ref = useRef();
+  useEffect(() => { if (canvas) ref.current.replaceChildren(canvas); }, [canvas]);
+  return <div className="noticias-pagina" ref={ref} role="img" aria-label={`Página ${numero} del periódico. El mismo contenido está disponible en Lectura móvil.`} />;
+}
+export function FotosNota({ fotos }) {
+  return <div className="noticias-fotos-lectura">{fotos.map(f => <figure key={f.id}><div className="noticias-foto-marco">{f.src ? <img src={f.src} alt={f.pie || 'Fotografía de la noticia'} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${f.x}% ${f.y}%`, transform: `scale(${f.zoom})`, transformOrigin: `${f.x}% ${f.y}%` }} /> : <div className="noticias-ilustracion">Cancha de ejemplo · Ilustración demo</div>}</div>{f.pie && <figcaption>{f.pie}</figcaption>}</figure>)}</div>;
+}
+export default function BoletinVista({ edicion, local = false, todas = false }) {
+  const { paginas, error, cargando } = useComposicion(edicion);
+  const [movil, setMovil] = useState(false), [actual, setActual] = useState(0), [zoom, setZoom] = useState(1), [exportando, setExportando] = useState(false), [fallo, setFallo] = useState('');
+  const toque = useRef(null);
+  const indice = Math.min(actual, Math.max(0, paginas.length - 1));
+  const guardar = async (canvas, i) => {
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) throw new Error('No hay memoria suficiente para generar el PNG.');
+    descargar(blob, `Jara-Informa-N${String(edicion.numero).padStart(2, '0')}-Pagina-${String(i + 1).padStart(2, '0')}.png`);
+  };
+  const exportar = async todos => {
+    setExportando(true); setFallo('');
+    try { if (todos) { for (let i = 0; i < paginas.length; i++) await guardar(paginas[i], i); } else await guardar(paginas[indice], indice); }
+    catch (e) { setFallo(`No se pudo descargar: ${e.message}`); }
+    finally { setExportando(false); }
+  };
+  return <section className="noticias-boletin">
+    <p className="noticias-etiqueta">{local ? 'VISTA PREVIA LOCAL · NO PUBLICADA' : 'CATÁLOGO DEMO · CONTENIDO FICTICIO'}</p>
+    <h2>{nombreEdicion(edicion)}</h2><p>{edicion.periodo}</p><p>{edicion.resumen}</p>
+    <div className="noticias-herramientas"><button className="btn secundario" aria-pressed={!movil} onClick={() => setMovil(false)}>Vista periódico</button><button className="btn secundario" aria-pressed={movil} onClick={() => setMovil(true)}>Lectura móvil</button></div>
+    {error && <p role="alert" className="noticias-error">{error} La exportación está bloqueada hasta corregirlo.</p>}
+    {cargando && <p role="status">Diagramando páginas…</p>}
+    {movil ? <div className="noticias-lectura"><h3>EL JARA INFORMA</h3>{edicion.bloques.map(b => <section key={b.id} className={`noticias-lectura-${b.tipo}`}>
+      {b.tipo === 'agenda' ? <><h3>Lo que viene</h3>{b.eventos.map(v => <p key={v.id}><strong>{v.fecha || 'Fecha por confirmar'}</strong><br />{v.descripcion}</p>)}</> : b.notas.map(n => <article key={n.id}><h3>{n.titulo || 'Noticia sin título'}</h3><p>{n.texto}</p><FotosNota fotos={n.fotos} /></article>)}
+    </section>)}</div> : !!paginas.length && <>
+      <div className="noticias-herramientas"><button className="btn secundario" disabled={indice === 0} onClick={() => setActual(indice - 1)}>← Anterior</button><span aria-live="polite">Página {indice + 1} de {paginas.length}</span><button className="btn secundario" disabled={indice === paginas.length - 1} onClick={() => setActual(indice + 1)}>Siguiente →</button></div>
+      <label className="noticias-campo">Ampliar página <input aria-label="Ampliar página" type="range" min="1" max="3" step="0.25" value={zoom} onChange={e => setZoom(Number(e.target.value))} /></label>
+      <div className="noticias-visor" onTouchStart={e => { toque.current = e.touches[0].clientX; }} onTouchEnd={e => { if (zoom !== 1 || toque.current == null) return; const dx = e.changedTouches[0].clientX - toque.current; if (Math.abs(dx) > 55) setActual(Math.max(0, Math.min(paginas.length - 1, indice + (dx < 0 ? 1 : -1)))); toque.current = null; }}>
+        <div style={{ width: `${zoom * 100}%` }}><Pagina canvas={paginas[indice]} numero={indice + 1} /></div>
+      </div>
+      {todas && paginas.length > 1 && <details><summary>Revisar todas las páginas ({paginas.length})</summary><div className="noticias-miniaturas">{paginas.map((p, i) => <button key={i} onClick={() => setActual(i)} aria-label={`Ir a página ${i + 1}`}><img src={p.toDataURL('image/png')} alt={`Página ${i + 1}`} /></button>)}</div></details>}
+    </>}
+    <div className="noticias-herramientas"><button className="btn" disabled={!paginas.length || cargando || exportando} onClick={() => exportar(false)}>Descargar página {indice + 1}</button><button className="btn secundario" disabled={!paginas.length || cargando || exportando} onClick={() => exportar(true)}>{exportando ? 'Preparando PNG…' : 'Descargar todas'}</button></div>
+    <p className="noticias-ayuda">PNG de 1280 × 1600. Si tu navegador bloquea varias descargas, cambia de página y usa «Descargar página» para guardarlas una por una. Al ampliar, desplázate dentro del periódico.</p>
+    {fallo && <p role="alert" className="noticias-error">{fallo}</p>}
+  </section>;
+}
