@@ -4,6 +4,27 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-03 · Fase P — "Ver como" para cuentas de prueba
+
+**Para qué:** probar la app desde distintos roles con una cuenta de prueba, cambiando de rol **dentro de la app**. Supabase se toca una sola vez por cuenta, para darle su lista de roles; quien prueba nunca entra a Supabase.
+
+**Qué se hizo** (migración `0022_ver_como.sql`, la revisa y la corre el administrador de la app antes del merge):
+- `personas.prueba_roles` (lista de roles que la cuenta puede elegir; null = cuenta normal) y `personas.prueba_rol` (el rol actual). La lista se pone solo por SQL: ninguna función la escribe y las tablas no se tocan desde el navegador.
+- `prueba_ver_como(rol, plantel)`: falla si la cuenta no es de prueba o si el rol no está en su lista. Apaga todo (permisos, áreas y planteles de esa misma persona) y prende solo el rol elegido. Roles: socio, equipo del fondo, Hacienda, anota partidos, entrenamientos (administra y cobra), tesorero de un plantel y comunicaciones. Administrador no existe como rol de prueba.
+- **Hacienda de prueba es solo mirar:** ve Compras como Hacienda y el fondo, pero la base rechaza aprobar, devolver, entregar, subir o abrir comprobantes, editar, eliminar, corregir compras ajenas, cerrar tópicos y cualquier cambio en el fondo. Para eso `puedo_aprobar_compras()` (la que piden todas las acciones) excluye a las cuentas de prueba, y la pantalla usa `puedo_mirar_hacienda()`.
+- **En ningún rol** una cuenta de prueba es administradora (regla en la tabla), abre comprobantes de transferencia, presenta una rendición ni la marca como subida.
+- Permiso nuevo `personas.edita_comunicaciones` para el módulo de Comunicaciones (todavía ninguna función lo usa).
+- `mi_persona()` suma `prueba` (roles, rol actual y planteles), `hacienda_solo_mirar` y `edita_comunicaciones`.
+- **App:** en Más, solo para cuentas de prueba, la tarjeta "Ver como" con sus roles (tesorero elige plantel). Al elegir, la app se recarga. Arriba, en toda la app, una barra: "Cuenta de prueba · viendo como: Hacienda (solo mirar)".
+
+**Comprobado:** `npm run build`, `npm run test:db` (34 + 174 + 51 pruebas nuevas en `supabase/tests/ver_como.mjs`, que aplica todas las migraciones en orden) y `npm run test:pedidos` (274) pasan. Tarjeta y barra revisadas en modo demostración a 375 px, sin scroll horizontal.
+
+**Ojo:** las cuentas de prueba viven en el club real. Equipo del fondo de prueba puede pasar compras al fondo y marcar respaldos; anota partidos y entrenamientos escriben datos reales. Hacienda de prueba ve nombres y montos de las compras reales, por eso solo va en la lista del administrador.
+
+Siguiente: Compras 3.
+
+---
+
 ## 2026-11-02 · Comunicaciones — Ajustes de revisión de El Jara Informa
 
 **Fotos mientras cargan otras:** antes, si se ajustaba el encuadre o el pie de una foto mientras se leían otras, al terminar la carga se volvía a la lista vieja y se perdía el ajuste. Ahora cada cambio se aplica sobre la lista vigente y ubica la foto por su id; cada foto se agrega apenas se lee, una foto dañada no descarta las demás y no se puede salir del editor (ni cerrar la pestaña sin aviso) con fotos cargando.

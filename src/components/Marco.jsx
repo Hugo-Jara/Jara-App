@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import Icono from './Icono.jsx';
 import { ESCUDO } from '../lib/base.js';
+import { nombreRol } from '../lib/prueba.js';
 
 const NAV = [
   { a: '/', icono: 'inicio', texto: 'Inicio' },
@@ -15,6 +16,12 @@ export default function Marco({ children }) {
   const { persona, esDemo, salir } = useSesion();
   return (
     <>
+      {persona.prueba && (
+        <div className="barra-prueba" role="status">
+          Cuenta de prueba · viendo como: <strong>{nombreRol(persona.prueba.rol)}</strong>
+          {persona.haciendaSoloMirar && ' (solo mirar)'}
+        </div>
+      )}
       <div className="pagina">
         <header className="barra">
           <img src={ESCUDO} alt="Escudo del Club Hugo Jara" />
