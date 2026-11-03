@@ -24,6 +24,11 @@ const PERSONA_DEMO = {
 const desdeFila = (f) => f && ({
   id: f.id, nombre: f.nombre, esAdmin: f.es_admin, club: f.club, equipos: f.equipos,
   apruebaCompras: f.aprueba_compras, esEncargado: f.es_encargado,
+  // Hacienda de prueba ve las pantallas de Hacienda, pero la base no la deja actuar.
+  haciendaSoloMirar: !!f.hacienda_solo_mirar,
+  editaComunicaciones: !!f.edita_comunicaciones,
+  // Solo en cuentas de prueba: { roles, rol, planteles } (migración 0022).
+  prueba: f.prueba ?? null,
 });
 
 export function ProveedorSesion({ children }) {

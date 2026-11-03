@@ -3,6 +3,7 @@ import { useSesion } from '../lib/sesion.jsx';
 import { accesoTablero } from '../lib/tablero.js';
 import { useAccesoFondo } from '../lib/fondo.js';
 import Icono from '../components/Icono.jsx';
+import VerComo from '../components/VerComo.jsx';
 
 // Lo administrativo del club vive acá, fuera de la pantalla de inicio.
 export default function Mas() {
@@ -31,6 +32,7 @@ export default function Mas() {
     <>
       <h1 className="titulo display">Más</h1>
       <p className="subtitulo">Lo administrativo del club.</p>
+      <VerComo />
       <div className="card lista">
         {FILAS.map((f) => (
           <Link key={f.nombre} to={f.a} className="fila">
