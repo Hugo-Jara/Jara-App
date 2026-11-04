@@ -174,6 +174,44 @@ export function enlaceCorreoMasivo(jugadores, plantel) {
   return `mailto:?bcc=${encodeURIComponent(correos.join(','))}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
 }
 
+// Lista para la liga: nombre, RUT, fecha de nacimiento, edad y contacto de quienes
+// juegan esta temporada, en un CSV que Excel abre bien (punto y coma y BOM).
+export function rutConPuntos(rut) {
+  const m = /^(\d{7,8})-([\dK])$/.exec(rut ?? '');
+  return m ? `${m[1].replace(/\B(?=(\d{3})+(?!\d))/g, '.')}-${m[2]}` : (rut ?? '');
+}
+
+export function edad(nacimiento, hoy = new Date()) {
+  if (!nacimiento) return '';
+  const [a, m, d] = nacimiento.split('-').map(Number);
+  return hoy.getFullYear() - a - ((hoy.getMonth() + 1 < m || (hoy.getMonth() + 1 === m && hoy.getDate() < d)) ? 1 : 0);
+}
+
+export function csvLiga(jugadores) {
+  const celda = (v) => {
+    const t = String(v ?? '');
+    return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+  };
+  const filas = jugadores.filter((j) => j.activo).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).map((j) => [
+    j.nombre, rutConPuntos(j.rut), j.nacimiento ? j.nacimiento.split('-').reverse().join('-') : '', edad(j.nacimiento),
+    j.telefono ?? '', j.correo_perfil ?? j.correo ?? '',
+  ]);
+  return '﻿' + [['Nombre', 'RUT', 'Fecha de nacimiento', 'Edad', 'Celular', 'Correo'], ...filas]
+    .map((f) => f.map(celda).join(';')).join('\r\n');
+}
+
+export function bajarListaLiga(jugadores, plantel) {
+  const url = URL.createObjectURL(new Blob([csvLiga(jugadores)], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  // Sin tildes en el nombre del archivo: algunos navegadores lo cambian por "download".
+  const limpio = plantel.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w ()-]/g, '').trim();
+  a.download = `Lista liga ${limpio} ${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1000);
+}
+
 // ---------------------------------------------------------------------------
 // Datos de demostración (inventados)
 // ---------------------------------------------------------------------------

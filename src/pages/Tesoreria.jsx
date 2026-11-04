@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
-  usePlantelesTesoreria, useTesoreria, armarPlan, enlaceWhatsApp, enlaceCorreoMasivo,
+  usePlantelesTesoreria, useTesoreria, armarPlan, enlaceWhatsApp, enlaceCorreoMasivo, bajarListaLiga,
   TEMPORADA, TIPOS, MEDIOS, CATEGORIAS, ESTADO_CARGO,
 } from '../lib/tesoreria.js';
 import { pesos } from '../lib/pedido.js';
@@ -94,7 +94,7 @@ function Plantel({ equipo, nombre }) {
                   className={`filtro${vista === v.id ? ' activo' : ''}`} onClick={() => setVista(v.id)}>{v.nombre}</button>
         ))}
       </div>
-      {vista === 'jugadores' && <Jugadores p={p} editar={editar} acciones={t.acciones} abrir={setAbierto} />}
+      {vista === 'jugadores' && <Jugadores p={p} nombre={nombre} editar={editar} acciones={t.acciones} abrir={setAbierto} />}
       {vista === 'cobrar' && <Cobrar p={p} nombre={nombre} abrir={setAbierto} />}
       {vista === 'cuotas' && <Cuotas p={p} editar={editar} acciones={t.acciones} />}
       {vista === 'caja' && <Caja p={p} editar={editar} acciones={t.acciones} />}
@@ -112,9 +112,11 @@ function EstadoJugador({ j }) {
   return <span className="ef al_dia">Al día</span>;
 }
 
-function Jugadores({ p, editar, acciones, abrir }) {
+function Jugadores({ p, nombre, editar, acciones, abrir }) {
   const [buscar, setBuscar] = useState('');
   const lista = p.jugadores.filter((j) => j.nombre.toLowerCase().includes(buscar.trim().toLowerCase()));
+  const activos = p.jugadores.filter((j) => j.activo);
+  const sinDatos = activos.filter((j) => !j.rut || !j.nacimiento).length;
   return (
     <>
       <input type="search" placeholder="Buscar jugador" aria-label="Buscar jugador" value={buscar} onChange={(e) => setBuscar(e.target.value)} />
@@ -133,6 +135,15 @@ function Jugadores({ p, editar, acciones, abrir }) {
           </button>
         ))}
       </div>
+      <h2 className="seccion">Lista para la liga</h2>
+      <section className="card">
+        <p className="item-meta" style={{ marginTop: 0 }}>
+          Nombre, RUT, fecha de nacimiento, edad y contacto de {activos.length === 1 ? 'quien juega' : `los ${activos.length} que juegan`} esta temporada, en un archivo que se abre en Excel.
+          {sinDatos > 0 && ` A ${sinDatos === 1 ? '1 le falta' : `${sinDatos} les falta`} el RUT o la fecha: complétalos en su ficha.`}
+        </p>
+        <button type="button" className="btn secundario" style={{ marginTop: 10 }} disabled={!activos.length}
+                onClick={() => bajarListaLiga(p.jugadores, nombre)}>Bajar lista</button>
+      </section>
       {editar && <SumarJugador acciones={acciones} />}
       {editar && <CargoExtra p={p} acciones={acciones} />}
     </>
