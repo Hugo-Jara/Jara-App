@@ -44,6 +44,7 @@ Las migraciones están en `supabase/migrations/` y se aplican en orden:
 | `0024_perfil_y_apodo.sql` | Nombre, celular y correo que carga el tesorero quedan en el perfil del jugador (el correo solo si no tenía uno; si no, queda para cobrar). `personas.apodo` opcional que pone cada jugador (`mi_apodo_guardar`, `apodos()`) |
 | `0028_perfil_jugador.sql` | Perfil del jugador: tablas `perfiles` (foto, posición, pie, nacimiento, estatura y peso con visibilidad elegida) y `dorsales` (número por plantel), bucket privado `fotos-perfil`, `perfil_ver`, `perfil_guardar`, `perfil_foto_guardar`, `planteles_fichas` |
 | `0030_perfil_instagram.sql` | `perfiles.instagram` (solo el usuario, lo limpia `instagram_limpiar`), `perfil_instagram_guardar` (solo el propio jugador) y `perfil_ver` con Instagram |
+| `0031_fotos_de_partidos.sql` | `partido_fotos` (carpeta del Drive de cada partido), `fotos_enlaces` (todo el club), `fotos_enlazar` y `fotos_desenlazar` (capitán del plantel o administrador) |
 
 `npm run test:db` y `npm run test:pedidos` aplican las migraciones en un Postgres en memoria y prueban los permisos, el flujo de cotizaciones, el ingreso por nombre, los partidos, los entrenamientos y los pedidos por link.
 
