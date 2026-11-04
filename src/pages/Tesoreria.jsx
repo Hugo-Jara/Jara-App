@@ -223,7 +223,7 @@ function Ficha({ j, plantel, editar, acciones, volver }) {
   return (
     <>
       <button type="button" className="enlace" onClick={volver}>← Volver al plantel</button>
-      <h2 className="titulo display" style={{ marginTop: 12 }}>{j.nombre}</h2>
+      <h2 className="titulo display" style={{ marginTop: 12 }}>{j.nombre}{j.apodo && <span className="apodo"> · {j.apodo}</span>}</h2>
       <section className="card total">
         <div className="sobretitulo">{j.deudaVencida > 0 ? 'Deuda vencida' : 'Al día'}</div>
         <div className="total-monto display">{pesos(j.deudaVencida)}</div>
@@ -441,7 +441,7 @@ function Cobrar({ p, nombre, abrir }) {
               <input type="checkbox" aria-label={`Incluir a ${j.nombre} en el correo`} checked={!quitados.includes(j.id)}
                      onChange={(e) => setQuitados(e.target.checked ? quitados.filter((x) => x !== j.id) : [...quitados, j.id])} />
               <button type="button" className="mov-texto tes-boton" onClick={() => abrir(j.id)}>
-                <span className="tes-nombre">{j.nombre}</span>
+                <span className="tes-nombre">{j.nombre}{j.apodo && <span className="apodo"> · {j.apodo}</span>}</span>
                 <span className="item-meta" style={{ marginTop: 0 }}>{pesos(j.deudaVencida)} · {plural(j.cuotasVencidas, 'cuota', 'cuotas')}</span>
               </button>
               {wa ? <a className="btn chico secundario" href={wa} target="_blank" rel="noopener noreferrer">WhatsApp</a>
