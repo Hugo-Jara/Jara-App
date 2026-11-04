@@ -488,6 +488,35 @@ ok('Ni las estadísticas', /no está en la nómina/.test(r.error ?? ''), r.error
 r = await como('doble', 'select count(*) from partido_estadisticas');
 ok('Las tablas de estadística no se leen directamente', !!r.error);
 
+// --- Partidos jugados (0025) -------------------------------------------------
+console.log('\nPJ · Partidos jugados en las estadísticas');
+await db.query(`insert into partido_respuestas (partido_id, persona_id, estado) values ($1, $2, 'voy')`, [viejo, P.doble]);
+r = await como('capi', 'select partido_resultado($1, 1, 0, $2)', [viejo, J([P.capi, 1])]);
+x = (await uno('doble', 'select partidos_jugados()')).find((p) => p.id === viejo);
+ok('Sin lista (app anterior), jugaron los que dijeron "voy" y quien tiene cifras',
+   !r.error && x.jugaron.length === 2 && x.jugaron.includes(P.doble) && x.jugaron.includes(P.capi), r.error ?? JSON.stringify(x.jugaron));
+x = await uno('doble', 'select estadisticas()');
+const bPJ = x.find((e) => e.persona_id === P.doble), cPJ = x.find((e) => e.persona_id === P.capi);
+ok('Quien jugó sin hacer goles aparece en la tabla, con su PJ', bPJ?.pj === 2 && bPJ?.goles === 3 && cPJ?.pj === 2 && cPJ?.goles === 2, JSON.stringify(x));
+r = await como('capi', 'select partido_resultado($1, 1, 0, $2, $3)', [viejo, J([P.capi, 1]), JSON.stringify([P.teso])]);
+x = (await uno('doble', 'select partidos_jugados()')).find((p) => p.id === viejo);
+ok('Con lista, jugaron los marcados más quien tiene cifras (aunque no esté marcado)',
+   !r.error && x.jugaron.length === 2 && x.jugaron.includes(P.teso) && x.jugaron.includes(P.capi), r.error ?? JSON.stringify(x.jugaron));
+x = await uno('doble', 'select estadisticas()');
+ok('La tabla cambia con la corrección', x.find((e) => e.persona_id === P.doble)?.pj === 1 && x.find((e) => e.persona_id === P.teso)?.pj === 1
+   && x.find((e) => e.persona_id === P.teso)?.goles === 0, JSON.stringify(x));
+r = await como('capi', 'select partido_resultado($1, 1, 0, $2, $3)', [viejo, '[]', JSON.stringify(['20000000-0000-0000-0000-0000000000ff'])]);
+ok('No se marca como jugador a alguien fuera de la nómina', /nómina/.test(r.error ?? ''), r.error);
+x = await uno('doble', 'select estadisticas(null, null, $1)', [`{${EQ.sabado}}`]);
+ok('Se filtra por varios planteles (categoría)', x.length === 2 && x.every((e) => e.pj === 1) && !x.some((e) => e.persona_id === P.teso), JSON.stringify(x));
+x = await uno('doble', 'select estadisticas(null, null, $1)', [`{${EQ.sabado},${EQ.jueves}}`]);
+ok('…y suma los planteles elegidos', x.length === 3, JSON.stringify(x));
+r = await como('admin', 'select partido_resultado($1, null, null, $2)', [viejo, '[]']);
+x = (await uno('doble', 'select partidos_jugados()')).find((p) => p.id === viejo);
+ok('Al borrar el resultado se borra también quiénes jugaron', !r.error && x.jugaron.length === 0, r.error);
+r = await como('doble', 'select count(*) from partido_jugadores');
+ok('Quiénes jugaron no se lee directamente', !!r.error);
+
 // ---------------------------------------------------------------------------
 // Seguridad antes de sumar gente (0018)
 console.log('\nM1 · Cada encargado gestiona su plantel');

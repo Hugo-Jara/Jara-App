@@ -101,12 +101,19 @@ function Resultado({ partido, anotar }) {
   const [favor, setFavor] = useState(partido.golesFavor ?? '');
   const [contra, setContra] = useState(partido.golesContra ?? '');
   const [filas, setFilas] = useState((partido.estadisticas ?? []).map((g) => ({ ...g })));
+  // Quiénes jugaron (para PJ): lo ya anotado o, la primera vez, los que dijeron "voy".
+  const [jugaron, setJugaron] = useState(() => new Set(
+    hay && partido.jugaron?.length ? partido.jugaron : porEstado(partido, 'voy').map((r) => r.personaId)));
   const [error, setError] = useState('');
   const [guardando, setGuardando] = useState(false);
   const puede = partido.puedoAnotar && partido.fecha <= hoyIso();
   // Quienes pueden aparecer: el plantel, más quien ya estaba anotado.
   const opciones = [...partido.plantel, ...(partido.estadisticas ?? []).filter((g) => !partido.plantel.some((j) => j.id === g.personaId)).map((g) => ({ id: g.personaId, nombre: g.nombre }))];
 
+  // Para marcar quién jugó: el plantel y quien dijo "voy" sin ser del plantel.
+  const convocables = [...partido.plantel, ...partido.respuestas.filter((r) => !partido.plantel.some((j) => j.id === r.personaId))
+    .map((r) => ({ id: r.personaId, nombre: r.nombre }))];
+  const marcar = (id) => { const n = new Set(jugaron); if (n.has(id)) n.delete(id); else n.add(id); setJugaron(n); };
   const cambiarFila = (i, campo, valor) => setFilas(filas.map((f, k) => (k === i ? { ...f, [campo]: valor } : f)));
   const num = (v) => Number(v || 0);
   const guardar = async (e) => {
@@ -122,7 +129,7 @@ function Resultado({ partido, anotar }) {
     try {
       await anotar(partido.id, Number(favor), Number(contra), elegidas.map((f) => ({
         personaId: f.personaId, goles: num(f.goles), asistencias: num(f.asistencias), amarillas: num(f.amarillas), rojas: num(f.rojas),
-      })));
+      })), [...new Set([...jugaron, ...elegidas.map((f) => f.personaId)])]);
       setEditando(false);
     } catch (x) { setError(x.message); }
     setGuardando(false);
@@ -146,6 +153,7 @@ function Resultado({ partido, anotar }) {
               <span className="marcador-texto">{textoResultado(partido)} contra {partido.rival}</span>
             </div>
             <Estadisticas partido={partido} />
+            {partido.jugaron?.length > 0 && <p className="ayuda abajo">Jugaron {partido.jugaron.length}.</p>}
             {!partido.estadisticas.length && partido.golesFavor > 0 && <p className="ayuda abajo">Todavía no se anota quién hizo los goles.</p>}
           </>
         ) : <p className="vacio">Todavía no se anota el resultado.</p>}
@@ -165,6 +173,21 @@ function Resultado({ partido, anotar }) {
       <input id="gf" type="number" inputMode="numeric" min="0" max="99" required value={favor} onChange={(e) => setFavor(e.target.value)} />
       <label htmlFor="gc">Goles de {partido.rival}</label>
       <input id="gc" type="number" inputMode="numeric" min="0" max="99" required value={contra} onChange={(e) => setContra(e.target.value)} />
+
+      {convocables.length > 0 && (
+        <fieldset className="jugaron">
+          <legend className="sobretitulo">¿Quiénes jugaron? <span className="jugaron-cuenta">{convocables.filter((j) => jugaron.has(j.id)).length}</span></legend>
+          <p className="ayuda">Parte con los que dijeron que iban. Corrige si alguien no llegó o jugó sin avisar: cuenta para los partidos jugados de cada uno.</p>
+          <div className="jugaron-lista">
+            {convocables.map((j) => (
+              <label key={j.id} className={`jugaron-item ${jugaron.has(j.id) ? 'si' : ''}`}>
+                <input type="checkbox" checked={jugaron.has(j.id)} onChange={() => marcar(j.id)} />
+                <NombreConApodo id={j.id} nombre={j.nombre} />
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <div className="sobretitulo" style={{ marginTop: 18 }}>Goles, asistencias y tarjetas</div>
       {filas.map((f, i) => (
@@ -276,7 +299,7 @@ export default function Partido() {
         )}
       </dl>
 
-      <Resultado key={`${partido.golesFavor}-${partido.golesContra}-${(partido.estadisticas ?? []).map((g) => `${g.personaId}.${g.goles}.${g.asistencias}.${g.amarillas}.${g.rojas}`).join()}`} partido={partido} anotar={anotarResultado} />
+      <Resultado key={`${partido.golesFavor}-${partido.golesContra}-${(partido.jugaron ?? []).join()}-${(partido.estadisticas ?? []).map((g) => `${g.personaId}.${g.goles}.${g.asistencias}.${g.amarillas}.${g.rojas}`).join()}`} partido={partido} anotar={anotarResultado} />
 
       {!jugado && (
         <div className="card">

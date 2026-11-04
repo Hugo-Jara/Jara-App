@@ -4,6 +4,21 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-04 · Partidos jugados por plantel, racha y PJ en las estadísticas
+
+**Para qué:** pedido del administrador después de la reunión de tesoreros. Que "Ya jugados" con **Todos** no sea una lista larga mezclada, que se vea la racha de cada plantel como en las apps de fútbol, y que en Jugadores aparezca todo el que jugó un partido, con filtros para no ver una lista gigante.
+
+**Qué se hizo** (migración `0025_partidos_jugados.sql`, se corre antes del merge):
+- **Ya jugados con "Todos":** una sección por plantel (primero los propios) con su racha y sus 3 últimos partidos en filas cortas (fecha, rival, marcador en verde/gris/rojo). "Ver todos los del …" filtra ese plantel. Con un plantel elegido se ve la racha arriba y las tarjetas de siempre.
+- **Racha:** los últimos 5 resultados, ✓ ganado, = empatado, ✗ perdido, el más reciente a la derecha. Cada marca lleva al partido. Componente `src/components/Racha.jsx`.
+- **Quiénes jugaron:** al anotar el resultado aparece "¿Quiénes jugaron?" con el plantel marcado según los que dijeron "voy"; quien anota corrige si alguien no llegó. Quien tiene goles, asistencias o tarjetas cuenta siempre como que jugó. Tabla nueva `partido_jugadores`; los partidos que ya tenían resultado se rellenan con "voy" + quienes tienen cifras.
+- **Jugadores (estadísticas):** columna **PJ**; aparece todo el que jugó al menos un partido con resultado, aunque no tenga goles. Botones "Más: Partidos · Goles · Asistencias · Amarillas · Rojas" para ordenar (además de tocar la columna). Se ven los 10 primeros con "Ver todos"; si tú quedas más abajo, tu fila aparece igual. Filtro por plantel y por categoría ("Senior (todos)" junta los planteles que empiezan igual).
+- `partido_resultado` recibe `p_jugaron` (opcional: sin ella toma los "voy", así la app anterior sigue funcionando) y `estadisticas` recibe `p_equipos` (varios planteles) y devuelve `pj`.
+
+**Comprobado:** `npm run build`, `npm run test:db` (7 pruebas nuevas de PJ en `supabase/tests/club.mjs`) y `npm run test:pedidos` pasan. Pantallas revisadas en modo demostración a 375 px, sin scroll horizontal ni errores.
+
+---
+
 ## 2026-11-04 · Ingreso con correo y contraseña
 
 **Para qué:** hasta ahora se entraba solo con Google o con un link/código al correo cada vez. Los tesoreros pidieron poder entrar con correo y contraseña quienes no usan Google.

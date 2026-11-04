@@ -338,7 +338,7 @@ select:disabled, input:disabled { opacity: 0.6; }
 .fila-tabla .quien { flex: 1; min-width: 0; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tabla-club { padding: 4px 12px; margin-top: 14px; }
 .tabla-club .fila-tabla { gap: 4px; padding: 11px 0; }
-.tabla-club .col { width: 46px; flex: none; text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; background: none; border: 0; color: var(--text); padding: 0; font-family: inherit; }
+.tabla-club .col { width: 38px; flex: none; text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; background: none; border: 0; color: var(--text); padding: 0; font-family: inherit; }
 .tabla-club .col.cero { color: var(--text-dim); opacity: 0.45; }
 .tabla-club .col.activa { color: var(--gold); font-weight: 700; }
 .fila-tabla.cabeza { padding: 6px 0; }
@@ -499,3 +499,38 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .movimientos li .enlace.quitar { flex: none; }
 .apodo { font-size: 0.8em; font-weight: 400; font-style: italic; color: var(--gold); white-space: nowrap; }
 .tes-solo-mirar { margin-bottom: 14px; }
+
+/* Estadísticas: ordenar, ver todos (0025) */
+.orden-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
+.orden-titulo { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-right: 2px; }
+.chip.chico { min-height: 34px; padding: 0 12px; font-size: 13px; }
+.ver-todos { display: block; margin: 10px auto 6px; font-size: 14px; }
+
+/* Partidos ya jugados por plantel, con racha */
+.columnas-planteles { display: grid; }
+.plantel-jugados { padding: 16px 16px 10px; }
+.plantel-jugados-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.plantel-jugados-nombre { margin: 0; font-size: 16px; font-weight: 700; }
+.jugados-cortos { list-style: none; margin: 0; padding: 0; }
+.jugados-cortos li + li { border-top: 1px solid var(--border); }
+.jugado-corto { display: flex; align-items: center; gap: 10px; padding: 10px 0; color: var(--text); text-decoration: none; min-height: 44px; }
+.jugado-corto-fecha { flex: none; width: 52px; font-size: 13px; color: var(--text-dim); }
+.jugado-corto-rival { flex: 1; min-width: 0; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jugado-corto-marcador { flex: none; min-width: 48px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; padding: 3px 8px; border-radius: 8px; font-size: 14px; }
+.jugado-corto-marcador.G { background: rgba(92, 138, 108, 0.25); color: #9fd1b0; }
+.jugado-corto-marcador.E { background: rgba(168, 155, 147, 0.18); color: var(--text); }
+.jugado-corto-marcador.P { background: rgba(198, 54, 43, 0.22); color: #f0a49c; }
+.jugado-corto-marcador.sin { color: var(--text-dim); font-weight: 600; }
+.racha { display: inline-flex; gap: 4px; vertical-align: middle; }
+.racha-marca { width: 24px; height: 24px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 13px; font-weight: 800; text-decoration: none; color: #fff; }
+.racha-marca.G { background: var(--green); }
+.racha-marca.E { background: #6e625c; }
+.racha-marca.P { background: var(--red); }
+.racha-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 2px 12px; font-size: 13px; color: var(--text-dim); }
+.jugaron { border: 0; padding: 0; margin: 18px 0 0; min-width: 0; }
+.jugaron legend { padding: 0; }
+.jugaron-cuenta { color: var(--gold); margin-left: 4px; }
+.jugaron-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-top: 8px; }
+.jugaron-item { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; margin: 0; border: 1px solid var(--border); border-radius: 12px; font-size: 14px; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.jugaron-item.si { border-color: var(--gold); background: rgba(198, 161, 91, 0.12); }
+.jugaron-item input { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--gold); }
