@@ -7,6 +7,7 @@ import RecordarPorWhatsApp from '../components/RecordarPorWhatsApp.jsx';
 import { complejoDe } from '../lib/complejos.js';
 import NombreConApodo from '../components/NombreConApodo.jsx';
 import EsquemaCanchas from '../components/EsquemaCanchas.jsx';
+import FotosDelPartido from '../components/FotosDelPartido.jsx';
 
 const OPCIONES = [['voy', 'Voy'], ['duda', 'Duda'], ['baja', 'No voy']];
 const TEXTO = { voy: 'Confirmaste que vas.', duda: 'Quedaste en duda.', baja: 'Avisaste que no vas.' };
@@ -277,6 +278,8 @@ export default function Partido() {
       </dl>
 
       <Resultado key={`${partido.golesFavor}-${partido.golesContra}-${(partido.estadisticas ?? []).map((g) => `${g.personaId}.${g.goles}.${g.asistencias}.${g.amarillas}.${g.rojas}`).join()}`} partido={partido} anotar={anotarResultado} />
+
+      <FotosDelPartido partido={partido} jugado={jugado} />
 
       {!jugado && (
         <div className="card">
