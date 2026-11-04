@@ -11,6 +11,25 @@ export const useSesion = () => useContext(Contexto);
 // misma pantalla después de entrar.
 const aDondeVolver = () => `${window.location.origin}${window.location.pathname}`;
 
+// Quien pide un link o código queda marcado para que, al entrar, la app le
+// ofrezca dejar una contraseña. Así crear y recuperar la contraseña son el
+// mismo camino y usan el correo que ya llega. Dura un día; si falla el
+// navegador (modo privado), simplemente no se ofrece.
+const OFRECER_CLAVE = 'jara-ofrecer-clave';
+const UN_DIA = 24 * 60 * 60 * 1000;
+const leerOferta = () => {
+  try {
+    const t = Number(localStorage.getItem(OFRECER_CLAVE));
+    return !!t && Date.now() - t < UN_DIA;
+  } catch { return false; }
+};
+const guardarOferta = (si) => {
+  try {
+    if (si) localStorage.setItem(OFRECER_CLAVE, String(Date.now()));
+    else localStorage.removeItem(OFRECER_CLAVE);
+  } catch { /* sin almacenamiento: no se ofrece */ }
+};
+
 const PERSONA_DEMO = {
   id: 'demo',
   nombre: 'Seba',
@@ -40,6 +59,8 @@ export function ProveedorSesion({ children }) {
   // No se pudo preguntar (sin señal, Supabase caído). No es lo mismo que null:
   // no hay que mandar a la persona a buscar su nombre de nuevo.
   const [sinConexion, setSinConexion] = useState(false);
+  // Recién entró con link o código: se le ofrece dejar contraseña.
+  const [ofrecerClave, setOfrecerClave] = useState(() => !esDemo && leerOferta());
 
   const cargarPersona = useCallback(async () => {
     try {
@@ -88,17 +109,39 @@ export function ProveedorSesion({ children }) {
       options: { redirectTo: aDondeVolver() },
     });
 
-  const entrarConCorreo = (email) =>
-    supabase.auth.signInWithOtp({
+  const entrarConCorreo = (email) => {
+    guardarOferta(true);
+    setOfrecerClave(true);
+    return supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
       options: { emailRedirectTo: aDondeVolver() },
     });
+  };
+
+  const entrarConClave = async (email, clave) => {
+    const r = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password: clave });
+    if (!r.error) { guardarOferta(false); setOfrecerClave(false); }
+    return r;
+  };
+
+  // Crea o cambia la contraseña de la cuenta con que se entró (sirve igual
+  // para cuentas que entraron con Google o con link).
+  const ponerClave = async (clave) => {
+    const r = await supabase.auth.updateUser({ password: clave });
+    if (!r.error) { guardarOferta(false); setOfrecerClave(false); }
+    return r;
+  };
+
+  const noOfrecerClave = () => { guardarOferta(false); setOfrecerClave(false); };
 
   const salir = () => supabase?.auth.signOut();
 
   return (
     <Contexto.Provider
-      value={{ cargando, sesion, persona, sinConexion, reintentar, esDemo, entrarConGoogle, entrarConCorreo, salir, recargarPersona: cargarPersona }}
+      value={{
+        cargando, sesion, persona, sinConexion, reintentar, esDemo, entrarConGoogle, entrarConCorreo,
+        entrarConClave, ponerClave, ofrecerClave, noOfrecerClave, salir, recargarPersona: cargarPersona,
+      }}
     >
       {children}
     </Contexto.Provider>

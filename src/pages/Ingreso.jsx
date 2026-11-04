@@ -4,8 +4,14 @@ import { ESCUDO } from '../lib/base.js';
 import { supabase } from '../lib/supabase.js';
 
 export default function Ingreso() {
-  const { entrarConGoogle, entrarConCorreo, esDemo } = useSesion();
+  const { entrarConGoogle, entrarConCorreo, entrarConClave, esDemo } = useSesion();
+  // 'clave': correo y contraseña. 'link': link o código al correo (también
+  // sirve para crear o recuperar la contraseña).
+  const [modo, setModo] = useState('clave');
   const [email, setEmail] = useState('');
+  const [clave, setClave] = useState('');
+  const [verClave, setVerClave] = useState(false);
+  const [entrando, setEntrando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [codigo, setCodigo] = useState('');
@@ -17,6 +23,29 @@ export default function Ingreso() {
     setError('');
     const { error } = await entrarConGoogle();
     if (error) setError('No se pudo abrir el ingreso con Google. Intenta de nuevo.');
+  };
+
+  // La sesión nueva la recoge solo el escuchador de SIGNED_IN en sesion.jsx.
+  const conClave = async (e) => {
+    e.preventDefault();
+    if (esDemo) return;
+    setError('');
+    setEntrando(true);
+    const { error } = await entrarConClave(email, clave);
+    setEntrando(false);
+    if (!error) return;
+    if (error.code === 'invalid_credentials' || error.status === 400) {
+      setError('Correo o contraseña incorrectos. Si todavía no tienes contraseña, entra con un link o código y la creas al entrar.');
+    } else if (error.status === 429) {
+      setError('Demasiados intentos seguidos. Espera unos minutos o entra con un link.');
+    } else {
+      setError('No pudimos conectar con el club. Revisa tu conexión e intenta de nuevo.');
+    }
+  };
+
+  const cambiarModo = (m) => {
+    setModo(m);
+    setError('');
   };
 
   const conCorreo = async (e) => {
@@ -86,13 +115,37 @@ export default function Ingreso() {
               Usar otro correo o pedir otro código
             </button>
           </form>
+        ) : modo === 'clave' ? (
+          <form onSubmit={conClave}>
+            <label htmlFor="correo">Tu correo</label>
+            <input id="correo" type="email" inputMode="email" autoComplete="username" required
+                   placeholder="nombre@correo.cl" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <label htmlFor="clave">Tu contraseña</label>
+            <input id="clave" type={verClave ? 'text' : 'password'} autoComplete="current-password" required
+                   value={clave} onChange={(e) => setClave(e.target.value)} />
+            <label className="ver-clave">
+              <input type="checkbox" checked={verClave} onChange={(e) => setVerClave(e.target.checked)} /> Mostrar contraseña
+            </label>
+            <button className="btn secundario" style={{ marginTop: 14 }} disabled={entrando}>
+              {entrando ? 'Entrando…' : 'Entrar'}
+            </button>
+            <button type="button" className="enlace otra-forma" onClick={() => cambiarModo('link')}>
+              ¿Primera vez o se te olvidó la contraseña? Entra con un link
+            </button>
+          </form>
         ) : (
           <form onSubmit={conCorreo}>
             <label htmlFor="correo">Tu correo</label>
             <input id="correo" type="email" inputMode="email" autoComplete="email" required
                    placeholder="nombre@correo.cl" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <p className="ayuda-clave">
+              Te mandamos un link y un código. Al entrar puedes dejar una contraseña para la próxima vez.
+            </p>
             <button className="btn secundario" style={{ marginTop: 14 }} disabled={enviando}>
-              {enviando ? 'Enviando…' : 'Enviarme un link'}
+              {enviando ? 'Enviando…' : 'Enviarme un link o código'}
+            </button>
+            <button type="button" className="enlace otra-forma" onClick={() => cambiarModo('clave')}>
+              Ya tengo contraseña
             </button>
           </form>
         )}
@@ -101,7 +154,7 @@ export default function Ingreso() {
 
       <p className="nota">
         La primera vez vas a buscar tu nombre en la nómina del club y un encargado de tu plantel te
-        da el pase. No hay contraseña que recordar.
+        da el pase.
       </p>
     </div>
   );
