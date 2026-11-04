@@ -7,8 +7,12 @@ import RecordarPorWhatsApp from '../components/RecordarPorWhatsApp.jsx';
 import { complejoDe } from '../lib/complejos.js';
 import NombreConApodo from '../components/NombreConApodo.jsx';
 import EsquemaCanchas from '../components/EsquemaCanchas.jsx';
+<<<<<<< HEAD
 import { JugadorDelPartido, Reacciones, Comentarios } from '../components/DespuesDelPartido.jsx';
 import { useCharla } from '../lib/charla.js';
+=======
+import FotosDelPartido from '../components/FotosDelPartido.jsx';
+>>>>>>> f16c4fb (Fotos de cada partido: enlace a su carpeta del Drive (0031))
 
 const OPCIONES = [['voy', 'Voy'], ['duda', 'Duda'], ['baja', 'No voy']];
 const TEXTO = { voy: 'Confirmaste que vas.', duda: 'Quedaste en duda.', baja: 'Avisaste que no vas.' };
@@ -322,6 +326,8 @@ export default function Partido() {
       <Resultado key={`${partido.golesFavor}-${partido.golesContra}-${(partido.jugaron ?? []).join()}-${(partido.estadisticas ?? []).map((g) => `${g.personaId}.${g.goles}.${g.asistencias}.${g.amarillas}.${g.rojas}`).join()}`} partido={partido} anotar={anotarResultado} />
 
       {(jugado || tieneResultado(partido)) && <DespuesDelPartido partido={partido} yo={persona} />}
+
+      <FotosDelPartido partido={partido} jugado={jugado} />
 
       {!jugado && (
         <div className="card">

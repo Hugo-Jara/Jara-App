@@ -564,6 +564,7 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .perfil-instagram input { flex: 1; min-width: 0; }
 .btn.apagado { opacity: 0.4; pointer-events: none; }
 
+<<<<<<< HEAD
 /* Jugador del partido (MVP) */
 .mvp { border-color: rgba(198, 161, 91, 0.45); }
 .mvp-pregunta { margin: 4px 0 10px; font-weight: 700; }
@@ -665,3 +666,10 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .liga-cabeza .titulo { margin-bottom: 0; }
 .btn.liga-actualizar { width: auto; padding: 8px 14px; font-size: 14px; margin: 0; }
 .liga-aviso { margin: 6px 0 0; width: 100%; }
+=======
+/* Fotos de los partidos: enlace de cada partido con su carpeta del Drive (0031) */
+.fotos-carpeta { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-top: 10px; }
+.fotos-carpeta-nombre { font-size: 15px; line-height: 1.3; overflow-wrap: anywhere; }
+.fotos-carpeta-dato { font-size: 12.5px; color: var(--text-dim); margin: 4px 0 10px; line-height: 1.45; overflow-wrap: anywhere; }
+.fotos-carpeta .campo-etiqueta { margin-top: 6px; }
+>>>>>>> f16c4fb (Fotos de cada partido: enlace a su carpeta del Drive (0031))

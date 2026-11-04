@@ -4,6 +4,20 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-04 · Fotos de cada partido, enlazadas a su carpeta del Drive
+
+**Para qué:** las fotos de los partidos ya están en el Drive del fotógrafo de la liga, ordenadas como `Junior Clausura / Fecha 7 / Rival vs Hugo Jara Jr`. La app no las copia: guarda qué carpeta es de cada partido y las muestra desde el Drive.
+
+**Qué se hizo** (migración `0031_fotos_de_partidos.sql`, se corre antes del merge):
+- **Base:** tabla `partido_fotos` (un partido, una carpeta; una carpeta, un partido), `fotos_enlaces()` para todo el club y `fotos_enlazar` / `fotos_desenlazar` para el encargado (capitán) del plantel o un administrador. No toca las funciones de partidos, así no choca con los PR de partidos abiertos.
+- **Detector** (`src/lib/fotosDrive.js`, sin React ni Supabase): recorre el Drive desde la carpeta raíz, junta las carpetas "X vs Hugo Jara", lee rival y categoría (Jr o Sr) del nombre y el día de la fecha de captura de las fotos. Propone un partido por carpeta (categoría + rival + día) y una persona confirma.
+- **Más > Fotos de los partidos** (`/fotos-partidos`, encargados y administradores): buscar, confirmar o elegir otro partido, y quitar enlaces.
+- **En cada partido jugado:** tarjeta "Fotos" con el enlace a la carpeta; el capitán también puede pegar el link de la carpeta a mano (sirve sin llave de Google).
+- **Galería:** queda para la Fase F (carril de Comunicaciones), que usa `fotosDeCarpeta()` con el id guardado.
+
+**Necesita:** una llave de Google (Drive API) en la variable del repositorio `GOOGLE_API_KEY`, limitada a la página de la app. Sin llave, la búsqueda automática queda apagada y el enlace a mano funciona igual. Si el fotógrafo mueve o borra carpetas, el enlace se pierde.
+
+**Comprobado:** `npm run build`, `npm run test:db` (17 pruebas nuevas en `fotos.mjs`) y `npm run test:fotos-drive` (8 pruebas del detector con nombres reales del Drive). Recorrido en modo demostración a 390 px: buscar, enlazar y ver el enlace en el partido, sin errores de JavaScript. No se probó contra el Drive real (falta la llave).
 ## 2026-11-07 · "Actualizar la liga" para todos
 
 **Qué se hizo** (migración `0040_actualizar_la_liga_para_todos.sql`, se corre antes del merge):
