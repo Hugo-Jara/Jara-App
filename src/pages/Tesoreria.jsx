@@ -344,6 +344,7 @@ function Condicion({ j, editar, acciones }) {
   const [d, setD] = useState({
     nombre: j.nombre, apodo: j.apodo ?? '', activo: j.activo, tipo: j.tipo, descuento_pct: Number(j.descuento_pct) || 0, monto_especial: j.monto_especial ?? 0,
     deuda_anterior: j.deuda_anterior || 0, telefono: j.telefono ?? '', correo: j.correo ?? '', comentario: j.comentario ?? '',
+    rut: j.rut ?? '', nacimiento: j.nacimiento ?? '',
   });
   const a = useAccion();
   const set = (k) => (e) => setD({ ...d, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
@@ -353,6 +354,9 @@ function Condicion({ j, editar, acciones }) {
       ...d, descuento_pct: Math.min(100, Number(d.descuento_pct) || 0),
       monto_especial: d.tipo === 'especial' ? soloNumero(d.monto_especial) : null,
       deuda_anterior: soloNumero(d.deuda_anterior),
+      // Solo se mandan si cambiaron: así una cuenta que no los ve no los borra.
+      rut: d.rut !== (j.rut ?? '') ? d.rut : undefined,
+      nacimiento: d.nacimiento !== (j.nacimiento ?? '') ? d.nacimiento : undefined,
     }), 'Guardado.');
   };
   return (
@@ -382,6 +386,10 @@ function Condicion({ j, editar, acciones }) {
           )}
           <label htmlFor="c-deuda">Deuda de la temporada anterior</label>
           <input id="c-deuda" inputMode="numeric" value={campoPesos(soloNumero(d.deuda_anterior))} onChange={(e) => setD({ ...d, deuda_anterior: soloNumero(e.target.value) })} />
+          <label htmlFor="c-rut">RUT</label>
+          <input id="c-rut" maxLength={12} placeholder="12.345.678-9" autoComplete="off" value={d.rut} onChange={set('rut')} />
+          <label htmlFor="c-nac">Fecha de nacimiento</label>
+          <input id="c-nac" type="date" className="fecha-clara" value={d.nacimiento} onChange={set('nacimiento')} />
           <label htmlFor="c-tel">Celular</label>
           <input id="c-tel" type="tel" maxLength={30} placeholder="9 1234 5678" value={d.telefono} onChange={set('telefono')} />
           <label htmlFor="c-correo">Correo para cobrar</label>
@@ -395,7 +403,8 @@ function Condicion({ j, editar, acciones }) {
           {editar && <button className="btn secundario" style={{ marginTop: 16 }} disabled={a.ocupado}>Guardar</button>}
         </fieldset>
         <p className="nota">
-          Nombre, celular y correo quedan en el perfil de {j.nombre.split(' ')[0]}; él no los puede cambiar.{' '}
+          Nombre, RUT, celular y correo quedan en el perfil de {j.nombre.split(' ')[0]}; él no los puede cambiar.
+          La fecha de nacimiento la puede corregir él; el club ve solo el día y el mes.{' '}
           {j.correo_perfil
             ? `Ya entra a la app con ${j.correo_perfil}: si pones otro correo, queda solo para cobrar.`
             : 'Como todavía no tiene correo, el que pongas será con el que entra a la app.'}
