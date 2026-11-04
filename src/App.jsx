@@ -25,6 +25,8 @@ import Solicitar from './pages/Solicitar.jsx';
 import Fondo from './pages/Fondo.jsx';
 import Tablero from './pages/Tablero.jsx';
 import Tesoreria from './pages/Tesoreria.jsx';
+import Perfil from './pages/Perfil.jsx';
+import Planteles from './pages/Planteles.jsx';
 
 export default function App() {
   const { cargando, sesion, persona, sinConexion, esDemo, ofrecerClave } = useSesion();
@@ -73,6 +75,9 @@ export default function App() {
         <Route path="/tesoreria" element={<Tesoreria />} />
         <Route path="/fondo" element={<Fondo />} />
         <Route path="/club" element={<Club />} />
+        <Route path="/perfil" element={<Perfil />} />
+        <Route path="/perfil/:id" element={<Perfil />} />
+        <Route path="/planteles" element={<Planteles />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Marco>
