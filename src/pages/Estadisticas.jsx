@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos, tablaEstadisticas, equiposDelClub } from '../lib/partidos.js';
+import NombreConApodo from '../components/NombreConApodo.jsx';
 import { hoyIso } from '../lib/fechas.js';
 
 // La tabla del club: goles, asistencias y tarjetas de cada jugador, armada con
@@ -89,7 +90,7 @@ export default function Estadisticas() {
             <div key={g.personaId} role="row"
                  className={`fila-tabla ${hayAlgo && g[orden] > 0 && puestos[i] <= 3 && orden !== 'amarillas' && orden !== 'rojas' ? 'top' : ''} ${g.personaId === persona.id ? 'yo' : ''}`}>
               <span className="puesto">{g[orden] > 0 ? puestos[i] : ''}</span>
-              <span className="quien">{g.nombre}</span>
+              <span className="quien"><NombreConApodo id={g.personaId} nombre={g.nombre} /></span>
               {COLUMNAS.map((c) => <span key={c.clave} className={`col ${orden === c.clave ? 'activa' : ''} ${g[c.clave] === 0 ? 'cero' : ''}`}>{g[c.clave]}</span>)}
             </div>
           ))}

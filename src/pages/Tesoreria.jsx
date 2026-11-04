@@ -82,6 +82,9 @@ function Plantel({ equipo, nombre }) {
           <div><dt>Al día</dt><dd>{p.alDia} de {p.activos}</dd></div>
         </dl>
       </section>
+      {!editar && (
+        <p className="aviso-demo tes-solo-mirar">Estás en modo solo mirar: puedes ver todo, pero no cambiar cuotas, condiciones ni pagos. Las cuentas de prueba siempre entran así; para editar, entra con tu cuenta normal.</p>
+      )}
       {p.cuotas.length === 0 && (
         <p className="item-comentario">Todavía no hay cuotas para esta temporada. {editar ? 'Parte por la pestaña Cuotas.' : ''}</p>
       )}
@@ -120,7 +123,7 @@ function Jugadores({ p, editar, acciones, abrir }) {
         {lista.map((j) => (
           <button key={j.id} type="button" className="fila tes-fila" onClick={() => abrir(j.id)}>
             <span className="mov-texto">
-              <span className="tes-nombre">{j.nombre}</span>
+              <span className="tes-nombre">{j.nombre}{j.apodo && <span className="apodo"> · {j.apodo}</span>}</span>
               <span className="item-meta" style={{ marginTop: 0 }}>
                 {TIPOS[j.tipo]}{j.tipo === 'beca' || (j.tipo === 'normal' && Number(j.descuento_pct) > 0) ? ` ${Number(j.descuento_pct)}%` : ''}
                 {' · '}pagado {pesos(j.pagado)}{!j.telefono && !j.correo ? ' · sin contacto' : ''}
@@ -339,7 +342,7 @@ function RegistrarPago({ j, acciones }) {
 
 function Condicion({ j, editar, acciones }) {
   const [d, setD] = useState({
-    activo: j.activo, tipo: j.tipo, descuento_pct: Number(j.descuento_pct) || 0, monto_especial: j.monto_especial ?? 0,
+    nombre: j.nombre, apodo: j.apodo ?? '', activo: j.activo, tipo: j.tipo, descuento_pct: Number(j.descuento_pct) || 0, monto_especial: j.monto_especial ?? 0,
     deuda_anterior: j.deuda_anterior || 0, telefono: j.telefono ?? '', correo: j.correo ?? '', comentario: j.comentario ?? '',
   });
   const a = useAccion();
@@ -357,6 +360,10 @@ function Condicion({ j, editar, acciones }) {
       <h2 className="seccion">Condición y contacto</h2>
       <form className="card" onSubmit={guardar}>
         <fieldset disabled={!editar} style={{ border: 0, padding: 0, margin: 0 }}>
+          <label htmlFor="c-nombre">Nombre completo</label>
+          <input id="c-nombre" required maxLength={80} value={d.nombre} onChange={set('nombre')} />
+          <label htmlFor="c-apodo">Apodo (opcional)</label>
+          <input id="c-apodo" maxLength={20} placeholder="Ej: el Checho" value={d.apodo} onChange={set('apodo')} />
           <label htmlFor="c-tipo">Condición</label>
           <select id="c-tipo" value={d.tipo} onChange={set('tipo')}>
             {Object.entries(TIPOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -387,7 +394,12 @@ function Condicion({ j, editar, acciones }) {
           </label>
           {editar && <button className="btn secundario" style={{ marginTop: 16 }} disabled={a.ocupado}>Guardar</button>}
         </fieldset>
-        <p className="nota">El correo de acá es solo para cobrar: no cambia con qué correo entra {j.nombre.split(' ')[0]} a la app.</p>
+        <p className="nota">
+          Nombre, celular y correo quedan en el perfil de {j.nombre.split(' ')[0]}; él no los puede cambiar.{' '}
+          {j.correo_perfil
+            ? `Ya entra a la app con ${j.correo_perfil}: si pones otro correo, queda solo para cobrar.`
+            : 'Como todavía no tiene correo, el que pongas será con el que entra a la app.'}
+        </p>
         <Avisos a={a} />
       </form>
     </>

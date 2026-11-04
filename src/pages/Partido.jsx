@@ -5,6 +5,7 @@ import { usePartidos, porEstado, sinResponder, recordatorioPartido, tieneResulta
 import { fechaLarga, hoyIso } from '../lib/fechas.js';
 import RecordarPorWhatsApp from '../components/RecordarPorWhatsApp.jsx';
 import { complejoDe } from '../lib/complejos.js';
+import NombreConApodo from '../components/NombreConApodo.jsx';
 import EsquemaCanchas from '../components/EsquemaCanchas.jsx';
 
 const OPCIONES = [['voy', 'Voy'], ['duda', 'Duda'], ['baja', 'No voy']];
@@ -76,7 +77,7 @@ function Estadisticas({ partido }) {
     <ul className="goleadores">
       {partido.estadisticas.map((g) => (
         <li key={g.personaId}>
-          <span>{g.nombre}</span>
+          <span><NombreConApodo id={g.personaId} nombre={g.nombre} /></span>
           <span className="cifras">
             {g.goles > 0 && <strong>{plural(g.goles, 'gol', 'goles')}</strong>}
             {g.asistencias > 0 && <em>{plural(g.asistencias, 'asistencia', 'asistencias')}</em>}

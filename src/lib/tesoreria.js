@@ -185,7 +185,7 @@ const demo = {
       aporte_pct: 10,
       cuotas: armarPlan({ temporada: TEMPORADA, inscripcion: 30000, cuota: 40000, desde: 3, cantidad: 9, dia: 10 }),
       jugadores: NOMBRES_DEMO.map((nombre, i) => ({
-        id: `j${i}`, nombre, en_plantel: true, activo: true,
+        id: `j${i}`, nombre, apodo: i === 1 ? 'el Beni' : null, correo_perfil: i < 4 ? `jugador${i + 1}@ejemplo.cl` : null, en_plantel: true, activo: true,
         tipo: i === 2 ? 'beca' : i === 5 ? 'exento' : 'normal', descuento_pct: i === 2 ? 50 : 0, monto_especial: null,
         deuda_anterior: i === 3 ? 15000 : 0, telefono: i % 3 === 0 ? null : `9${String(10000000 + i * 1111111).slice(0, 8)}`,
         correo: `jugador${i + 1}@ejemplo.cl`, comentario: null, con_cuenta: i < 4,
