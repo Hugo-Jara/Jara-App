@@ -23,6 +23,7 @@ import Pedido from './pages/Pedido.jsx';
 import Solicitar from './pages/Solicitar.jsx';
 import Fondo from './pages/Fondo.jsx';
 import Tablero from './pages/Tablero.jsx';
+import Tesoreria from './pages/Tesoreria.jsx';
 
 export default function App() {
   const { cargando, sesion, persona, sinConexion, esDemo } = useSesion();
@@ -65,6 +66,7 @@ export default function App() {
         <Route path="/cuota" element={<Cuota />} />
         <Route path="/compras" element={<Compras />} />
         <Route path="/tablero" element={<Tablero />} />
+        <Route path="/tesoreria" element={<Tesoreria />} />
         <Route path="/fondo" element={<Fondo />} />
         <Route path="/club" element={<Club />} />
         <Route path="*" element={<Navigate to="/" replace />} />
