@@ -3,6 +3,7 @@ import { useSesion } from './lib/sesion.jsx';
 import Marco from './components/Marco.jsx';
 import Ingreso from './pages/Ingreso.jsx';
 import ElegirNombre from './pages/ElegirNombre.jsx';
+import ElegirClave from './pages/ElegirClave.jsx';
 import SinConexion from './pages/SinConexion.jsx';
 import Inicio from './pages/Inicio.jsx';
 import Partidos from './pages/Partidos.jsx';
@@ -26,7 +27,7 @@ import Tablero from './pages/Tablero.jsx';
 import Tesoreria from './pages/Tesoreria.jsx';
 
 export default function App() {
-  const { cargando, sesion, persona, sinConexion, esDemo } = useSesion();
+  const { cargando, sesion, persona, sinConexion, esDemo, ofrecerClave } = useSesion();
   const { pathname } = useLocation();
 
   // El pedido de compras es una página suelta: se entra con un link, sin cuenta
@@ -38,9 +39,12 @@ export default function App() {
   // En modo demostración, /ingreso muestra la pantalla de entrada para revisarla.
   if (esDemo && pathname === '/ingreso') return <Ingreso />;
   if (esDemo && pathname === '/sin-conexion') return <SinConexion />;
+  if (esDemo && pathname === '/clave') return <ElegirClave />;
 
   if (cargando) return <div className="cargando">Cargando…</div>;
   if (!esDemo && !sesion) return <Ingreso />;
+  // Recién entró con link o código: se le ofrece dejar contraseña (puede saltarlo).
+  if (!esDemo && ofrecerClave) return <ElegirClave />;
   // Si no se pudo preguntar quién es, no se le pide buscar su nombre de nuevo.
   if (!esDemo && persona === undefined && sinConexion) return <SinConexion />;
   if (!esDemo && persona === null) return <ElegirNombre />;

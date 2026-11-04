@@ -88,6 +88,10 @@ a.btn { text-decoration: none; }
 .ingreso { max-width: 420px; margin: 0 auto; padding: 9vh 16px 40px; }
 .ingreso .escudo { display: block; width: 148px; height: 148px; object-fit: contain; margin: 0 auto 14px; mix-blend-mode: lighten; }
 .ingreso .titulo, .ingreso .subtitulo { text-align: center; }
+.ver-clave { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 12px 0 0; cursor: pointer; }
+.ver-clave input { width: 18px; height: 18px; padding: 0; margin: 0; flex: none; accent-color: var(--gold); }
+.ayuda-clave { font-size: 12px; color: var(--text-dim); margin: 8px 0 0; line-height: 1.4; }
+.ingreso .otra-forma { display: block; margin: 16px auto 0; font-size: 13.5px; text-align: center; }
 .nota { font-size: 12px; color: var(--text-dim); text-align: center; margin: 18px 0 0; line-height: 1.45; }
 
 /* Navegación inferior */

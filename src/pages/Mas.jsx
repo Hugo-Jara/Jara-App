@@ -5,6 +5,7 @@ import { useAccesoFondo } from '../lib/fondo.js';
 import { usePlantelesTesoreria } from '../lib/tesoreria.js';
 import Icono from '../components/Icono.jsx';
 import VerComo from '../components/VerComo.jsx';
+import MiClave from '../components/MiClave.jsx';
 
 // Lo administrativo del club vive acá, fuera de la pantalla de inicio.
 export default function Mas() {
@@ -53,6 +54,7 @@ export default function Mas() {
           </Link>
         ))}
       </div>
+      <MiClave />
     </>
   );
 }

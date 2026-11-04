@@ -4,6 +4,25 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-04 · Ingreso con correo y contraseña
+
+**Para qué:** hasta ahora se entraba solo con Google o con un link/código al correo cada vez. Los tesoreros pidieron poder entrar con correo y contraseña quienes no usan Google.
+
+**Qué se hizo** (sin migración ni cambios en la base):
+- **Ingreso:** Google arriba y, abajo, correo + contraseña (con "Mostrar contraseña"). Un enlace lleva al link/código de siempre: "¿Primera vez o se te olvidó la contraseña? Entra con un link".
+- **Crear y recuperar la contraseña son el mismo camino:** quien pide un link o código queda marcado (un día, en el navegador) y, al entrar, la app le ofrece "¿Dejamos una contraseña?" antes de seguir. Puede saltarlo con "Ahora no". Se usa el mismo correo de siempre; no hace falta otra plantilla ni registro aparte.
+- **Más > Mi contraseña:** crear o cambiar la contraseña en cualquier momento, también para quien entra con Google.
+- Mínimo 8 caracteres, revisado en la app; los errores de Supabase salen en español.
+- Cambios en `src/lib/sesion.jsx` (`entrarConClave`, `ponerClave`, `ofrecerClave`), `src/pages/Ingreso.jsx`, `src/pages/ElegirClave.jsx` (nueva), `src/components/FormClave.jsx` y `src/components/MiClave.jsx` (nuevos), `App.jsx`, `Mas.jsx` y estilos. En modo demostración se ven en `/ingreso` y `/clave`.
+
+**En Supabase (opcional, lo hace el administrador):** el proveedor Email ya está activo y cubre contraseñas. Se recomienda subir el largo mínimo a 8 (Authentication > Providers > Email) y dejar "Secure password change" apagado, para no pedir reautenticación al cambiarla desde Más.
+
+**Comprobado:** `npm run build` y `npm run test:db` pasan. Pantallas revisadas en modo demostración a 375 px, sin scroll horizontal ni errores. Falta probar con la base real y en celulares.
+
+**Ojo:** si el link del correo se abre en otro navegador (por ejemplo, dentro de la app de Gmail), la oferta no aparece; para eso está Más > Mi contraseña.
+
+---
+
 ## 2026-11-04 · Fase 5 (primera versión) — Tesorería de cada plantel
 
 **Para qué:** que el tesorero de un plantel deje su planilla y lleve cuotas, pagos, cobros y caja en la app. Sale de la reunión con los tesoreros del 3/11; parte con un plantel de piloto y su feedback guía al resto.
