@@ -183,11 +183,21 @@ function Editor({ perfil, onListo, onCancelar }) {
       )}
 
       {propio && (
-        <label className="campo">
-          <span className="campo-etiqueta">Instagram (opcional, tu usuario o el link a tu perfil)</span>
-          <input autoCapitalize="none" autoCorrect="off" spellCheck={false} maxLength={80} placeholder="@tu.usuario"
-                 value={f.instagram} onChange={(e) => poner('instagram', e.target.value)} />
-        </label>
+        <div className="campo">
+          <label className="campo-etiqueta" htmlFor="perfil-instagram">Instagram (opcional, tu usuario o el link a tu perfil)</label>
+          <div className="perfil-instagram">
+            <input id="perfil-instagram" autoCapitalize="none" autoCorrect="off" spellCheck={false} maxLength={80} placeholder="@tu.usuario"
+                   value={f.instagram} onChange={(e) => poner('instagram', e.target.value)} />
+            {/* Abre la cuenta en Instagram para confirmar que es la tuya antes de guardar. */}
+            <a className={`btn chico secundario ${limpiarInstagram(f.instagram) ? '' : 'apagado'}`}
+               aria-disabled={!limpiarInstagram(f.instagram)}
+               href={limpiarInstagram(f.instagram) ? `https://www.instagram.com/${limpiarInstagram(f.instagram)}/` : undefined}
+               target="_blank" rel="noopener noreferrer">Comprobar</a>
+          </div>
+          {limpiarInstagram(f.instagram) && (
+            <p className="item-meta">Toca Comprobar: si se abre tu cuenta, está bien escrito. Se guardará como @{limpiarInstagram(f.instagram)}.</p>
+          )}
+        </div>
       )}
 
       {perfil.planteles.length > 0 && (
