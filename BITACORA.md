@@ -4,6 +4,18 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-04 · Perfil: Instagram, nombres que llevan al perfil y nombres completos
+
+**Qué se hizo** (migración `0030_perfil_instagram.sql`, se corre antes del merge; la 0025, 0026 y 0027 van en otros PR):
+- **Instagram:** cada jugador pone su usuario (o pega el link o el @, la base lo limpia) y el club lo ve en su perfil como enlace a su cuenta. Lo cambia solo él. Es un enlace, no una conexión con la cuenta de Instagram.
+- **Nombres con enlace:** `NombreConApodo` acepta `enlace`; tocar el nombre abre `/perfil/:id`. Activado en Estadísticas, goleadores y asistencia de cada partido, y listas de entrenamiento (invitados sin cuenta no llevan enlace). No se usa dentro de botones (por ejemplo, al votar el MVP). En el perfil ajeno, "‹ Volver" regresa a la pantalla de donde se vino.
+- **Nombres completos en Estadísticas:** el nombre ya no se corta con "…": baja a una segunda línea, y las columnas de números son más angostas (probado en iPhone SE y 13).
+- **Mis fotos:** queda el espacio en el perfil con un "Pronto". La galería es de la Fase F (carril de Comunicaciones); se coordina con ese carril.
+
+**Comprobado:** `npm run build`, `npm run test:db` (8 pruebas nuevas de Instagram en `perfil.mjs`).
+
+---
+
 ## 2026-11-04 · RUT y fecha de nacimiento en Tesorería
 
 **Para qué:** la liga pide seguido el RUT y la fecha de nacimiento de cada jugador, y las fechas alimentan los cumpleaños. Los tesoreros los tienen en una planilla común (fuera del repo); con esto quedan en la app y se puede importar esa planilla.

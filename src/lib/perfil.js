@@ -10,6 +10,8 @@ export const POSICIONES = [
 ];
 export const PIES = [['derecho', 'Derecho'], ['izquierdo', 'Izquierdo'], ['ambos', 'Ambos']];
 export const nombrePosicion = (v) => POSICIONES.find(([k]) => k === v)?.[1] ?? '';
+// '@usuario' o el link completo → 'usuario' (la base hace lo mismo, 0030).
+export const limpiarInstagram = (t) => (t ?? '').trim().replace(/^(https?:\/\/)?(www\.)?(instagram\.com|instagr\.am)\//i, '').replace(/^@|[/?].*$/g, '').toLowerCase() || null;
 export const nombrePie = (v) => PIES.find(([k]) => k === v)?.[1] ?? '';
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -19,7 +21,7 @@ export const textoCumple = (mmdd) => (mmdd ? `${Number(mmdd.slice(3))} de ${MESE
 // --- Modo demostración: datos inventados en memoria -------------------------
 const DEMO = {
   demo: { id: 'demo', nombre: 'Seba', apodo: null, estado: 'activo', propio: true, puedo_cargar: true,
-          foto_ruta: null, posicion: 'volante', pie: 'derecho', cumple: '03-14', nacimiento: '1990-03-14',
+          foto_ruta: null, instagram: 'club.hugojara.demo', posicion: 'volante', pie: 'derecho', cumple: '03-14', nacimiento: '1990-03-14',
           muestra_fisico: false, estatura_cm: 178, peso_kg: null, telefono: '+56 9 0000 0000', correo: 'demo@correo.cl',
           planteles: [{ id: 'e-sabado', nombre: 'Senior Sábado', dorsal: 8 }] },
 };
@@ -46,8 +48,12 @@ export async function leerPerfil(id = null) {
 // Solo manda lo que cambió. El apodo va por su función (0024), para que se
 // actualice al tiro al lado del nombre en toda la app.
 export async function guardarPerfil(perfil, cambios) {
-  const { apodo, ...resto } = cambios;
+  const { apodo, instagram, ...resto } = cambios;
   if (apodo !== undefined) await guardarMiApodo(perfil.id, apodo ?? '');
+  if (instagram !== undefined) {
+    if (esDemo) DEMO.demo.instagram = limpiarInstagram(instagram);
+    else await llamar('perfil_instagram_guardar', { p_instagram: instagram ?? '' });
+  }
   if (!Object.keys(resto).length) return;
   if (esDemo) { Object.assign(DEMO[perfil.id] ?? {}, resto); return; }
   await llamar('perfil_guardar', { p_persona: perfil.id, p_datos: resto });
