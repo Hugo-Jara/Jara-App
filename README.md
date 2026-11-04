@@ -43,6 +43,7 @@ Las migraciones están en `supabase/migrations/` y se aplican en orden:
 | `0023_tesoreria.sql` | Tesorería de cada plantel: plan de cuotas editable, condición de cada jugador (beca, exento, especial, deuda anterior, contacto para cobrar), cargos extra, pagos (se anulan, no se borran) y caja. Tesorero ve y edita solo su plantel; Hacienda y administradores, todos; cuentas de prueba solo miran; cada jugador ve lo suyo con `mi_tesoreria()` |
 | `0024_perfil_y_apodo.sql` | Nombre, celular y correo que carga el tesorero quedan en el perfil del jugador (el correo solo si no tenía uno; si no, queda para cobrar). `personas.apodo` opcional que pone cada jugador (`mi_apodo_guardar`, `apodos()`) |
 | `0025_partidos_jugados.sql` | Quiénes jugaron cada partido (`partido_jugadores`, lo marca quien anota el resultado; parte con los "voy"). `estadisticas` devuelve PJ y filtra por varios planteles (`p_equipos`) |
+| `0027_mvp_y_comentarios.sql` | Jugador del partido (votan los que jugaron, no a sí mismos; cierra a las 23:59 del día siguiente), comentarios en cadena (moderan Comunicaciones, encargado del plantel y administradores) y reacciones con emoji al partido y a cada comentario. Necesita la 0025 |
 
 `npm run test:db` y `npm run test:pedidos` aplican las migraciones en un Postgres en memoria y prueban los permisos, el flujo de cotizaciones, el ingreso por nombre, los partidos, los entrenamientos y los pedidos por link.
 

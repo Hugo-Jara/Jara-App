@@ -7,6 +7,8 @@ import RecordarPorWhatsApp from '../components/RecordarPorWhatsApp.jsx';
 import { complejoDe } from '../lib/complejos.js';
 import NombreConApodo from '../components/NombreConApodo.jsx';
 import EsquemaCanchas from '../components/EsquemaCanchas.jsx';
+import { JugadorDelPartido, Reacciones, Comentarios } from '../components/DespuesDelPartido.jsx';
+import { useCharla } from '../lib/charla.js';
 
 const OPCIONES = [['voy', 'Voy'], ['duda', 'Duda'], ['baja', 'No voy']];
 const TEXTO = { voy: 'Confirmaste que vas.', duda: 'Quedaste en duda.', baja: 'Avisaste que no vas.' };
@@ -225,6 +227,24 @@ function Resultado({ partido, anotar }) {
   );
 }
 
+// Después del partido: jugador del partido (MVP), reacciones y comentarios (0027).
+function DespuesDelPartido({ partido, yo }) {
+  const charla = useCharla(partido, yo);
+  if (charla.error) return <p className="ayuda abajo">No pudimos cargar los comentarios: {charla.error}</p>;
+  if (!charla.datos) return null;
+  const { mvp, reacciones, comentarios } = charla.datos;
+  return (
+    <>
+      <JugadorDelPartido partido={partido} yo={yo} mvp={mvp} votar={charla.votar} />
+      <div className="card charla-partido">
+        <div className="sobretitulo">¿Qué te pareció el partido?</div>
+        <Reacciones lista={reacciones} reaccionar={charla.reaccionarPartido} etiqueta="Reacciones al partido" siempreAbiertas />
+      </div>
+      <Comentarios comentarios={comentarios} acciones={charla} />
+    </>
+  );
+}
+
 function Grupo({ titulo, clase, lista }) {
   if (!lista.length) return null;
   return (
@@ -300,6 +320,8 @@ export default function Partido() {
       </dl>
 
       <Resultado key={`${partido.golesFavor}-${partido.golesContra}-${(partido.jugaron ?? []).join()}-${(partido.estadisticas ?? []).map((g) => `${g.personaId}.${g.goles}.${g.asistencias}.${g.amarillas}.${g.rojas}`).join()}`} partido={partido} anotar={anotarResultado} />
+
+      {(jugado || tieneResultado(partido)) && <DespuesDelPartido partido={partido} yo={persona} />}
 
       {!jugado && (
         <div className="card">

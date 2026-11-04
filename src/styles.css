@@ -534,3 +534,41 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .jugaron-item { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; margin: 0; border: 1px solid var(--border); border-radius: 12px; font-size: 14px; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .jugaron-item.si { border-color: var(--gold); background: rgba(198, 161, 91, 0.12); }
 .jugaron-item input { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--gold); }
+
+/* Jugador del partido (MVP) */
+.mvp { border-color: rgba(198, 161, 91, 0.45); }
+.mvp-pregunta { margin: 4px 0 10px; font-weight: 700; }
+.mvp-candidatos { display: flex; flex-wrap: wrap; gap: 8px; }
+.mvp-candidatos .chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mvp-conteo { margin: 10px 0 0; font-size: 13px; color: var(--text-dim); }
+.mvp-ganadores { list-style: none; margin: 6px 0 0; padding: 0; }
+.mvp-ganadores li { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.mvp-estrella { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: var(--bg); font-size: 20px; }
+.mvp-nombre { flex: 1; min-width: 0; font-size: 18px; font-weight: 800; }
+.mvp-votos { flex: none; font-size: 13px; color: var(--text-dim); }
+.mvp-marca { margin-left: 6px; font-size: 0.8em; font-weight: 800; color: var(--gold); white-space: nowrap; }
+
+/* Comentarios y reacciones del partido */
+.charla-reacciones { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.charla-emoji { min-width: 40px; min-height: 36px; padding: 0 10px; border-radius: 18px; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.03); color: var(--text); font-size: 17px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; }
+.charla-emoji.vacia { opacity: 0.75; }
+.charla-emoji.mia { border-color: var(--gold); background: rgba(198, 161, 91, 0.2); opacity: 1; }
+.charla-emoji.mas { font-size: 14px; color: var(--text-dim); }
+.charla-emoji:disabled { cursor: wait; }
+.charla-n { font-size: 13px; font-weight: 700; }
+.charla-total { color: var(--gold); margin-left: 4px; }
+.charla-lista { list-style: none; margin: 8px 0 0; padding: 0; }
+.charla-hilo + .charla-hilo { border-top: 1px solid var(--border); }
+.charla-hilo { padding: 6px 0; }
+.charla-comentario { padding: 8px 0; min-width: 0; }
+.charla-comentario.charla-respuesta { margin-left: 14px; padding-left: 12px; border-left: 2px solid var(--border); }
+.charla-cabeza { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.charla-autor { font-weight: 700; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.charla-cuando { flex: none; font-size: 12px; color: var(--text-dim); }
+.charla-texto { margin: 4px 0 8px; font-size: 15px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.charla-texto.borrado { font-style: italic; color: var(--text-dim); font-size: 13.5px; }
+.charla-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 13.5px; }
+.charla-borrar { color: var(--text-dim); }
+.charla-escribir { margin-top: 12px; }
+.charla-escribir textarea { width: 100%; resize: vertical; min-height: 64px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0, 0, 0, 0.25); color: var(--text); font: inherit; font-size: 16px; }
+.charla-escribir-pie { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 8px; }

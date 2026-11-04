@@ -4,6 +4,23 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-04 · Jugador del partido (MVP), comentarios y reacciones
+
+**Para qué:** que después de cada partido el club vote al mejor, comente y reaccione, como en las redes sociales. Sale de las ideas que llegaron después de la reunión de tesoreros del 3/11.
+
+**Qué se hizo** (migración `0027_mvp_y_comentarios.sql`, se corre antes del merge y **después de la 0025**, que trae `partido_jugadores`):
+- **Jugador del partido:** votan solo los que jugaron (la lista "¿Quiénes jugaron?" que marca quien anota el resultado) y no pueden votarse a sí mismos. Abre al anotar el resultado y cierra a las 23:59 del día siguiente (sábado → domingo en la noche, jueves → viernes en la noche). El voto se puede cambiar mientras está abierta; solo se ve cuántos votaron, no por quién. Al cerrar aparece el MVP con sus votos (si empatan, son MVP los empatados), y en Jugadores sale una ★ al lado del nombre (★3 = tres veces MVP), con los mismos filtros de la tabla.
+- **Comentarios** en cada partido jugado, con respuestas en cadena (una respuesta a una respuesta queda en el mismo hilo). Máximo 500 letras. Cada uno borra lo suyo; borran cualquiera los administradores, quien edita Comunicaciones y el encargado del plantel del partido (capitán o DT). Un borrado deja "Comentario borrado" para no romper la cadena. Las cuentas de prueba comentan pero no borran lo ajeno.
+- **Reacciones** con emoji al partido y a cada comentario, de una lista fija (👏 🔥 ⚽ 💪 😂 😮 😢 ❤️). Tocar el mismo de nuevo lo quita.
+- Las tablas no se leen desde el navegador: todo pasa por `partido_charla`, `mvp_votar`, `comentario_agregar`, `comentario_borrar`, `reaccionar_partido`, `reaccionar_comentario` y `mvp_conteo`.
+- **App:** en la pantalla de un partido jugado, debajo del resultado: "Jugador del partido", "¿Qué te pareció el partido?" y "Comentarios". Código en `src/lib/charla.js` y `src/components/DespuesDelPartido.jsx`. En modo demostración se ve una votación abierta (partido de ayer) y una cerrada con comentarios.
+
+**Comprobado:** `npm run build`, `npm run test:db` (con 38 pruebas nuevas en `supabase/tests/charla.mjs`) y `npm run test:pedidos` pasan. Pantallas revisadas en modo demostración a 375 px, sin scroll horizontal ni errores.
+
+**Queda para después:** avisar por WhatsApp o notificación cuando abre o cierra la votación; ver el MVP en la lista de partidos jugados.
+
+---
+
 ## 2026-11-04 · Partidos jugados por plantel, racha y PJ en las estadísticas
 
 **Para qué:** pedido del administrador después de la reunión de tesoreros. Que "Ya jugados" con **Todos** no sea una lista larga mezclada, que se vea la racha de cada plantel como en las apps de fútbol, y que en Jugadores aparezca todo el que jugó un partido, con filtros para no ver una lista gigante.
