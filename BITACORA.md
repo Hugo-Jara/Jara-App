@@ -15,7 +15,7 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 - Mínimo 8 caracteres, revisado en la app; los errores de Supabase salen en español.
 - Cambios en `src/lib/sesion.jsx` (`entrarConClave`, `ponerClave`, `ofrecerClave`), `src/pages/Ingreso.jsx`, `src/pages/ElegirClave.jsx` (nueva), `src/components/FormClave.jsx` y `src/components/MiClave.jsx` (nuevos), `App.jsx`, `Mas.jsx` y estilos. En modo demostración se ven en `/ingreso` y `/clave`.
 
-**En Supabase (opcional, lo hace el administrador):** el proveedor Email ya está activo y cubre contraseñas. Se recomienda subir el largo mínimo a 8 (Authentication > Providers > Email) . "Secure password change" puede quedar como esté: si está prendido y la sesión tiene más de un día, la app pide volver a entrar con un link antes de cambiar la contraseña desde Más.
+**En Supabase (opcional, lo hace el administrador):** el proveedor Email ya está activo y cubre contraseñas. Se recomienda subir el largo mínimo a 8 (Authentication > Providers > Email). "Secure password change" puede quedar como esté: si está prendido y la sesión tiene más de un día, la app pide volver a entrar con un link antes de cambiar la contraseña desde Más.
 
 **Comprobado:** `npm run build` y `npm run test:db` pasan. Pantallas revisadas en modo demostración a 375 px, sin scroll horizontal ni errores. Falta probar con la base real y en celulares.
 
