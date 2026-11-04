@@ -14,6 +14,7 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 - **Ficha del jugador en Tesorería:** campos RUT y fecha de nacimiento. Se guardan con `tes_guardar_identidad()`, solo para jugadores de ese plantel, y solo si cambiaron.
 - **Quién ve:** el tesorero del plantel, Hacienda y administradores ven RUT y fecha completa de su plantel (`tes_ver`). Las cuentas de prueba no. El resto del club sigue viendo solo día y mes del cumpleaños.
 - **Quién cambia:** los mismos (tesorero del plantel, Hacienda, administradores). El jugador puede corregir su fecha desde Mi perfil, pero no su RUT.
+- **Lista para la liga** (Tesorería > Jugadores > Bajar lista): un CSV que abre Excel, con nombre, RUT con puntos, fecha de nacimiento, edad, celular y correo de quienes juegan la temporada. Avisa a cuántos les falta RUT o fecha.
 
 **Comprobado:** `npm run build` y `npm run test:db` pasan (18 pruebas nuevas en `supabase/tests/tesoreria.mjs`). Ficha revisada en modo demostración a 400 px.
 
