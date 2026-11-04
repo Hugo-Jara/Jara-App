@@ -526,3 +526,6 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .perfil-datos a { color: var(--gold); font-weight: 600; }
 .enlace-volver { background: none; border: 0; padding: 4px 0; font-family: inherit; cursor: pointer; }
 .tabla-club .fila-tabla.cabeza .col { font-size: 9.5px; letter-spacing: 0; }
+.perfil-instagram { display: flex; gap: 8px; align-items: center; }
+.perfil-instagram input { flex: 1; min-width: 0; }
+.btn.apagado { opacity: 0.4; pointer-events: none; }

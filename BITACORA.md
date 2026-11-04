@@ -4,6 +4,12 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-04 · Perfil: botón "Comprobar" en Instagram
+
+En "Editar mi perfil", junto al campo de Instagram, un botón **Comprobar** abre instagram.com/<usuario> para que el jugador confirme que es su cuenta antes de guardar, y se muestra cómo quedará guardado (@usuario). Las sugerencias de Instagram mientras se escribe no son posibles sin una app aprobada por Meta. Solo frontend, sin migración.
+
+---
+
 ## 2026-11-04 · Perfil: Instagram, nombres que llevan al perfil y nombres completos
 
 **Qué se hizo** (migración `0030_perfil_instagram.sql`, se corre antes del merge; la 0025, 0026 y 0027 van en otros PR):
