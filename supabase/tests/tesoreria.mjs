@@ -236,5 +236,48 @@ ok('Borrar el apodo lo quita', !r.error && !(PER.jugador in x), r.error);
 r = await anon('select apodos()');
 ok('Sin cuenta no se leen los apodos', /permission denied/.test(r.error ?? ''), r.error);
 
+// RUT y fecha de nacimiento (0029)
+console.log('\nRUT y fecha de nacimiento');
+const identidad = (quien, equipo, persona, datos) =>
+  como(quien, 'select tes_guardar_identidad($1, $2, $3::jsonb)', [equipo, persona, JSON.stringify(datos)]);
+r = await como('jugador', `select rut_normalizar('12.345.678-5') as r`);
+ok('El RUT se guarda sin puntos y con guion', r.rows[0]?.r === '12345678-5', r.error ?? JSON.stringify(r.rows));
+r = await como('jugador', `select rut_normalizar('10.000.013-k') as r`);
+ok('…y la K en mayúscula', r.rows[0]?.r === '10000013-K', r.error ?? JSON.stringify(r.rows));
+r = await identidad('tesorero', JUNIOR, PER.jugador, { rut: '12.345.678-9' });
+ok('Un RUT con el dígito malo se rechaza', /no calza/.test(r.error ?? ''), r.error);
+r = await identidad('tesorero', JUNIOR, PER.jugador, { rut: 'hola' });
+ok('Un RUT sin forma se rechaza', /no parece válido/.test(r.error ?? ''), r.error);
+r = await identidad('tesorero', JUNIOR, PER.jugador, { rut: '12.345.678-5', nacimiento: '1990-03-14' });
+x = (await ver('tesorero', JUNIOR)).rows[0].v.jugadores.find((j) => j.id === PER.jugador);
+ok('El tesorero carga RUT y fecha de su jugador y los ve', !r.error && x.rut === '12345678-5' && x.nacimiento === '1990-03-14', r.error ?? JSON.stringify(x));
+x = (await como('jugador', 'select perfil_ver() as p')).rows[0].p;
+ok('La fecha queda en el perfil del jugador', x.nacimiento === '1990-03-14' && x.cumple === '03-14', JSON.stringify(x));
+x = (await como('otro', 'select perfil_ver($1) as p', [PER.jugador])).rows[0].p;
+ok('El resto del club ve solo el día y el mes', x.cumple === '03-14' && x.nacimiento == null && !('rut' in x), JSON.stringify(x));
+r = await identidad('tesorero', JUNIOR, PER.otro, { rut: '12345678-5' });
+ok('Un RUT no se repite entre dos personas', /ya está cargado/.test(r.error ?? ''), r.error);
+r = await identidad('tesorero', SENIOR, PER.otro, { rut: '11111111-1' });
+ok('El tesorero no carga RUT en otro plantel', /Solo el tesorero/.test(r.error ?? ''), r.error);
+r = await identidad('hacienda', JUNIOR, PER.hacienda, { rut: '11111111-1' });
+ok('Solo a jugadores del plantel', /no es de este plantel/.test(r.error ?? ''), r.error);
+r = await identidad('tesorero', JUNIOR, PER.jugador, { nacimiento: '2030-01-01' });
+ok('Una fecha imposible se rechaza', /Revisa la fecha/.test(r.error ?? ''), r.error);
+r = await identidad('hacienda', SENIOR, PER.otro, { rut: '22.222.222-2' });
+ok('Hacienda carga en cualquier plantel', !r.error, r.error);
+r = await identidad('tesorero', JUNIOR, PER.jugador, { nacimiento: '' });
+x = (await ver('tesorero', JUNIOR)).rows[0].v.jugadores.find((j) => j.id === PER.jugador);
+ok('Mandar solo la fecha vacía la borra y deja el RUT', !r.error && x.nacimiento == null && x.rut === '12345678-5', r.error ?? JSON.stringify(x));
+r = await identidad('jugador', JUNIOR, PER.jugador, { rut: '11111111-1' });
+ok('El jugador no se cambia el RUT', /Solo el tesorero/.test(r.error ?? ''), r.error);
+r = await como('jugador', 'select rut from persona_contactos');
+ok('El RUT no se lee desde el navegador', /permission denied/.test(r.error ?? ''), r.error);
+await como('prueba', 'select prueba_ver_como($1, $2)', ['tesorero', JUNIOR]);
+r = await ver('prueba', JUNIOR);
+x = r.rows[0]?.v.jugadores.find((j) => j.id === PER.jugador);
+ok('Una cuenta de prueba no ve RUT ni fecha', !r.error && x && x.rut == null && x.nacimiento == null, r.error ?? JSON.stringify(x));
+r = await identidad('prueba', JUNIOR, PER.jugador, { rut: '11111111-1' });
+ok('…ni los cambia', !!r.error, r.error);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

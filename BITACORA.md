@@ -4,6 +4,23 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-04 · RUT y fecha de nacimiento en Tesorería
+
+**Para qué:** la liga pide seguido el RUT y la fecha de nacimiento de cada jugador, y las fechas alimentan los cumpleaños. Los tesoreros los tienen en una planilla común (fuera del repo); con esto quedan en la app y se puede importar esa planilla.
+
+**Qué se hizo** (migración `0029_rut_y_nacimiento_en_tesoreria.sql`, se corre después de la 0028 y antes del merge):
+- **RUT** en `persona_contactos.rut`, guardado como `12345678-K`. `rut_normalizar()` acepta puntos, guion y k minúscula, revisa el dígito verificador y rechaza lo que no sea un RUT. No se repite entre dos personas.
+- **Fecha de nacimiento:** la misma del perfil (`perfiles.nacimiento`, 0028).
+- **Ficha del jugador en Tesorería:** campos RUT y fecha de nacimiento. Se guardan con `tes_guardar_identidad()`, solo para jugadores de ese plantel, y solo si cambiaron.
+- **Quién ve:** el tesorero del plantel, Hacienda y administradores ven RUT y fecha completa de su plantel (`tes_ver`). Las cuentas de prueba no. El resto del club sigue viendo solo día y mes del cumpleaños.
+- **Quién cambia:** los mismos (tesorero del plantel, Hacienda, administradores). El jugador puede corregir su fecha desde Mi perfil, pero no su RUT.
+
+**Comprobado:** `npm run build` y `npm run test:db` pasan (18 pruebas nuevas en `supabase/tests/tesoreria.mjs`). Ficha revisada en modo demostración a 400 px.
+
+**Siguiente:** importar la planilla común cuando los tesoreros la revisen. El SQL de importación se arma fuera del repo, porque lleva datos personales.
+
+---
+
 ## 2026-11-04 · Perfil del jugador (Fase 7, parte 2)
 
 **Para qué:** que cada jugador tenga su ficha con foto, apodo, dorsal, posición y pie hábil, y que el club pueda ver quién es quién en cada plantel.

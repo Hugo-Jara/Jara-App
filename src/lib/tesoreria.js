@@ -189,6 +189,7 @@ const demo = {
         tipo: i === 2 ? 'beca' : i === 5 ? 'exento' : 'normal', descuento_pct: i === 2 ? 50 : 0, monto_especial: null,
         deuda_anterior: i === 3 ? 15000 : 0, telefono: i % 3 === 0 ? null : `9${String(10000000 + i * 1111111).slice(0, 8)}`,
         correo: `jugador${i + 1}@ejemplo.cl`, comentario: null, con_cuenta: i < 4,
+        rut: i < 3 ? ['11111111-1', '22222222-2', '33333333-3'][i] : null, nacimiento: i < 5 ? `199${i}-0${i + 1}-1${i}` : null,
       })),
       extras: [{ id: 1, persona: 'j0', concepto: 'Polera', monto: 18000, vence: `${TEMPORADA}-05-01` }],
       pagos: [
@@ -216,8 +217,10 @@ const accionesDemo = (equipo) => {
   const d = () => demo.datos[equipo];
   return {
     guardarPlan: async (cuotas, aporte) => { await esperar(); Object.assign(d(), { cuotas, aporte_pct: aporte }); },
-    guardarJugador: async (persona, datos) => {
+    guardarJugador: async (persona, todo) => {
       await esperar();
+      const datos = Object.fromEntries(Object.entries(todo).filter(([, v]) => v !== undefined));
+      if (datos.rut && !/^\d{1,2}\.?\d{3}\.?\d{3}-?[\dkK]$/.test(datos.rut.trim())) throw new Error(`El RUT ${datos.rut} no parece válido`);
       const j = d().jugadores.find((x) => x.id === persona);
       if (j) Object.assign(j, datos);
       else {
@@ -253,7 +256,16 @@ const accionesDemo = (equipo) => {
 
 const accionesReales = (equipo, temporada) => ({
   guardarPlan: (cuotas, aporte) => llamar('tes_guardar_plan', { p_equipo: equipo, p_temporada: temporada, p_cuotas: cuotas, p_aporte_pct: aporte }),
-  guardarJugador: (persona, datos) => llamar('tes_guardar_jugador', { p_equipo: equipo, p_temporada: temporada, p_persona: persona, p_datos: datos }),
+  // RUT y fecha de nacimiento van aparte (0029): al perfil, no a la temporada.
+  guardarJugador: async (persona, { rut, nacimiento, ...datos }) => {
+    await llamar('tes_guardar_jugador', { p_equipo: equipo, p_temporada: temporada, p_persona: persona, p_datos: datos });
+    const identidad = {};
+    if (rut !== undefined) identidad.rut = rut;
+    if (nacimiento !== undefined) identidad.nacimiento = nacimiento;
+    if (Object.keys(identidad).length) {
+      await llamar('tes_guardar_identidad', { p_equipo: equipo, p_persona: persona, p_datos: identidad });
+    }
+  },
   registrarPago: (persona, monto, fecha, medio, nota) => llamar('tes_registrar_pago', {
     p_equipo: equipo, p_temporada: temporada, p_persona: persona, p_monto: monto, p_fecha: fecha, p_medio: medio, p_nota: nota || null }),
   anularPago: (id) => llamar('tes_anular_pago', { p_pago: id }),
