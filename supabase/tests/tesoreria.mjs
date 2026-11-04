@@ -196,5 +196,45 @@ ok('Hacienda de prueba tampoco cambia planes', /no cambiarla/.test(r.error ?? ''
 r = await como('hacienda', 'select tes_guardar_plan($1, $2, $3::jsonb, 15)', [SENIOR, T, PLAN]);
 ok('Hacienda edita el plan de cualquier plantel', !r.error, r.error);
 
+// 0024: el perfil se alimenta desde Tesorería, y apodo
+console.log('\nPerfil desde Tesorería y apodo (0024)');
+const guardarJ = (quien, persona, datos) => como(quien, 'select tes_guardar_jugador($1, $2, $3, $4::jsonb)', [JUNIOR, T, persona, JSON.stringify(datos)]);
+r = await guardarJ('tesorero', PER.sinCuenta, { nombre: 'Sin Cuenta Corregido', telefono: '922222222', correo: 'nuevo@correo.cl' });
+x = (await db.query('select p.nombre, c.email, c.telefono from personas p join persona_contactos c on c.persona_id = p.id where p.id = $1', [PER.sinCuenta])).rows[0];
+ok('Nombre, celular y correo del tesorero quedan en el perfil', !r.error && x?.nombre === 'Sin Cuenta Corregido' && x.email === 'nuevo@correo.cl' && x.telefono === '922222222', r.error ?? JSON.stringify(x));
+await db.query(`insert into auth.users (id, email) values ('00000000-0000-0000-0000-0000000000c1', 'nuevo@correo.cl')`);
+await db.exec('set role authenticated');
+await db.query(`select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-0000000000c1', false), set_config('request.jwt.claims', '{"email":"nuevo@correo.cl"}', false)`);
+x = (await db.query('select vincular_persona() as id')).rows[0].id; await db.exec('reset role');
+ok('…y con ese correo el jugador entra a la app como él', x === PER.sinCuenta, x);
+r = await guardarJ('tesorero', PER.jugador, { telefono: '933333333', correo: 'otro@correo.cl' });
+x = (await db.query('select c.email, c.telefono, tj.correo as cobro from persona_contactos c join tes_jugadores tj on tj.persona_id = c.persona_id and tj.equipo_id = $2 where c.persona_id = $1', [PER.jugador, JUNIOR])).rows[0];
+ok('Si ya tiene correo de la app, no se cambia: el nuevo queda solo para cobrar', !r.error && x.email === 'jugador@correo.cl' && x.cobro === 'otro@correo.cl' && x.telefono === '933333333', r.error ?? JSON.stringify(x));
+r = await guardarJ('tesorero', PER.otro, { correo: 'jugador@correo.cl' });
+x = (await db.query('select email from persona_contactos where persona_id = $1', [PER.otro])).rows[0];
+ok('Un correo que ya usa otra persona no se copia al perfil', !r.error && !x?.email, r.error ?? JSON.stringify(x));
+r = await guardarJ('tesorero', PER.jugador, { correo: 'no-es-correo' });
+ok('Un correo mal escrito se rechaza', /no parece válido/.test(r.error ?? ''), r.error);
+r = await guardarJ('tesorero', PER.jugador, { nombre: '  ' });
+ok('El nombre no puede quedar vacío', /no puede quedar vacío/.test(r.error ?? ''), r.error);
+r = await como('tesorero', 'select tes_guardar_jugador($1, $2, $3, $4::jsonb)', [SENIOR, T, PER.otro, JSON.stringify({ nombre: 'Cambiado' })]);
+ok('El tesorero no cambia perfiles desde otro plantel', /Solo el tesorero/.test(r.error ?? ''), r.error);
+r = await como('jugador', 'update persona_contactos set telefono = $1 where persona_id = $2', ['900000000', PER.jugador]);
+ok('El jugador no edita su contacto desde el navegador', /permission denied/.test(r.error ?? ''), r.error);
+x = (await ver('tesorero', JUNIOR)).rows[0].v.jugadores.find((j) => j.id === PER.jugador);
+ok('tes_ver trae el celular del perfil y el correo para cobrar', x.telefono === '933333333' && x.correo === 'otro@correo.cl' && x.correo_perfil === 'jugador@correo.cl', JSON.stringify(x));
+
+r = await como('jugador', `select mi_apodo_guardar('el Checho')`);
+x = (await como('otro', 'select apodos() as a')).rows[0].a;
+ok('Cada jugador se pone su apodo y el club lo ve', !r.error && x[PER.jugador] === 'el Checho', r.error ?? JSON.stringify(x));
+ok('…y lo lee de vuelta', (await como('jugador', 'select mi_apodo() as a')).rows[0].a === 'el Checho');
+r = await como('jugador', `select mi_apodo_guardar('un apodo larguísimo de verdad')`);
+ok('Apodo de más de 20 letras no', /hasta 20/.test(r.error ?? ''), r.error);
+r = await como('jugador', `select mi_apodo_guardar('')`);
+x = (await como('otro', 'select apodos() as a')).rows[0].a;
+ok('Borrar el apodo lo quita', !r.error && !(PER.jugador in x), r.error);
+r = await anon('select apodos()');
+ok('Sin cuenta no se leen los apodos', /permission denied/.test(r.error ?? ''), r.error);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

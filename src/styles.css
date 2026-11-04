@@ -497,3 +497,5 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .tes-cuota input:first-child { grid-column: 1 / -1; }
 .tes-acciones { display: flex; flex-direction: column; gap: 6px; flex: none; }
 .movimientos li .enlace.quitar { flex: none; }
+.apodo { font-size: 0.82em; font-weight: 400; color: var(--gold); }
+.tes-solo-mirar { margin-bottom: 14px; }

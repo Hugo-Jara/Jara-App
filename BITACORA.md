@@ -23,6 +23,21 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-04 · Fase 5 (ajuste) — El perfil se alimenta desde Tesorería, y apodo
+
+**Por qué:** al probar el piloto, el administrador pidió que el nombre, el celular y el correo que carga el tesorero alimenten el perfil del jugador (y que el jugador no los edite), y que cada uno pueda tener un apodo.
+
+**Qué se hizo** (migración `0024_perfil_y_apodo.sql`, se corre antes del merge):
+- En la ficha de Tesorería se editan nombre completo, apodo, celular y correo, y van directo a `personas` / `persona_contactos`. El jugador no los puede cambiar (las tablas siguen cerradas desde la 0018).
+- **Correo:** si el jugador no tenía, el del tesorero pasa a ser con el que entra a la app; si ya tenía, no se toca y el nuevo queda solo para cobrar. No se copia un correo que use otra persona.
+- El celular guardado aparte en la 0023 pasa al perfil.
+- **Apodo** (`personas.apodo`, máx. 20): cada jugador lo pone en Más > Tu apodo; sale chico al lado del nombre real ("Nombre · apodo") en Jugadores (estadísticas), goleadores del partido y la lista de Tesorería.
+- Tesorería avisa cuando se entra en modo solo mirar (cuentas de prueba).
+
+**Comprobado:** `npm run build`, `npm run test:db` (con 14 pruebas nuevas en `supabase/tests/tesoreria.mjs`) y `npm run test:pedidos` pasan. Pantallas revisadas en modo demostración a 375 px.
+
+---
+
 ## 2026-11-04 · Fase 5 (primera versión) — Tesorería de cada plantel
 
 **Para qué:** que el tesorero de un plantel deje su planilla y lleve cuotas, pagos, cobros y caja en la app. Sale de la reunión con los tesoreros del 3/11; parte con un plantel de piloto y su feedback guía al resto.
