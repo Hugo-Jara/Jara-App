@@ -4,6 +4,24 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-04 · Perfil del jugador (Fase 7, parte 2)
+
+**Para qué:** que cada jugador tenga su ficha con foto, apodo, dorsal, posición y pie hábil, y que el club pueda ver quién es quién en cada plantel.
+
+**Qué se hizo** (migración `0028_perfil_jugador.sql`, se corre antes del merge; la 0025, 0026 y 0027 van en otros PR):
+- **Mi perfil** (`/perfil`, desde Más): foto, apodo, dorsal en cada plantel donde juega, posición (arquero, defensa, lateral, volante, delantero), pie hábil, fecha de nacimiento, estatura y peso. La foto se achica en el teléfono a 600 px y va a un bucket privado que solo ven los socios del club.
+- **Lo que no edita el jugador:** nombre, celular y correo. Se muestran en "Tus datos del club" y los cambia el tesorero o Hacienda desde Tesorería (0024).
+- **Qué ve el resto:** foto, apodo, dorsal, posición, pie y el día del cumpleaños (sin el año). Estatura y peso solo si el jugador lo elige. Celular, correo y fecha completa, solo él.
+- **Carga por otros:** el tesorero y el encargado del plantel, Hacienda y administradores pueden poner dorsal, posición y pie (para quienes aún no entran a la app). El dorsal, solo en su plantel. Las cuentas de prueba no cargan perfiles ajenos.
+- **Planteles** (`/planteles`, desde Más): jugadores de cada plantel ordenados por dorsal, con foto y posición; tocando uno se abre su perfil.
+- El apodo se movió de Más a Mi perfil (se borró `MiApodo.jsx`).
+
+**Comprobado:** `npm run build`, `npm run test:db` (incluye `supabase/tests/perfil.mjs`, 44 pruebas nuevas) y `npm run test:pedidos` pasan. Recorrido en modo demostración en tamaño iPhone 13 sin errores.
+
+**Pendiente:** enlazar el perfil desde Estadísticas y la asistencia de los partidos (se deja para no chocar con los PR de esas pantallas). La fecha de nacimiento queda lista para el módulo Cumpleaños.
+
+---
+
 ## 2026-11-04 · Ingreso con correo y contraseña
 
 **Para qué:** hasta ahora se entraba solo con Google o con un link/código al correo cada vez. Los tesoreros pidieron poder entrar con correo y contraseña quienes no usan Google.
