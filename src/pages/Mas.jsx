@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { accesoTablero } from '../lib/tablero.js';
 import { useAccesoFondo } from '../lib/fondo.js';
+import { usePlantelesTesoreria } from '../lib/tesoreria.js';
 import Icono from '../components/Icono.jsx';
 import VerComo from '../components/VerComo.jsx';
 
@@ -9,6 +10,7 @@ import VerComo from '../components/VerComo.jsx';
 export default function Mas() {
   const { persona } = useSesion();
   const veFondo = useAccesoFondo();
+  const tesoreria = usePlantelesTesoreria();
   const area = persona.club?.etiqueta_area || 'Ministerio';
   const FILAS = [
     { a: '/noticias', icono: 'noticias', nombre: 'Noticias', desc: 'Fotos, novedades y el boletín del club' },
@@ -21,8 +23,14 @@ export default function Mas() {
   if (persona.esEncargado) {
     FILAS.unshift({ a: '/ingresos', icono: 'club', nombre: 'Pases de ingreso', desc: 'Aprobar a quienes pidieron entrar a la app' });
   }
-  if (accesoTablero(persona).puedeVer) {
+  // El tablero de ejemplo queda solo mientras no haya tesorería real que mostrar.
+  if (accesoTablero(persona).puedeVer && !tesoreria?.length) {
     FILAS.splice(2, 0, { a: '/tablero', icono: 'cuota', nombre: 'Tablero de tesorería', desc: 'Cuotas, saldo y aporte al club · Datos de ejemplo' });
+  }
+  // Tesoreros de plantel, Hacienda y administradores (migración 0023).
+  if (tesoreria?.length) {
+    const solo = tesoreria.length === 1 ? ` de ${tesoreria[0].nombre}` : '';
+    FILAS.splice(2, 0, { a: '/tesoreria', icono: 'cuota', nombre: `Tesorería${solo}`, desc: 'Cuotas, pagos, cobros y caja del plantel' });
   }
   // Solo para el equipo del fondo, Hacienda y los administradores.
   if (veFondo) {

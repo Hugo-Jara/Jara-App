@@ -4,6 +4,24 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-04 · Fase 5 (primera versión) — Tesorería de cada plantel
+
+**Para qué:** que el tesorero de un plantel deje su planilla y lleve cuotas, pagos, cobros y caja en la app. Sale de la reunión con los tesoreros del 3/11; parte con un plantel de piloto y su feedback guía al resto.
+
+**Qué se hizo** (migración `0023_tesoreria.sql`, la revisan y la corren el administrador de la app y Hacienda antes del merge):
+- **Plan de cuotas por plantel y temporada**, editable: una fila por cuota (inscripción, marzo…) con vencimiento y monto, más el % de aporte al club. Cada plantel cobra distinto y el monto puede cambiar mes a mes.
+- **Condición de cada jugador:** normal (con descuento opcional), beca %, exento o monto especial (por cuota mensual, sin inscripción); deuda de la temporada anterior; celular y correo **para cobrar** (no tocan el correo con que se entra a la app); comentario; "juega esta temporada".
+- **Cargos extra** (polera, asado, rifa) a varios jugadores de una vez; **pagos** con fecha, medio y nota, que se anulan con registro de quién (no se borran); **caja** del plantel con ingresos y egresos, pagados o programados.
+- **Lo que se debe no se guarda:** se calcula en `src/lib/tesoreria.js` (plan × condición + extras + deuda anterior − pagos, aplicando los pagos de lo más antiguo a lo más nuevo). La misma cuenta sirve al tesorero y a "Mi cuota".
+- **Permisos:** tesorero (`persona_equipos.rol = 'tesorero'`) ve y edita solo su plantel; Hacienda y administradores, todos; tesorero y Hacienda de prueba solo miran; cada jugador ve solo lo suyo con `mi_tesoreria()`. Las tablas no se leen desde el navegador. El tesorero puede sumar a la tesorería a alguien de la nómina sin cambiar los planteles del club.
+- **App:** `/tesoreria` (Más > Tesorería) con Jugadores (ficha, registrar pago, condición), Cobrar (un correo con copia oculta a los deudores y WhatsApp con el detalle de cada uno), Cuotas (armar el plan rápido o cuota a cuota) y Caja. "Mi cuota" deja de ser maqueta. El tablero de ejemplo se oculta a quien ya tiene tesorería real.
+
+**Comprobado:** `npm run build`, `npm run test:db` (34 + 174 + 51 + 37 nuevas en `supabase/tests/tesoreria.mjs`) y `npm run test:pedidos` (274) pasan. Pantallas revisadas en modo demostración a 375 px, sin scroll horizontal ni errores.
+
+**Queda para después:** pago dentro de la app con pasarela (registro automático), correo desde una casilla de tesorería del club, recordatorios automáticos por fecha, importar planillas, RUT y fecha de nacimiento.
+
+---
+
 ## 2026-11-03 · Fase P — "Ver como" para cuentas de prueba
 
 **Para qué:** probar la app desde distintos roles con una cuenta de prueba, cambiando de rol **dentro de la app**. Supabase se toca una sola vez por cuenta, para darle su lista de roles; quien prueba nunca entra a Supabase.
