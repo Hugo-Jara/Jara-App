@@ -174,6 +174,44 @@ export function enlaceCorreoMasivo(jugadores, plantel) {
   return `mailto:?bcc=${encodeURIComponent(correos.join(','))}&subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
 }
 
+// Lista para la liga: nombre, RUT, fecha de nacimiento, edad y contacto de quienes
+// juegan esta temporada, en un CSV que Excel abre bien (punto y coma y BOM).
+export function rutConPuntos(rut) {
+  const m = /^(\d{7,8})-([\dK])$/.exec(rut ?? '');
+  return m ? `${m[1].replace(/\B(?=(\d{3})+(?!\d))/g, '.')}-${m[2]}` : (rut ?? '');
+}
+
+export function edad(nacimiento, hoy = new Date()) {
+  if (!nacimiento) return '';
+  const [a, m, d] = nacimiento.split('-').map(Number);
+  return hoy.getFullYear() - a - ((hoy.getMonth() + 1 < m || (hoy.getMonth() + 1 === m && hoy.getDate() < d)) ? 1 : 0);
+}
+
+export function csvLiga(jugadores) {
+  const celda = (v) => {
+    const t = String(v ?? '');
+    return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+  };
+  const filas = jugadores.filter((j) => j.activo).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).map((j) => [
+    j.nombre, rutConPuntos(j.rut), j.nacimiento ? j.nacimiento.split('-').reverse().join('-') : '', edad(j.nacimiento),
+    j.telefono ?? '', j.correo_perfil ?? j.correo ?? '',
+  ]);
+  return '﻿' + [['Nombre', 'RUT', 'Fecha de nacimiento', 'Edad', 'Celular', 'Correo'], ...filas]
+    .map((f) => f.map(celda).join(';')).join('\r\n');
+}
+
+export function bajarListaLiga(jugadores, plantel) {
+  const url = URL.createObjectURL(new Blob([csvLiga(jugadores)], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url;
+  // Sin tildes en el nombre del archivo: algunos navegadores lo cambian por "download".
+  const limpio = plantel.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w ()-]/g, '').trim();
+  a.download = `Lista liga ${limpio} ${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 1000);
+}
+
 // ---------------------------------------------------------------------------
 // Datos de demostración (inventados)
 // ---------------------------------------------------------------------------
@@ -189,6 +227,7 @@ const demo = {
         tipo: i === 2 ? 'beca' : i === 5 ? 'exento' : 'normal', descuento_pct: i === 2 ? 50 : 0, monto_especial: null,
         deuda_anterior: i === 3 ? 15000 : 0, telefono: i % 3 === 0 ? null : `9${String(10000000 + i * 1111111).slice(0, 8)}`,
         correo: `jugador${i + 1}@ejemplo.cl`, comentario: null, con_cuenta: i < 4,
+        rut: i < 3 ? ['11111111-1', '22222222-2', '33333333-3'][i] : null, nacimiento: i < 5 ? `199${i}-0${i + 1}-1${i}` : null,
       })),
       extras: [{ id: 1, persona: 'j0', concepto: 'Polera', monto: 18000, vence: `${TEMPORADA}-05-01` }],
       pagos: [
@@ -216,8 +255,10 @@ const accionesDemo = (equipo) => {
   const d = () => demo.datos[equipo];
   return {
     guardarPlan: async (cuotas, aporte) => { await esperar(); Object.assign(d(), { cuotas, aporte_pct: aporte }); },
-    guardarJugador: async (persona, datos) => {
+    guardarJugador: async (persona, todo) => {
       await esperar();
+      const datos = Object.fromEntries(Object.entries(todo).filter(([, v]) => v !== undefined));
+      if (datos.rut && !/^\d{1,2}\.?\d{3}\.?\d{3}-?[\dkK]$/.test(datos.rut.trim())) throw new Error(`El RUT ${datos.rut} no parece válido`);
       const j = d().jugadores.find((x) => x.id === persona);
       if (j) Object.assign(j, datos);
       else {
@@ -253,7 +294,16 @@ const accionesDemo = (equipo) => {
 
 const accionesReales = (equipo, temporada) => ({
   guardarPlan: (cuotas, aporte) => llamar('tes_guardar_plan', { p_equipo: equipo, p_temporada: temporada, p_cuotas: cuotas, p_aporte_pct: aporte }),
-  guardarJugador: (persona, datos) => llamar('tes_guardar_jugador', { p_equipo: equipo, p_temporada: temporada, p_persona: persona, p_datos: datos }),
+  // RUT y fecha de nacimiento van aparte (0029): al perfil, no a la temporada.
+  guardarJugador: async (persona, { rut, nacimiento, ...datos }) => {
+    await llamar('tes_guardar_jugador', { p_equipo: equipo, p_temporada: temporada, p_persona: persona, p_datos: datos });
+    const identidad = {};
+    if (rut !== undefined) identidad.rut = rut;
+    if (nacimiento !== undefined) identidad.nacimiento = nacimiento;
+    if (Object.keys(identidad).length) {
+      await llamar('tes_guardar_identidad', { p_equipo: equipo, p_persona: persona, p_datos: identidad });
+    }
+  },
   registrarPago: (persona, monto, fecha, medio, nota) => llamar('tes_registrar_pago', {
     p_equipo: equipo, p_temporada: temporada, p_persona: persona, p_monto: monto, p_fecha: fecha, p_medio: medio, p_nota: nota || null }),
   anularPago: (id) => llamar('tes_anular_pago', { p_pago: id }),

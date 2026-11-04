@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import {
-  usePlantelesTesoreria, useTesoreria, armarPlan, enlaceWhatsApp, enlaceCorreoMasivo,
+  usePlantelesTesoreria, useTesoreria, armarPlan, enlaceWhatsApp, enlaceCorreoMasivo, bajarListaLiga,
   TEMPORADA, TIPOS, MEDIOS, CATEGORIAS, ESTADO_CARGO,
 } from '../lib/tesoreria.js';
 import { pesos } from '../lib/pedido.js';
@@ -94,7 +94,7 @@ function Plantel({ equipo, nombre }) {
                   className={`filtro${vista === v.id ? ' activo' : ''}`} onClick={() => setVista(v.id)}>{v.nombre}</button>
         ))}
       </div>
-      {vista === 'jugadores' && <Jugadores p={p} editar={editar} acciones={t.acciones} abrir={setAbierto} />}
+      {vista === 'jugadores' && <Jugadores p={p} nombre={nombre} editar={editar} acciones={t.acciones} abrir={setAbierto} />}
       {vista === 'cobrar' && <Cobrar p={p} nombre={nombre} abrir={setAbierto} />}
       {vista === 'cuotas' && <Cuotas p={p} editar={editar} acciones={t.acciones} />}
       {vista === 'caja' && <Caja p={p} editar={editar} acciones={t.acciones} />}
@@ -112,9 +112,11 @@ function EstadoJugador({ j }) {
   return <span className="ef al_dia">Al día</span>;
 }
 
-function Jugadores({ p, editar, acciones, abrir }) {
+function Jugadores({ p, nombre, editar, acciones, abrir }) {
   const [buscar, setBuscar] = useState('');
   const lista = p.jugadores.filter((j) => j.nombre.toLowerCase().includes(buscar.trim().toLowerCase()));
+  const activos = p.jugadores.filter((j) => j.activo);
+  const sinDatos = activos.filter((j) => !j.rut || !j.nacimiento).length;
   return (
     <>
       <input type="search" placeholder="Buscar jugador" aria-label="Buscar jugador" value={buscar} onChange={(e) => setBuscar(e.target.value)} />
@@ -133,6 +135,15 @@ function Jugadores({ p, editar, acciones, abrir }) {
           </button>
         ))}
       </div>
+      <h2 className="seccion">Lista para la liga</h2>
+      <section className="card">
+        <p className="item-meta" style={{ marginTop: 0 }}>
+          Nombre, RUT, fecha de nacimiento, edad y contacto de {activos.length === 1 ? 'quien juega' : `los ${activos.length} que juegan`} esta temporada, en un archivo que se abre en Excel.
+          {sinDatos > 0 && ` A ${sinDatos === 1 ? '1 le falta' : `${sinDatos} les falta`} el RUT o la fecha: complétalos en su ficha.`}
+        </p>
+        <button type="button" className="btn secundario" style={{ marginTop: 10 }} disabled={!activos.length}
+                onClick={() => bajarListaLiga(p.jugadores, nombre)}>Bajar lista</button>
+      </section>
       {editar && <SumarJugador acciones={acciones} />}
       {editar && <CargoExtra p={p} acciones={acciones} />}
     </>
@@ -344,6 +355,7 @@ function Condicion({ j, editar, acciones }) {
   const [d, setD] = useState({
     nombre: j.nombre, apodo: j.apodo ?? '', activo: j.activo, tipo: j.tipo, descuento_pct: Number(j.descuento_pct) || 0, monto_especial: j.monto_especial ?? 0,
     deuda_anterior: j.deuda_anterior || 0, telefono: j.telefono ?? '', correo: j.correo ?? '', comentario: j.comentario ?? '',
+    rut: j.rut ?? '', nacimiento: j.nacimiento ?? '',
   });
   const a = useAccion();
   const set = (k) => (e) => setD({ ...d, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
@@ -353,6 +365,9 @@ function Condicion({ j, editar, acciones }) {
       ...d, descuento_pct: Math.min(100, Number(d.descuento_pct) || 0),
       monto_especial: d.tipo === 'especial' ? soloNumero(d.monto_especial) : null,
       deuda_anterior: soloNumero(d.deuda_anterior),
+      // Solo se mandan si cambiaron: así una cuenta que no los ve no los borra.
+      rut: d.rut !== (j.rut ?? '') ? d.rut : undefined,
+      nacimiento: d.nacimiento !== (j.nacimiento ?? '') ? d.nacimiento : undefined,
     }), 'Guardado.');
   };
   return (
@@ -382,6 +397,10 @@ function Condicion({ j, editar, acciones }) {
           )}
           <label htmlFor="c-deuda">Deuda de la temporada anterior</label>
           <input id="c-deuda" inputMode="numeric" value={campoPesos(soloNumero(d.deuda_anterior))} onChange={(e) => setD({ ...d, deuda_anterior: soloNumero(e.target.value) })} />
+          <label htmlFor="c-rut">RUT</label>
+          <input id="c-rut" maxLength={12} placeholder="12.345.678-9" autoComplete="off" value={d.rut} onChange={set('rut')} />
+          <label htmlFor="c-nac">Fecha de nacimiento</label>
+          <input id="c-nac" type="date" className="fecha-clara" value={d.nacimiento} onChange={set('nacimiento')} />
           <label htmlFor="c-tel">Celular</label>
           <input id="c-tel" type="tel" maxLength={30} placeholder="9 1234 5678" value={d.telefono} onChange={set('telefono')} />
           <label htmlFor="c-correo">Correo para cobrar</label>
@@ -395,7 +414,8 @@ function Condicion({ j, editar, acciones }) {
           {editar && <button className="btn secundario" style={{ marginTop: 16 }} disabled={a.ocupado}>Guardar</button>}
         </fieldset>
         <p className="nota">
-          Nombre, celular y correo quedan en el perfil de {j.nombre.split(' ')[0]}; él no los puede cambiar.{' '}
+          Nombre, RUT, celular y correo quedan en el perfil de {j.nombre.split(' ')[0]}; él no los puede cambiar.
+          La fecha de nacimiento la puede corregir él; el club ve solo el día y el mes.{' '}
           {j.correo_perfil
             ? `Ya entra a la app con ${j.correo_perfil}: si pones otro correo, queda solo para cobrar.`
             : 'Como todavía no tiene correo, el que pongas será con el que entra a la app.'}

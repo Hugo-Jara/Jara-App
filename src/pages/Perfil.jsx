@@ -203,7 +203,7 @@ function Editor({ perfil, onListo, onCancelar }) {
       {propio && (
         <>
           <label className="campo">
-            <span className="campo-etiqueta">Fecha de nacimiento (el club ve solo el día y el mes)</span>
+            <span className="campo-etiqueta">Fecha de nacimiento (el club ve solo el día y el mes; tu tesorero, la fecha completa para la liga)</span>
             <input type="date" className="fecha-clara" value={f.nacimiento} onChange={(e) => poner('nacimiento', e.target.value)} />
           </label>
           <div className="perfil-fisico">
