@@ -335,10 +335,11 @@ select:disabled, input:disabled { opacity: 0.6; }
 .fila-tabla { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .fila-tabla:last-child { border-bottom: none; }
 .fila-tabla .puesto { width: 24px; flex: none; color: var(--text-dim); font-size: 14px; font-variant-numeric: tabular-nums; }
-.fila-tabla .quien { flex: 1; min-width: 0; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tabla-club { padding: 4px 12px; margin-top: 14px; }
+.fila-tabla .quien { flex: 1; min-width: 0; font-size: 14px; line-height: 1.25; overflow-wrap: break-word; }
+.tabla-club { padding: 4px 10px; margin-top: 14px; }
 .tabla-club .fila-tabla { gap: 4px; padding: 11px 0; }
-.tabla-club .col { width: 46px; flex: none; text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; background: none; border: 0; color: var(--text); padding: 0; font-family: inherit; }
+.tabla-club .puesto { width: 20px; }
+.tabla-club .col { width: 34px; flex: none; text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; background: none; border: 0; color: var(--text); padding: 0; font-family: inherit; }
 .tabla-club .col.cero { color: var(--text-dim); opacity: 0.45; }
 .tabla-club .col.activa { color: var(--gold); font-weight: 700; }
 .fila-tabla.cabeza { padding: 6px 0; }
@@ -520,3 +521,8 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .perfil-check input { width: 20px; height: 20px; flex: none; accent-color: var(--gold); }
 .perfil-fila { color: var(--text); }
 .perfil-dorsal { width: 26px; flex: none; text-align: right; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+.nombre-enlace { color: inherit; text-decoration: underline; text-decoration-color: rgba(198, 161, 91, 0.35); text-underline-offset: 3px; }
+.nombre-enlace:active { color: var(--gold); }
+.perfil-datos a { color: var(--gold); font-weight: 600; }
+.enlace-volver { background: none; border: 0; padding: 4px 0; font-family: inherit; cursor: pointer; }
+.tabla-club .fila-tabla.cabeza .col { font-size: 9.5px; letter-spacing: 0; }
