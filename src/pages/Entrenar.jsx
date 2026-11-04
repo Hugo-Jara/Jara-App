@@ -5,6 +5,7 @@ import { useEntrenamiento, horario, recordatorioEntrenamiento } from '../lib/ent
 import { fechaLarga, fechaCorta, hoyIso } from '../lib/fechas.js';
 import { pesos } from '../lib/pedido.js';
 import { plural } from '../lib/texto.js';
+import NombreConApodo from '../components/NombreConApodo.jsx';
 import RecordarPorWhatsApp from '../components/RecordarPorWhatsApp.jsx';
 
 // El pago queda a la vista de todo el club; lo marca quien cobra. Para
@@ -131,7 +132,7 @@ export default function Entrenar() {
         <ol className="nombres">
           {e.inscritos.map((i) => (
             <li key={i.id}>
-              <span className="nombre">{i.nombre}</span>
+              <span className="nombre"><NombreConApodo id={i.personaId} nombre={i.nombre} /></span>
               {i.invitado && <span className="marca">invitado{i.invitadoPor ? ` de ${i.invitadoPor.split(' ')[0]}` : ''}</span>}
               {((i.invitado && i.esMio && !empezo) || (t.puedoAdministrar && i.personaId !== persona.id)) && (
                 <button className="enlace quitar" aria-label={`Bajar a ${i.nombre} de la lista`} onClick={() => intentar(t.bajar)(i.id)}>Bajar</button>
@@ -146,7 +147,7 @@ export default function Entrenar() {
             <ol className="nombres">
               {e.bajasTarde.map((i) => (
                 <li key={i.id}>
-                  <span className="nombre">{i.nombre}</span>
+                  <span className="nombre"><NombreConApodo id={i.personaId} nombre={i.nombre} /></span>
                   <span className="comentario">{i.pagado && i.monto !== e.multa ? 'ya había pagado' : 'multa'}</span>
                   <Pago fila={i} puedoCobrar={cobrarHoy} marcar={intentar(t.marcarPago)} />
                 </li>

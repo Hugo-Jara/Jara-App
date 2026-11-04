@@ -210,7 +210,7 @@ function Grupo({ titulo, clase, lista }) {
       <ol className="nombres">
         {lista.map((r) => (
           <li key={r.personaId ?? r.id}>
-            <span className="nombre">{r.nombre}</span>
+            <span className="nombre"><NombreConApodo id={r.personaId} nombre={r.nombre} /></span>
             {r.asado && <span className="marca">tercer tiempo</span>}
             {r.nota && <span className="comentario">{r.nota}</span>}
           </li>

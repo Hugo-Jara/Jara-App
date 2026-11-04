@@ -23,6 +23,12 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-04 · Apodo en todos lados
+
+El apodo (0024) sale chico, en cursiva y dorado al lado del nombre real también en la asistencia de cada partido, las listas de entrenamientos y la ficha y la lista de cobros de Tesorería. Solo frontend, sin migración.
+
+---
+
 ## 2026-11-04 · Fase 5 (ajuste) — El perfil se alimenta desde Tesorería, y apodo
 
 **Por qué:** al probar el piloto, el administrador pidió que el nombre, el celular y el correo que carga el tesorero alimenten el perfil del jugador (y que el jugador no los edite), y que cada uno pueda tener un apodo.
