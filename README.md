@@ -42,6 +42,7 @@ Las migraciones están en `supabase/migrations/` y se aplican en orden:
 | `0022_ver_como.sql` | "Ver como" para cuentas de prueba: `personas.prueba_roles` (solo por SQL) y `prueba_ver_como()` para cambiar de rol en la app. Hacienda de prueba es solo mirar; ninguna cuenta de prueba es administradora, abre comprobantes ni presenta rendiciones. Permiso nuevo `personas.edita_comunicaciones` |
 | `0023_tesoreria.sql` | Tesorería de cada plantel: plan de cuotas editable, condición de cada jugador (beca, exento, especial, deuda anterior, contacto para cobrar), cargos extra, pagos (se anulan, no se borran) y caja. Tesorero ve y edita solo su plantel; Hacienda y administradores, todos; cuentas de prueba solo miran; cada jugador ve lo suyo con `mi_tesoreria()` |
 | `0024_perfil_y_apodo.sql` | Nombre, celular y correo que carga el tesorero quedan en el perfil del jugador (el correo solo si no tenía uno; si no, queda para cobrar). `personas.apodo` opcional que pone cada jugador (`mi_apodo_guardar`, `apodos()`) |
+| `0026_tabla_posiciones.sql` | Tabla de posiciones de cada plantel (`tablas_posiciones()`, `tabla_guardar`): la copia el encargado o un administrador desde la página de la liga; todo el club la ve; cuentas de prueba solo miran |
 
 `npm run test:db` y `npm run test:pedidos` aplican las migraciones en un Postgres en memoria y prueban los permisos, el flujo de cotizaciones, el ingreso por nombre, los partidos, los entrenamientos y los pedidos por link.
 

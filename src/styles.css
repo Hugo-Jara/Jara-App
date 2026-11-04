@@ -499,3 +499,32 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .movimientos li .enlace.quitar { flex: none; }
 .apodo { font-size: 0.8em; font-weight: 400; font-style: italic; color: var(--gold); white-space: nowrap; }
 .tes-solo-mirar { margin-bottom: 14px; }
+
+/* --- Tabla de posiciones (0026) --- */
+.posiciones { padding: 4px 10px; margin-top: 8px; }
+.posiciones-fila { display: flex; align-items: center; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+.posiciones-fila:last-child { border-bottom: none; }
+.posiciones-fila.cabeza { padding: 6px 0; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; }
+.posiciones-puesto { width: 20px; flex: none; color: var(--text-dim); font-size: 13px; }
+.posiciones-equipo { flex: 1; min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.posiciones-col { width: 27px; flex: none; text-align: center; font-size: 14px; }
+.posiciones-col.pts { width: 32px; font-weight: 700; }
+.posiciones-col.ancho { display: none; }
+.posiciones-fila.cabeza .posiciones-col, .posiciones-fila.cabeza .posiciones-equipo { font-size: 11px; font-weight: 400; }
+.posiciones-fila.jara { background: rgba(198, 161, 91, 0.14); margin: 0 -10px; padding-left: 10px; padding-right: 10px; }
+.posiciones-fila.jara .posiciones-equipo, .posiciones-fila.jara .posiciones-puesto, .posiciones-fila.jara .pts { color: var(--gold); font-weight: 700; }
+@media (min-width: 440px) { .posiciones-col.ancho { display: block; } }
+.posiciones-resumen { margin: 0 2px 4px; font-size: 14px; }
+.posiciones-resumen strong { color: var(--gold); }
+.posiciones-proximos { list-style: none; padding: 4px 16px; margin: 0; }
+.posiciones-proximos li { border-bottom: 1px solid var(--border); }
+.posiciones-proximos li:last-child { border-bottom: none; }
+.posiciones-proximos a { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; column-gap: 10px; padding: 12px 0; color: var(--text); text-decoration: none; }
+.posiciones-proximos a svg { grid-row: 1 / 3; grid-column: 2; align-self: center; color: var(--gold); }
+.posiciones-proximo-fecha { font-size: 12.5px; color: var(--text-dim); }
+.posiciones-proximo-rival { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.posiciones-fixture { list-style: none; padding: 0; margin: 12px 0 0; font-size: 13.5px; }
+.posiciones-fixture li { display: flex; flex-direction: column; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.posiciones-fixture li span:first-child { color: var(--text-dim); font-size: 12.5px; }
+.posiciones-fixture li.repetido { opacity: 0.5; }
+.posiciones-form-titulo { margin: 0 0 4px; font-size: 17px; }
