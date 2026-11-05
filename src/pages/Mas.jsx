@@ -5,7 +5,7 @@ import { useAccesoFondo } from '../lib/fondo.js';
 import { usePlantelesTesoreria } from '../lib/tesoreria.js';
 import Icono from '../components/Icono.jsx';
 import VerComo from '../components/VerComo.jsx';
-import MiApodo from '../components/MiApodo.jsx';
+import MiPerfil from '../components/MiPerfil.jsx';
 import MiClave from '../components/MiClave.jsx';
 
 // Lo administrativo del club vive acá, fuera de la pantalla de inicio.
@@ -17,6 +17,7 @@ export default function Mas() {
   const FILAS = [
     { a: '/noticias', icono: 'noticias', nombre: 'Noticias', desc: 'Fotos, novedades y el boletín del club' },
     { a: '/cuota', icono: 'cuota', nombre: 'Mi cuota', desc: 'Tu estado de pago y las fechas que vienen' },
+    { a: '/planteles', icono: 'jugadores', nombre: 'Planteles', desc: 'Los jugadores de cada plantel, con dorsal y posición' },
     { a: '/compras', icono: 'compras', nombre: 'Compras', desc: 'Pedir una compra con su cotización' },
     { a: '/club', icono: 'asambleas', nombre: 'Asambleas', desc: 'Tabla, link al Meet y actas' },
     { a: '/club', icono: 'club', nombre: `${area}s`, desc: 'Quién es quién y qué hace cada uno' },
@@ -43,6 +44,7 @@ export default function Mas() {
       <h1 className="titulo display">Más</h1>
       <p className="subtitulo">Lo administrativo del club.</p>
       <VerComo />
+      <MiPerfil />
       <div className="card lista">
         {FILAS.map((f) => (
           <Link key={f.nombre} to={f.a} className="fila">
@@ -55,7 +57,6 @@ export default function Mas() {
           </Link>
         ))}
       </div>
-      <MiApodo />
       <MiClave />
     </>
   );

@@ -7,7 +7,7 @@ import { fechaLarga, proximoDia, correrDias, hoyIso } from './fechas.js';
 // (uno o dos); el encargado del plantel los programa.
 
 const filaEstadistica = (g) => ({
-  personaId: g.persona_id, nombre: g.nombre, goles: g.goles ?? 0, asistencias: g.asistencias ?? 0,
+  personaId: g.persona_id, nombre: g.nombre, pj: g.pj ?? 0, goles: g.goles ?? 0, asistencias: g.asistencias ?? 0,
   amarillas: g.amarillas ?? 0, rojas: g.rojas ?? 0,
 });
 
@@ -16,6 +16,8 @@ const desdeFila = (f) => ({
   fecha: f.fecha, citacion: f.citacion, horaInicio: f.hora_inicio, cancha: f.cancha, tercerTiempo: f.tercer_tiempo,
   golesFavor: f.goles_favor ?? null, golesContra: f.goles_contra ?? null,
   estadisticas: (f.estadisticas ?? []).map(filaEstadistica),
+  // Quiénes jugaron (0025). Si la base todavía no lo trae, queda nulo.
+  jugaron: f.jugaron ?? null,
   puedoAnotar: !!f.puedo_anotar,
   esMio: f.es_mio, puedoEditar: f.puedo_editar, plantel: f.plantel,
   respuestas: f.respuestas.map((r) => ({
@@ -29,14 +31,17 @@ const base = {
     const [proximos, jugados] = await Promise.all([llamar('partidos_proximos'), llamar('partidos_jugados')]);
     return [...proximos, ...jugados].map(desdeFila);
   },
-  resultado: (id, favor, contra, jugadores = []) => llamar('partido_resultado', {
+  resultado: (id, favor, contra, jugadores = [], jugaron = null) => llamar('partido_resultado', {
     p_partido: id, p_favor: favor, p_contra: contra,
     p_jugadores: jugadores.map((g) => ({
       persona_id: g.personaId, goles: g.goles, asistencias: g.asistencias, amarillas: g.amarillas, rojas: g.rojas,
     })),
+    ...(jugaron ? { p_jugaron: jugaron } : {}),
   }),
-  estadisticas: async (equipoId, anio) => (await llamar('estadisticas', { p_equipo: equipoId ?? null, p_anio: anio ?? null }))
-    .map(filaEstadistica),
+  // equipoIds: uno o varios planteles (una categoría); vacío = todo el club.
+  estadisticas: async (equipoIds, anio) => (await llamar('estadisticas', {
+    p_anio: anio ?? null, ...(equipoIds?.length ? { p_equipos: equipoIds } : {}),
+  })).map(filaEstadistica),
   responder: (id, _yo, r) => llamar('partido_responder', {
     p_partido: id, p_estado: r?.estado ?? null, p_nota: r?.nota ?? null, p_tercer_tiempo: !!r?.asado,
   }),
@@ -82,6 +87,7 @@ let demo = [{
     { personaId: 'd-Lalo', nombre: 'Lalo', goles: 1, asistencias: 2, amarillas: 0, rojas: 0 },
   ],
   plantel: gente('Pancho', 'Lalo', 'Seba'), respuestas: [va('Pancho', 'voy'), va('Lalo', 'voy'), va('Seba', 'voy')],
+  jugaron: ['d-Pancho', 'd-Lalo', 'demo'],
 }, {
   id: 'p5', equipoId: 'e-junior', equipo: 'Junior Sábado', torneo: 'Liga de ejemplo',
   rival: 'Rival junior de ejemplo', fecha: correrDias(hoyIso(), -7), citacion: '10:00', cancha: 'Cancha 4',
@@ -89,8 +95,34 @@ let demo = [{
   estadisticas: [
     { personaId: 'd-Mati', nombre: 'Mati', goles: 2, asistencias: 0, amarillas: 0, rojas: 1 },
   ],
-  plantel: gente('Mati', 'Cote'), respuestas: [va('Mati', 'voy'), va('Cote', 'voy')],
-}];
+  plantel: gente('Mati', 'Cote'), respuestas: [va('Mati', 'voy'), va('Cote', 'voy')], jugaron: ['d-Mati', 'd-Cote'],
+},
+// Jugado ayer: la votación del jugador del partido sigue abierta (0027).
+{
+  id: 'p6', equipoId: 'e-sabado', equipo: 'Senior Sábado', torneo: 'Liga de ejemplo',
+  rival: 'Rival de ayer', fecha: correrDias(hoyIso(), -1), citacion: '08:15', cancha: 'Cancha 2',
+  tercerTiempo: null, esMio: true, puedoEditar: true, puedoAnotar: true, golesFavor: 1, golesContra: 0,
+  estadisticas: [{ personaId: 'd-Tito', nombre: 'Tito', goles: 1, asistencias: 0, amarillas: 0, rojas: 0 }],
+  plantel: gente('Pancho', 'Lalo', 'Tito', 'Nico', 'Seba'),
+  respuestas: [va('Pancho', 'voy'), va('Lalo', 'voy'), va('Tito', 'voy'), va('Nico', 'voy'), va('Seba', 'voy')],
+  jugaron: ['d-Pancho', 'd-Lalo', 'd-Tito', 'd-Nico', 'demo'],
+},
+// Fechas anteriores, para ver la racha y la tabla con más gente.
+...[
+  ['e-sabado', 'Senior Sábado', [[2, 0], [1, 1], [0, 2], [4, 1], [2, 1]], ['Pancho', 'Lalo', 'Tito', 'Nico', 'Seba']],
+  ['e-jueves', 'Senior Jueves', [[1, 3], [2, 2], [3, 0], [0, 1], [1, 0]], ['Memo', 'Gato', 'Toño', 'Pipe']],
+  ['e-junior', 'Junior Sábado', [[3, 1], [0, 0], [2, 1], [1, 2], [5, 2]], ['Mati', 'Cote', 'Benja', 'Tomi']],
+].flatMap(([equipoId, equipo, marcadores, quienes]) => marcadores.map(([favor, contra], i) => {
+  const jugadores = gente(...quienes);
+  const goleador = jugadores[i % jugadores.length];
+  return {
+    id: `h-${equipoId}-${i}`, equipoId, equipo, torneo: 'Liga de ejemplo', rival: `Rival de ejemplo ${i + 1}`,
+    fecha: correrDias(hoyIso(), -14 - 7 * i), citacion: null, cancha: null, tercerTiempo: null,
+    esMio: equipoId === 'e-sabado', puedoEditar: true, puedoAnotar: true, golesFavor: favor, golesContra: contra,
+    estadisticas: favor ? [{ personaId: goleador.id, nombre: goleador.nombre, goles: favor, asistencias: 0, amarillas: i === 2 ? 1 : 0, rojas: 0 }] : [],
+    plantel: jugadores, respuestas: jugadores.map((j) => va(j.nombre, 'voy')), jugaron: jugadores.map((j) => j.id),
+  };
+}))];
 const EQUIPOS_DEMO = [{ id: 'e-jueves', nombre: 'Senior Jueves' }, { id: 'e-sabado', nombre: 'Senior Sábado' }, { id: 'e-junior', nombre: 'Junior Sábado' }];
 const enDemo = {
   cargar: async () => demo,
@@ -106,20 +138,30 @@ const enDemo = {
     else demo = [...demo, { ...d, id: `p${Date.now()}`, equipo, esMio: false, puedoEditar: true, puedoAnotar: true, estadisticas: [], plantel: [], respuestas: [] }];
   },
   eliminar: async (id) => { demo = demo.filter((p) => p.id !== id); },
-  resultado: async (id, favor, contra, jugadores = []) => {
+  resultado: async (id, favor, contra, jugadores = [], jugaron = null) => {
     demo = demo.map((p) => (p.id === id ? {
       ...p, golesFavor: favor, golesContra: contra,
+      jugaron: favor == null ? [] : [...new Set([
+        ...(jugaron ?? p.respuestas.filter((r) => r.estado === 'voy').map((r) => r.personaId)),
+        ...jugadores.filter((g) => g.goles + g.asistencias + g.amarillas + g.rojas > 0).map((g) => g.personaId),
+      ])],
       estadisticas: favor == null ? [] : jugadores
         .filter((g) => g.goles + g.asistencias + g.amarillas + g.rojas > 0)
         .map((g) => ({ ...g, nombre: p.plantel.find((j) => j.id === g.personaId)?.nombre ?? g.nombre ?? '' })),
     } : p));
   },
-  estadisticas: async (equipoId) => {
+  estadisticas: async (equipoIds) => {
     const suma = new Map();
-    demo.filter((p) => !equipoId || p.equipoId === equipoId).forEach((p) => (p.estadisticas ?? []).forEach((g) => {
-      const x = suma.get(g.personaId) ?? { personaId: g.personaId, nombre: g.nombre, goles: 0, asistencias: 0, amarillas: 0, rojas: 0 };
-      suma.set(g.personaId, { ...x, goles: x.goles + g.goles, asistencias: x.asistencias + g.asistencias, amarillas: x.amarillas + g.amarillas, rojas: x.rojas + g.rojas });
-    }));
+    const fila = (id, nombre) => suma.get(id) ?? { personaId: id, nombre, pj: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0 };
+    demo.filter((p) => tieneResultado(p) && (!equipoIds?.length || equipoIds.includes(p.equipoId))).forEach((p) => {
+      const nombreDe = (id) => [...p.plantel, ...p.respuestas.map((r) => ({ id: r.personaId, nombre: r.nombre }))].find((j) => j.id === id)?.nombre ?? '';
+      const ids = new Set([...(p.jugaron ?? []), ...(p.estadisticas ?? []).map((g) => g.personaId)]);
+      ids.forEach((id) => { const x = fila(id, nombreDe(id)); suma.set(id, { ...x, pj: x.pj + 1 }); });
+      (p.estadisticas ?? []).forEach((g) => {
+        const x = fila(g.personaId, g.nombre);
+        suma.set(g.personaId, { ...x, goles: x.goles + g.goles, asistencias: x.asistencias + g.asistencias, amarillas: x.amarillas + g.amarillas, rojas: x.rojas + g.rojas });
+      });
+    });
     return [...suma.values()];
   },
   equipos: async () => EQUIPOS_DEMO,
@@ -150,9 +192,15 @@ export function usePartidos(yo) {
 }
 
 export const equiposDelClub = () => origen.equipos();
-export const tablaEstadisticas = (equipoId, anio) => origen.estadisticas(equipoId, anio);
+export const tablaEstadisticas = (equipoIds, anio) => origen.estadisticas(equipoIds, anio);
 
 export const tieneResultado = (p) => p.golesFavor != null && p.golesContra != null;
+
+// 'G' ganado, 'E' empatado, 'P' perdido.
+export const signo = (p) => (p.golesFavor > p.golesContra ? 'G' : p.golesFavor < p.golesContra ? 'P' : 'E');
+
+// Los últimos n resultados de una lista de jugados (más reciente primero).
+export const racha = (jugados, n = 5) => jugados.filter(tieneResultado).slice(0, n);
 
 export const textoResultado = (p) =>
   p.golesFavor > p.golesContra ? 'Ganamos' : p.golesFavor < p.golesContra ? 'Perdimos' : 'Empatamos';

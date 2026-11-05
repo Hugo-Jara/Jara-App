@@ -16,7 +16,107 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 - **Próximas fechas** del plantel en la misma pantalla y **Cargar varias fechas de una vez:** se pegan las fechas ("14/11 Rival" o "21/11 09:00 Rival") con campeonato, citación y cancha comunes, y se crean como partidos normales (`partido_guardar`, sin cambios en la base). No repite un día que ya tiene partido. Los cambios por suspensión o de día se corrigen en cada partido, como siempre.
 - Archivos nuevos `src/lib/tabla.js`, `src/pages/Tabla.jsx` y `supabase/tests/tabla.mjs` (20 pruebas, entra en `npm run test:db`); ruta en `App.jsx`, botón en `Partidos.jsx` y estilos `posiciones-` al final de `styles.css`.
 
-**Comprobado:** `npm run build` y `npm run test:db` pasan (también con la 0025 del PR #28 antes). Pantallas revisadas en modo demostración a 375 px, sin scroll horizontal ni errores. Falta probar con la base real.
+**Comprobado:** `npm run build` y `npm run test:db` pasan (con la 0025, 0027, 0028, 0029 y 0030 ya en main). Pantallas revisadas en modo demostración a 375 px, sin scroll horizontal ni errores. Falta probar con la base real.
+
+---
+
+## 2026-11-04 · Jugador del partido (MVP), comentarios y reacciones
+
+**Para qué:** que después de cada partido el club vote al mejor, comente y reaccione, como en las redes sociales. Sale de las ideas que llegaron después de la reunión de tesoreros del 3/11.
+
+**Qué se hizo** (migración `0027_mvp_y_comentarios.sql`, se corre antes del merge y **después de la 0025**, que trae `partido_jugadores`):
+- **Jugador del partido:** votan solo los que jugaron (la lista "¿Quiénes jugaron?" que marca quien anota el resultado) y no pueden votarse a sí mismos. Abre al anotar el resultado y cierra a las 23:59 del día siguiente (sábado → domingo en la noche, jueves → viernes en la noche). El voto se puede cambiar mientras está abierta; solo se ve cuántos votaron, no por quién. Al cerrar aparece el MVP con sus votos (si empatan, son MVP los empatados), y en Jugadores sale una ★ al lado del nombre (★3 = tres veces MVP), con los mismos filtros de la tabla.
+- **Comentarios** en cada partido jugado, con respuestas en cadena (una respuesta a una respuesta queda en el mismo hilo). Máximo 500 letras. Cada uno borra lo suyo; borran cualquiera los administradores, quien edita Comunicaciones y el encargado del plantel del partido (capitán o DT). Un borrado deja "Comentario borrado" para no romper la cadena. Las cuentas de prueba comentan pero no borran lo ajeno.
+- **Reacciones** con emoji al partido y a cada comentario, de una lista fija (👏 🔥 ⚽ 💪 😂 😮 😢 ❤️). Tocar el mismo de nuevo lo quita.
+- Las tablas no se leen desde el navegador: todo pasa por `partido_charla`, `mvp_votar`, `comentario_agregar`, `comentario_borrar`, `reaccionar_partido`, `reaccionar_comentario` y `mvp_conteo`.
+- **App:** en la pantalla de un partido jugado, debajo del resultado: "Jugador del partido", "¿Qué te pareció el partido?" y "Comentarios". Código en `src/lib/charla.js` y `src/components/DespuesDelPartido.jsx`. En modo demostración se ve una votación abierta (partido de ayer) y una cerrada con comentarios.
+
+**Comprobado:** `npm run build`, `npm run test:db` (con 38 pruebas nuevas en `supabase/tests/charla.mjs`) y `npm run test:pedidos` pasan. Pantallas revisadas en modo demostración a 375 px, sin scroll horizontal ni errores.
+
+**Queda para después:** avisar por WhatsApp o notificación cuando abre o cierra la votación; ver el MVP en la lista de partidos jugados.
+
+---
+
+## 2026-11-04 · Partidos jugados por plantel, racha y PJ en las estadísticas
+
+**Para qué:** pedido del administrador después de la reunión de tesoreros. Que "Ya jugados" con **Todos** no sea una lista larga mezclada, que se vea la racha de cada plantel como en las apps de fútbol, y que en Jugadores aparezca todo el que jugó un partido, con filtros para no ver una lista gigante.
+
+**Qué se hizo** (migración `0025_partidos_jugados.sql`, se corre antes del merge):
+- **Ya jugados con "Todos":** una sección por plantel (primero los propios) con su racha y sus 3 últimos partidos en filas cortas (fecha, rival, marcador en verde/gris/rojo). "Ver todos los del …" filtra ese plantel. Con un plantel elegido se ve la racha arriba y las tarjetas de siempre.
+- **Racha:** los últimos 5 resultados, ✓ ganado, = empatado, ✗ perdido, el más reciente a la derecha. Cada marca lleva al partido. Componente `src/components/Racha.jsx`.
+- **Quiénes jugaron:** al anotar el resultado aparece "¿Quiénes jugaron?" con el plantel marcado según los que dijeron "voy"; quien anota corrige si alguien no llegó. Quien tiene goles, asistencias o tarjetas cuenta siempre como que jugó. Tabla nueva `partido_jugadores`; los partidos que ya tenían resultado se rellenan con "voy" + quienes tienen cifras.
+- **Jugadores (estadísticas):** columna **PJ**; aparece todo el que jugó al menos un partido con resultado, aunque no tenga goles. Botones "Más: Partidos · Goles · Asistencias · Amarillas · Rojas" para ordenar (además de tocar la columna). Se ven los 10 primeros con "Ver todos"; si tú quedas más abajo, tu fila aparece igual. Filtro por plantel y por categoría ("Senior (todos)" junta los planteles que empiezan igual).
+- `partido_resultado` recibe `p_jugaron` (opcional: sin ella toma los "voy", así la app anterior sigue funcionando) y `estadisticas` recibe `p_equipos` (varios planteles) y devuelve `pj`.
+
+**Comprobado:** `npm run build`, `npm run test:db` (7 pruebas nuevas de PJ en `supabase/tests/club.mjs`) y `npm run test:pedidos` pasan. Pantallas revisadas en modo demostración a 375 px, sin scroll horizontal ni errores.
+
+---
+
+## 2026-11-04 · Perfil: botón "Comprobar" en Instagram
+
+En "Editar mi perfil", junto al campo de Instagram, un botón **Comprobar** abre instagram.com/<usuario> para que el jugador confirme que es su cuenta antes de guardar, y se muestra cómo quedará guardado (@usuario). Las sugerencias de Instagram mientras se escribe no son posibles sin una app aprobada por Meta. Solo frontend, sin migración.
+
+---
+
+## 2026-11-04 · Perfil: Instagram, nombres que llevan al perfil y nombres completos
+
+**Qué se hizo** (migración `0030_perfil_instagram.sql`, se corre antes del merge; la 0025, 0026 y 0027 van en otros PR):
+- **Instagram:** cada jugador pone su usuario (o pega el link o el @, la base lo limpia) y el club lo ve en su perfil como enlace a su cuenta. Lo cambia solo él. Es un enlace, no una conexión con la cuenta de Instagram.
+- **Nombres con enlace:** `NombreConApodo` acepta `enlace`; tocar el nombre abre `/perfil/:id`. Activado en Estadísticas, goleadores y asistencia de cada partido, y listas de entrenamiento (invitados sin cuenta no llevan enlace). No se usa dentro de botones (por ejemplo, al votar el MVP). En el perfil ajeno, "‹ Volver" regresa a la pantalla de donde se vino.
+- **Nombres completos en Estadísticas:** el nombre ya no se corta con "…": baja a una segunda línea, y las columnas de números son más angostas (probado en iPhone SE y 13).
+- **Mis fotos:** queda el espacio en el perfil con un "Pronto". La galería es de la Fase F (carril de Comunicaciones); se coordina con ese carril.
+
+**Comprobado:** `npm run build`, `npm run test:db` (8 pruebas nuevas de Instagram en `perfil.mjs`).
+
+---
+
+## 2026-11-04 · RUT y fecha de nacimiento en Tesorería
+
+**Para qué:** la liga pide seguido el RUT y la fecha de nacimiento de cada jugador, y las fechas alimentan los cumpleaños. Los tesoreros los tienen en una planilla común (fuera del repo); con esto quedan en la app y se puede importar esa planilla.
+
+**Qué se hizo** (migración `0029_rut_y_nacimiento_en_tesoreria.sql`, se corre después de la 0028 y antes del merge):
+- **RUT** en `persona_contactos.rut`, guardado como `12345678-K`. `rut_normalizar()` acepta puntos, guion y k minúscula, revisa el dígito verificador y rechaza lo que no sea un RUT. No se repite entre dos personas.
+- **Fecha de nacimiento:** la misma del perfil (`perfiles.nacimiento`, 0028).
+- **Ficha del jugador en Tesorería:** campos RUT y fecha de nacimiento. Se guardan con `tes_guardar_identidad()`, solo para jugadores de ese plantel, y solo si cambiaron.
+- **Quién ve:** el tesorero del plantel, Hacienda y administradores ven RUT y fecha completa de su plantel (`tes_ver`). Las cuentas de prueba no. El resto del club sigue viendo solo día y mes del cumpleaños.
+- **Quién cambia:** los mismos (tesorero del plantel, Hacienda, administradores). El jugador puede corregir su fecha desde Mi perfil, pero no su RUT.
+- **Lista para la liga** (Tesorería > Jugadores > Bajar lista): un CSV que abre Excel, con nombre, RUT con puntos, fecha de nacimiento, edad, celular y correo de quienes juegan la temporada. Avisa a cuántos les falta RUT o fecha.
+
+**Comprobado:** `npm run build` y `npm run test:db` pasan (18 pruebas nuevas en `supabase/tests/tesoreria.mjs`). Ficha revisada en modo demostración a 400 px.
+
+**Siguiente:** importar la planilla común cuando los tesoreros la revisen. El SQL de importación se arma fuera del repo, porque lleva datos personales.
+
+---
+
+## 2026-11-04 · Perfil del jugador (Fase 7, parte 2)
+
+**Para qué:** que cada jugador tenga su ficha con foto, apodo, dorsal, posición y pie hábil, y que el club pueda ver quién es quién en cada plantel.
+
+**Qué se hizo** (migración `0028_perfil_jugador.sql`, se corre antes del merge; la 0025, 0026 y 0027 van en otros PR):
+- **Mi perfil** (`/perfil`, desde Más): foto, apodo, dorsal en cada plantel donde juega, posición (arquero, defensa, lateral, volante, delantero), pie hábil, fecha de nacimiento, estatura y peso. La foto se achica en el teléfono a 600 px y va a un bucket privado que solo ven los socios del club.
+- **Lo que no edita el jugador:** nombre, celular y correo. Se muestran en "Tus datos del club" y los cambia el tesorero o Hacienda desde Tesorería (0024).
+- **Qué ve el resto:** foto, apodo, dorsal, posición, pie y el día del cumpleaños (sin el año). Estatura y peso solo si el jugador lo elige. Celular, correo y fecha completa, solo él.
+- **Carga por otros:** el tesorero y el encargado del plantel, Hacienda y administradores pueden poner dorsal, posición y pie (para quienes aún no entran a la app). El dorsal, solo en su plantel. Las cuentas de prueba no cargan perfiles ajenos.
+- **Planteles** (`/planteles`, desde Más): jugadores de cada plantel ordenados por dorsal, con foto y posición; tocando uno se abre su perfil.
+- El apodo se movió de Más a Mi perfil (se borró `MiApodo.jsx`).
+
+**Comprobado:** `npm run build`, `npm run test:db` (incluye `supabase/tests/perfil.mjs`, 44 pruebas nuevas) y `npm run test:pedidos` pasan. Recorrido en modo demostración en tamaño iPhone 13 sin errores.
+
+**Pendiente:** enlazar el perfil desde Estadísticas y la asistencia de los partidos (se deja para no chocar con los PR de esas pantallas). La fecha de nacimiento queda lista para el módulo Cumpleaños.
+---
+
+## 2026-11-04 · Partidos jugados por plantel, racha y PJ en las estadísticas
+
+**Para qué:** pedido del administrador después de la reunión de tesoreros. Que "Ya jugados" con **Todos** no sea una lista larga mezclada, que se vea la racha de cada plantel como en las apps de fútbol, y que en Jugadores aparezca todo el que jugó un partido, con filtros para no ver una lista gigante.
+
+**Qué se hizo** (migración `0025_partidos_jugados.sql`, se corre antes del merge):
+- **Ya jugados con "Todos":** una sección por plantel (primero los propios) con su racha y sus 3 últimos partidos en filas cortas (fecha, rival, marcador en verde/gris/rojo). "Ver todos los del …" filtra ese plantel. Con un plantel elegido se ve la racha arriba y las tarjetas de siempre.
+- **Racha:** los últimos 5 resultados, ✓ ganado, = empatado, ✗ perdido, el más reciente a la derecha. Cada marca lleva al partido. Componente `src/components/Racha.jsx`.
+- **Quiénes jugaron:** al anotar el resultado aparece "¿Quiénes jugaron?" con el plantel marcado según los que dijeron "voy"; quien anota corrige si alguien no llegó. Quien tiene goles, asistencias o tarjetas cuenta siempre como que jugó. Tabla nueva `partido_jugadores`; los partidos que ya tenían resultado se rellenan con "voy" + quienes tienen cifras.
+- **Jugadores (estadísticas):** columna **PJ**; aparece todo el que jugó al menos un partido con resultado, aunque no tenga goles. Botones "Más: Partidos · Goles · Asistencias · Amarillas · Rojas" para ordenar (además de tocar la columna). Se ven los 10 primeros con "Ver todos"; si tú quedas más abajo, tu fila aparece igual. Filtro por plantel y por categoría ("Senior (todos)" junta los planteles que empiezan igual).
+- `partido_resultado` recibe `p_jugaron` (opcional: sin ella toma los "voy", así la app anterior sigue funcionando) y `estadisticas` recibe `p_equipos` (varios planteles) y devuelve `pj`.
+
+**Comprobado:** `npm run build`, `npm run test:db` (7 pruebas nuevas de PJ en `supabase/tests/club.mjs`) y `npm run test:pedidos` pasan. Pantallas revisadas en modo demostración a 375 px, sin scroll horizontal ni errores.
 
 ---
 

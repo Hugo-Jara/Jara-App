@@ -335,10 +335,11 @@ select:disabled, input:disabled { opacity: 0.6; }
 .fila-tabla { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .fila-tabla:last-child { border-bottom: none; }
 .fila-tabla .puesto { width: 24px; flex: none; color: var(--text-dim); font-size: 14px; font-variant-numeric: tabular-nums; }
-.fila-tabla .quien { flex: 1; min-width: 0; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tabla-club { padding: 4px 12px; margin-top: 14px; }
+.fila-tabla .quien { flex: 1; min-width: 0; font-size: 14px; line-height: 1.25; overflow-wrap: break-word; }
+.tabla-club { padding: 4px 10px; margin-top: 14px; }
 .tabla-club .fila-tabla { gap: 4px; padding: 11px 0; }
-.tabla-club .col { width: 46px; flex: none; text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; background: none; border: 0; color: var(--text); padding: 0; font-family: inherit; }
+.tabla-club .puesto { width: 20px; }
+.tabla-club .col { width: 34px; flex: none; text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; background: none; border: 0; color: var(--text); padding: 0; font-family: inherit; }
 .tabla-club .col.cero { color: var(--text-dim); opacity: 0.45; }
 .tabla-club .col.activa { color: var(--gold); font-weight: 700; }
 .fila-tabla.cabeza { padding: 6px 0; }
@@ -500,6 +501,106 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .apodo { font-size: 0.8em; font-weight: 400; font-style: italic; color: var(--gold); white-space: nowrap; }
 .tes-solo-mirar { margin-bottom: 14px; }
 
+/* Estadísticas: ordenar, ver todos (0025) */
+.orden-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
+.orden-titulo { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-right: 2px; }
+.chip.chico { min-height: 34px; padding: 0 12px; font-size: 13px; }
+.ver-todos { display: block; margin: 10px auto 6px; font-size: 14px; }
+
+/* Partidos ya jugados por plantel, con racha */
+.columnas-planteles { display: grid; }
+.plantel-jugados { padding: 16px 16px 10px; }
+.plantel-jugados-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.plantel-jugados-nombre { margin: 0; font-size: 16px; font-weight: 700; }
+.jugados-cortos { list-style: none; margin: 0; padding: 0; }
+.jugados-cortos li + li { border-top: 1px solid var(--border); }
+.jugado-corto { display: flex; align-items: center; gap: 10px; padding: 10px 0; color: var(--text); text-decoration: none; min-height: 44px; }
+.jugado-corto-fecha { flex: none; width: 52px; font-size: 13px; color: var(--text-dim); }
+.jugado-corto-rival { flex: 1; min-width: 0; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jugado-corto-marcador { flex: none; min-width: 48px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; padding: 3px 8px; border-radius: 8px; font-size: 14px; }
+.jugado-corto-marcador.G { background: rgba(92, 138, 108, 0.25); color: #9fd1b0; }
+.jugado-corto-marcador.E { background: rgba(168, 155, 147, 0.18); color: var(--text); }
+.jugado-corto-marcador.P { background: rgba(198, 54, 43, 0.22); color: #f0a49c; }
+.jugado-corto-marcador.sin { color: var(--text-dim); font-weight: 600; }
+.racha { display: inline-flex; gap: 4px; vertical-align: middle; }
+.racha-marca { width: 24px; height: 24px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 13px; font-weight: 800; text-decoration: none; color: #fff; }
+.racha-marca.G { background: var(--green); }
+.racha-marca.E { background: #6e625c; }
+.racha-marca.P { background: var(--red); }
+.racha-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 2px 12px; font-size: 13px; color: var(--text-dim); }
+.jugaron { border: 0; padding: 0; margin: 18px 0 0; min-width: 0; }
+.jugaron legend { padding: 0; }
+.jugaron-cuenta { color: var(--gold); margin-left: 4px; }
+.jugaron-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-top: 8px; }
+.jugaron-item { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; margin: 0; border: 1px solid var(--border); border-radius: 12px; font-size: 14px; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.jugaron-item.si { border-color: var(--gold); background: rgba(198, 161, 91, 0.12); }
+.jugaron-item input { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--gold); }
+/* Perfil del jugador y planteles (0028) */
+.perfil-foto { display: inline-grid; place-items: center; flex: none; border-radius: 50%; overflow: hidden; background: var(--bg-card-alt); border: 1px solid var(--gold-dim); color: var(--gold); font-weight: 700; }
+.perfil-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.perfil-cabeza { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; margin: 8px 0 18px; }
+.perfil-nombre { margin: 6px 0 0; }
+.perfil-apodo { margin: 0; font-size: 15px; }
+.perfil-planteles { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.perfil-foto-botones { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
+.perfil-datos { margin: 0; display: grid; gap: 0; }
+.perfil-datos > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.perfil-datos > div:last-child { border-bottom: none; }
+.perfil-datos dt { color: var(--text-dim); font-size: 14px; }
+.perfil-datos dd { margin: 0; font-size: 15px; text-align: right; overflow-wrap: anywhere; }
+.perfil-dorsales { display: grid; gap: 8px; }
+.perfil-dorsales label { display: grid; grid-template-columns: 1fr 90px; align-items: center; gap: 10px; font-size: 14px; }
+.perfil-fisico { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.perfil-check { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 14px; color: var(--text-dim); }
+.perfil-check input { width: 20px; height: 20px; flex: none; accent-color: var(--gold); }
+.perfil-fila { color: var(--text); }
+.perfil-dorsal { width: 26px; flex: none; text-align: right; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+.nombre-enlace { color: inherit; text-decoration: underline; text-decoration-color: rgba(198, 161, 91, 0.35); text-underline-offset: 3px; }
+.nombre-enlace:active { color: var(--gold); }
+.perfil-datos a { color: var(--gold); font-weight: 600; }
+.enlace-volver { background: none; border: 0; padding: 4px 0; font-family: inherit; cursor: pointer; }
+.tabla-club .fila-tabla.cabeza .col { font-size: 9.5px; letter-spacing: 0; }
+.perfil-instagram { display: flex; gap: 8px; align-items: center; }
+.perfil-instagram input { flex: 1; min-width: 0; }
+.btn.apagado { opacity: 0.4; pointer-events: none; }
+
+/* Jugador del partido (MVP) */
+.mvp { border-color: rgba(198, 161, 91, 0.45); }
+.mvp-pregunta { margin: 4px 0 10px; font-weight: 700; }
+.mvp-candidatos { display: flex; flex-wrap: wrap; gap: 8px; }
+.mvp-candidatos .chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mvp-conteo { margin: 10px 0 0; font-size: 13px; color: var(--text-dim); }
+.mvp-ganadores { list-style: none; margin: 6px 0 0; padding: 0; }
+.mvp-ganadores li { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.mvp-estrella { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--gold); color: var(--bg); font-size: 20px; }
+.mvp-nombre { flex: 1; min-width: 0; font-size: 18px; font-weight: 800; }
+.mvp-votos { flex: none; font-size: 13px; color: var(--text-dim); }
+.mvp-marca { margin-left: 6px; font-size: 0.8em; font-weight: 800; color: var(--gold); white-space: nowrap; }
+
+/* Comentarios y reacciones del partido */
+.charla-reacciones { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.charla-emoji { min-width: 40px; min-height: 36px; padding: 0 10px; border-radius: 18px; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.03); color: var(--text); font-size: 17px; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; }
+.charla-emoji.vacia { opacity: 0.75; }
+.charla-emoji.mia { border-color: var(--gold); background: rgba(198, 161, 91, 0.2); opacity: 1; }
+.charla-emoji.mas { font-size: 14px; color: var(--text-dim); }
+.charla-emoji:disabled { cursor: wait; }
+.charla-n { font-size: 13px; font-weight: 700; }
+.charla-total { color: var(--gold); margin-left: 4px; }
+.charla-lista { list-style: none; margin: 8px 0 0; padding: 0; }
+.charla-hilo + .charla-hilo { border-top: 1px solid var(--border); }
+.charla-hilo { padding: 6px 0; }
+.charla-comentario { padding: 8px 0; min-width: 0; }
+.charla-comentario.charla-respuesta { margin-left: 14px; padding-left: 12px; border-left: 2px solid var(--border); }
+.charla-cabeza { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.charla-autor { font-weight: 700; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.charla-cuando { flex: none; font-size: 12px; color: var(--text-dim); }
+.charla-texto { margin: 4px 0 8px; font-size: 15px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.charla-texto.borrado { font-style: italic; color: var(--text-dim); font-size: 13.5px; }
+.charla-acciones { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 13.5px; }
+.charla-borrar { color: var(--text-dim); }
+.charla-escribir { margin-top: 12px; }
+.charla-escribir textarea { width: 100%; resize: vertical; min-height: 64px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: rgba(0, 0, 0, 0.25); color: var(--text); font: inherit; font-size: 16px; }
+.charla-escribir-pie { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 8px; }
 /* --- Tabla de posiciones (0026) --- */
 .posiciones { padding: 4px 10px; margin-top: 8px; }
 .posiciones-fila { display: flex; align-items: center; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; }
