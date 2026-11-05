@@ -123,6 +123,30 @@ x = (await como('d', 'select mvp_conteo(null, null) as c')).rows[0].c;
 ok('Conteo de MVP del club (para las estadísticas)', x[PER.b] === 2 && x[PER.a] === 1 && !x[PER.c], JSON.stringify(x));
 x = (await como('d', `select mvp_conteo(null, array['${OTRO}']::uuid[]) as c`)).rows[0].c;
 ok('…filtrado por plantel', x[PER.b] === 1 && x[PER.a] === 1, JSON.stringify(x));
+
+console.log('\nCuerpo técnico (0033)');
+const OTRO_HOY = '50000000-0000-0000-0000-000000000006';
+await db.exec(`update personas set cuerpo_tecnico = true where id = '${PER.d}';
+  insert into partidos (id, club_id, equipo_id, rival, fecha, goles_favor, goles_contra)
+    values ('${OTRO_HOY}', '${CLUB}', '${OTRO}', 'Rival Inventado', hoy(), 1, 0);
+  insert into partido_jugadores (partido_id, persona_id) values ('${OTRO_HOY}', '${PER.a}');`);
+x = await charla('d', P.hoy);
+ok('El cuerpo técnico de su plantel puede votar sin haber jugado', x.mvp.puedo_votar && !x.mvp.jugue);
+r = await votar('d', P.hoy, 'b');
+x = await charla('d', P.hoy);
+ok('…y la base le acepta el voto', !r.error && x.mvp.mi_voto === PER.b, r.error);
+ok('…pero no pasa a ser candidato', !x.mvp.candidatos.some((c) => c.persona_id === PER.d));
+r = await votar('a', P.hoy, 'd');
+ok('…ni se puede votar por él', /alguien que jugó/.test(r.error ?? ''), r.error);
+x = await charla('d', OTRO_HOY);
+r = await votar('d', OTRO_HOY, 'a');
+ok('En un plantel que no es el suyo no vota', !x.mvp.puedo_votar && /Votan solo/.test(r.error ?? ''), r.error);
+x = await charla('enc', P.hoy);
+r = await votar('enc', P.hoy, 'b');
+ok('Sin el permiso, quien no jugó sigue sin votar', !x.mvp.puedo_votar && /Votan solo/.test(r.error ?? ''), r.error);
+r = await como('d', `update personas set cuerpo_tecnico = true where id = '${PER.c}'`);
+ok('El permiso no se da desde el navegador', !!r.error || r.rows.length === 0, r.error);
+
 r = await como('a', 'select * from partido_votos');
 ok('Los votos no se leen desde el navegador', !!r.error);
 
