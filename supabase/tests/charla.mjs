@@ -154,6 +154,20 @@ ok('Sin el permiso, quien no jugó sigue sin votar', !x.mvp.puedo_votar && /Vota
 r = await como('d', `update personas set cuerpo_tecnico = true where id = '${PER.c}'`);
 ok('El permiso no se da desde el navegador', !!r.error || r.rows.length === 0, r.error);
 
+
+console.log('\nCómo va la votación (0035)');
+x = await charla('b', P.hoy);
+ok('Quien puede votar y no ha votado no ve el conteo', x.mvp.puedo_votar && !x.mvp.ver_conteo && x.mvp.conteo.length === 0);
+x = await charla('a', P.hoy);
+ok('Quien ya votó ve cuántos votos lleva cada uno', x.mvp.ver_conteo && x.mvp.conteo.length === 2
+   && x.mvp.conteo.every((c) => c.votos === 1) && !x.mvp.conteo.some((c) => 'votante_id' in c), JSON.stringify(x.mvp.conteo));
+x = await charla('enc', P.hoy);
+ok('Quien no puede votar también lo ve', !x.mvp.puedo_votar && x.mvp.ver_conteo && x.mvp.conteo.length === 2);
+x = await charla('b', P.viejo);
+ok('Al cerrar lo ven todos, de más a menos votos', x.mvp.ver_conteo && x.mvp.conteo[0].persona_id === PER.b && x.mvp.conteo[0].votos === 2);
+x = await charla('b', P.sin);
+ok('Sin resultado no hay conteo', !x.mvp.ver_conteo && x.mvp.conteo.length === 0);
+
 r = await como('a', 'select * from partido_votos');
 ok('Los votos no se leen desde el navegador', !!r.error);
 
