@@ -168,6 +168,20 @@ ok('Al cerrar lo ven todos, de más a menos votos', x.mvp.ver_conteo && x.mvp.co
 x = await charla('b', P.sin);
 ok('Sin resultado no hay conteo', !x.mvp.ver_conteo && x.mvp.conteo.length === 0);
 
+
+console.log('\nCierra cuando votan todos (0035)');
+r = await votar('b', P.hoy, 'c');
+x = await charla('a', P.hoy);
+ok('Si falta alguien por votar, sigue abierta', !r.error && x.mvp.abierta && !x.mvp.cerrada, r.error);
+r = await votar('c', P.hoy, 'b');
+x = await charla('enc', P.hoy);
+ok('Cuando votan todos los que jugaron y el cuerpo técnico, cierra sola', !r.error && !x.mvp.abierta && x.mvp.cerrada, r.error);
+ok('…y se conoce el MVP sin esperar el plazo', x.mvp.ganadores.length === 2 && x.mvp.ganadores.every((g) => g.votos === 2), JSON.stringify(x.mvp.ganadores));
+r = await votar('a', P.hoy, 'b');
+ok('…y ya no se puede cambiar el voto', /ya cerró/.test(r.error ?? ''), r.error);
+x = (await como('a', 'select mvp_conteo(null, null) as c')).rows[0].c;
+ok('…y cuenta para las estadísticas', x[PER.c] === 1 && x[PER.b] === 3, JSON.stringify(x));
+
 r = await como('a', 'select * from partido_votos');
 ok('Los votos no se leen desde el navegador', !!r.error);
 

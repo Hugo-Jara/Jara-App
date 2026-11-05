@@ -71,11 +71,14 @@ const ganadores = (votos, nombreDe) => {
   const max = Math.max(0, ...Object.values(n));
   return Object.entries(n).filter(([, v]) => v === max).map(([id, votos]) => ({ id, nombre: nombreDe(id), votos }));
 };
-const estado = (partido) => {
+const estado = (partido, votos = {}) => {
   const hay = partido.golesFavor != null;
-  // Cierra a las 23:59 del sexto día después: sigue abierta si el partido fue hace seis días o menos.
-  const abierta = hay && partido.fecha >= correrDias(hoyIso(), -6) && (partido.jugaron ?? []).length > 0;
-  return { hay, abierta, cerrada: hay && !abierta && partido.fecha < correrDias(hoyIso(), -6) };
+  const jugaron = partido.jugaron ?? [];
+  // Cierra a las 23:59 del sexto día después (0034), o antes si ya votaron todos los que jugaron (0035).
+  const todos = jugaron.length > 0 && jugaron.every((id) => votos[id]);
+  const plazo = partido.fecha < correrDias(hoyIso(), -6);
+  const cerrada = hay && (plazo || todos);
+  return { hay, abierta: hay && !cerrada && jugaron.length > 0, cerrada };
 };
 
 const enDemo = {
@@ -83,7 +86,7 @@ const enDemo = {
     const m = de(partido.id);
     const nombres = [...partido.plantel, ...partido.respuestas.map((r) => ({ id: r.personaId, nombre: r.nombre }))];
     const nombreDe = (id) => nombres.find((j) => j.id === id)?.nombre ?? '';
-    const { abierta, cerrada } = estado(partido);
+    const { abierta, cerrada } = estado(partido, m.votos);
     const jugue = (partido.jugaron ?? []).includes(yo.id);
     const miVoto = m.votos[yo.id] ?? null;
     const verConteo = cerrada || (abierta && (miVoto != null || !jugue));

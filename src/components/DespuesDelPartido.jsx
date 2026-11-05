@@ -118,11 +118,11 @@ export function JugadorDelPartido({ partido, yo, mvp, votar }) {
             ))}
           </div>
           <p className="ayuda abajo">
-            {votado ? <>Votaste por <strong>{votado.nombre}</strong>. Puedes cambiarlo hasta {cierre}.</> : `Votan los que jugaron y el cuerpo técnico, y nadie por sí mismo. Cierra ${cierre}.`}
+            {votado ? <>Votaste por <strong>{votado.nombre}</strong>. Puedes cambiarlo hasta {cierre}, o hasta que voten todos.</> : `Votan los que jugaron y el cuerpo técnico, y nadie por sí mismo. Cierra ${cierre}, o antes si ya votaron todos.`}
           </p>
         </>
       ) : (
-        <p className="vacio">Votan los que jugaron este partido y el cuerpo técnico. El MVP se conoce {cierre}.</p>
+        <p className="vacio">Votan los que jugaron este partido y el cuerpo técnico. El MVP se conoce {cierre}, o antes si ya votaron todos.</p>
       )}
       <BarrasVotos conteo={mvp.conteo} miVoto={mvp.miVoto} titulo="Así va la votación" />
       <p className="mvp-conteo">{mvp.votaron === 0 ? 'Todavía nadie vota.' : `Ya ${mvp.votaron === 1 ? 'votó 1' : `votaron ${mvp.votaron}`}.${mvp.verConteo ? '' : ' Vota para ver cómo va.'}`}</p>
