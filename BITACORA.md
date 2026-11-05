@@ -4,6 +4,19 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-05 · La votación del jugador del partido dura la semana
+
+**Para qué:** dos días era poco para que todos alcancen a votar.
+
+**Qué se hizo** (migración `0034_mvp_semana_completa.sql`, se corre antes del merge):
+- La votación cierra a las 23:59 del sexto día después del partido (sábado → viernes; jueves → miércoles), el día antes del partido de la semana siguiente. Solo cambia `mvp_cierre`.
+- Los partidos con menos de seis días que ya habían cerrado se vuelven a abrir.
+- Modo demostración con la misma regla. Pruebas de `supabase/tests/charla.mjs` ajustadas, más una nueva.
+
+**Comprobado:** `npm run build` y `npm run test:db` pasan. Falta probar con la base real.
+
+---
+
 ## 2026-11-05 · El cuerpo técnico vota por el jugador del partido
 
 **Para qué:** el DT y su ayudante no juegan, así que no quedan en "quiénes jugaron" y no podían votar por el MVP.
