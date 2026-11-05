@@ -5,7 +5,7 @@ import { correrDias, hoyIso } from './fechas.js';
 // Lo que pasa después del partido (migración 0027): el jugador del partido
 // (MVP), los comentarios en cadena y las reacciones con emoji.
 //   · MVP: votan solo los que jugaron, no a sí mismos. Abre al anotar el
-//     resultado y cierra a las 23:59 del día siguiente. El conteo se ve al cerrar.
+//     resultado y cierra a las 23:59 del sexto día después (0034). El conteo se ve al cerrar.
 //   · Comentarios: todo el club; cada uno borra los suyos, y los moderan
 //     Comunicaciones, el encargado del plantel y los administradores.
 
@@ -68,9 +68,9 @@ const ganadores = (votos, nombreDe) => {
 };
 const estado = (partido) => {
   const hay = partido.golesFavor != null;
-  // Cierra a las 23:59 del día siguiente: sigue abierta si el partido fue hoy o ayer.
-  const abierta = hay && partido.fecha >= correrDias(hoyIso(), -1) && (partido.jugaron ?? []).length > 0;
-  return { hay, abierta, cerrada: hay && !abierta && partido.fecha < correrDias(hoyIso(), -1) };
+  // Cierra a las 23:59 del sexto día después: sigue abierta si el partido fue hace seis días o menos.
+  const abierta = hay && partido.fecha >= correrDias(hoyIso(), -6) && (partido.jugaron ?? []).length > 0;
+  return { hay, abierta, cerrada: hay && !abierta && partido.fecha < correrDias(hoyIso(), -6) };
 };
 
 const enDemo = {

@@ -64,7 +64,7 @@ await db.exec(`
   insert into partidos (id, club_id, equipo_id, rival, fecha, goles_favor, goles_contra) values
     ('${P.hoy}', '${CLUB}', '${PLANTEL}', 'Rival Inventado', hoy(), 2, 1),
     ('${P.ayer}', '${CLUB}', '${PLANTEL}', 'Rival Inventado', hoy() - 1, 0, 0),
-    ('${P.viejo}', '${CLUB}', '${PLANTEL}', 'Rival Inventado', hoy() - 2, 3, 0),
+    ('${P.viejo}', '${CLUB}', '${PLANTEL}', 'Rival Inventado', hoy() - 7, 3, 0),
     ('${P.sin}', '${CLUB}', '${PLANTEL}', 'Rival Inventado', hoy(), null, null),
     ('${P.otro}', '${CLUB}', '${OTRO}', 'Rival Inventado', hoy() - 10, 1, 0);
   insert into partido_jugadores (partido_id, persona_id)
@@ -113,9 +113,16 @@ ok('Sin resultado no se vota', /cuando se anota el resultado/.test(r.error ?? ''
 x = await charla('a', P.ayer);
 r = await votar('a', P.ayer, 'b');
 ok('Partido de ayer: sigue abierta hasta esta noche', x.mvp.abierta && !r.error, r.error);
+await db.exec(`insert into partidos (id, club_id, equipo_id, rival, fecha, goles_favor, goles_contra)
+  values ('50000000-0000-0000-0000-000000000007', '${CLUB}', '${PLANTEL}', 'Rival Inventado', hoy() - 6, 1, 0);
+  insert into partido_jugadores (partido_id, persona_id) values
+  ('50000000-0000-0000-0000-000000000007', '${PER.a}'), ('50000000-0000-0000-0000-000000000007', '${PER.b}');`);
+x = await charla('a', '50000000-0000-0000-0000-000000000007');
+r = await votar('a', '50000000-0000-0000-0000-000000000007', 'b');
+ok('Partido de hace seis días: sigue abierta hasta esta noche (0034)', x.mvp.abierta && !x.mvp.cerrada && !r.error, r.error);
 x = await charla('a', P.viejo);
 r = await votar('c', P.viejo, 'a');
-ok('Partido de antes de ayer: ya cerró', !x.mvp.abierta && x.mvp.cerrada && /ya cerró/.test(r.error ?? ''), r.error);
+ok('Partido de hace una semana: ya cerró', !x.mvp.abierta && x.mvp.cerrada && /ya cerró/.test(r.error ?? ''), r.error);
 ok('…y muestra al MVP con sus votos', x.mvp.ganadores.length === 1 && x.mvp.ganadores[0].persona_id === PER.b && x.mvp.ganadores[0].votos === 2);
 x = await charla('d', P.otro);
 ok('Si empatan, son MVP los empatados', x.mvp.ganadores.length === 2);
