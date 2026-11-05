@@ -46,12 +46,33 @@ export function Reacciones({ lista, reaccionar, etiqueta, siempreAbiertas = fals
   );
 }
 
+// Cuántos votos lleva cada uno, en barras horizontales (0035).
+function BarrasVotos({ conteo, miVoto, titulo }) {
+  if (!conteo.length) return null;
+  const max = Math.max(1, ...conteo.map((c) => c.votos));
+  return (
+    <div className="mvp-barras">
+      <div className="sobretitulo">{titulo}</div>
+      <ul>
+        {conteo.map((c) => (
+          <li key={c.id} className={`${c.votos === max ? 'lider' : ''} ${c.id === miVoto ? 'mio' : ''}`}>
+            <span className="mvp-barra-nombre"><NombreConApodo id={c.id} nombre={c.nombre} />{c.id === miVoto && <span className="mvp-barra-tuyo">tu voto</span>}</span>
+            <span className="mvp-barra-pista" aria-hidden="true"><span className="mvp-barra" style={{ width: `${(c.votos / max) * 100}%` }} /></span>
+            <span className="mvp-barra-n">{c.votos}<span className="sr-solo"> {c.votos === 1 ? 'voto' : 'votos'}</span></span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // El jugador del partido: votar mientras está abierta y ver al ganador al cerrar.
 export function JugadorDelPartido({ partido, yo, mvp, votar }) {
   const [error, setError] = useState('');
   const [ocupado, setOcupado] = useState(false);
   if (!mvp || (!mvp.abierta && !mvp.cerrada)) return null;
-  const cierre = `el ${diaSemana(correrDias(partido.fecha, 1))} a las 23:59`;
+  // Cierra a las 23:59 del sexto día después del partido (0034).
+  const cierre = `el ${diaSemana(correrDias(partido.fecha, 6))} a las 23:59`;
   const elegir = async (id) => {
     setError(''); setOcupado(true);
     try { await votar(id); } catch (x) { setError(x.message); }
@@ -77,6 +98,7 @@ export function JugadorDelPartido({ partido, yo, mvp, votar }) {
             {mvp.ganadores.length > 1 && <p className="ayuda abajo">Empataron en votos: son MVP los {mvp.ganadores.length}.</p>}
           </>
         ) : <p className="vacio">Nadie votó en este partido.</p>}
+        <BarrasVotos conteo={mvp.conteo} miVoto={mvp.miVoto} titulo="Votos" />
       </div>
     );
   }
@@ -96,13 +118,14 @@ export function JugadorDelPartido({ partido, yo, mvp, votar }) {
             ))}
           </div>
           <p className="ayuda abajo">
-            {votado ? <>Votaste por <strong>{votado.nombre}</strong>. Puedes cambiarlo hasta {cierre}.</> : `Votan los que jugaron y el cuerpo técnico, y nadie por sí mismo. Cierra ${cierre}.`}
+            {votado ? <>Votaste por <strong>{votado.nombre}</strong>. Puedes cambiarlo hasta {cierre}, o hasta que voten todos.</> : `Votan los que jugaron y el cuerpo técnico, y nadie por sí mismo. Cierra ${cierre}, o antes si ya votaron todos.`}
           </p>
         </>
       ) : (
-        <p className="vacio">Votan los que jugaron este partido y el cuerpo técnico. El MVP se conoce {cierre}.</p>
+        <p className="vacio">Votan los que jugaron este partido y el cuerpo técnico. El MVP se conoce {cierre}, o antes si ya votaron todos.</p>
       )}
-      <p className="mvp-conteo">{mvp.votaron === 0 ? 'Todavía nadie vota.' : `Ya ${mvp.votaron === 1 ? 'votó 1' : `votaron ${mvp.votaron}`}. El resultado se ve al cerrar.`}</p>
+      <BarrasVotos conteo={mvp.conteo} miVoto={mvp.miVoto} titulo="Así va la votación" />
+      <p className="mvp-conteo">{mvp.votaron === 0 ? 'Todavía nadie vota.' : `Ya ${mvp.votaron === 1 ? 'votó 1' : `votaron ${mvp.votaron}`}.${mvp.verConteo ? '' : ' Vota para ver cómo va.'}`}</p>
       {error && <p className="error" role="alert">{error}</p>}
     </div>
   );

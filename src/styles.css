@@ -576,6 +576,18 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .mvp-nombre { flex: 1; min-width: 0; font-size: 18px; font-weight: 800; }
 .mvp-votos { flex: none; font-size: 13px; color: var(--text-dim); }
 .mvp-marca { margin-left: 6px; font-size: 0.8em; font-weight: 800; color: var(--gold); white-space: nowrap; }
+/* Cómo va la votación del MVP: barras horizontales (0035) */
+.mvp-barras { margin-top: 16px; }
+.mvp-barras ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.mvp-barras li { display: grid; grid-template-columns: minmax(0, 38%) 1fr 2ch; align-items: center; gap: 10px; }
+.mvp-barra-nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+.mvp-barras li.lider .mvp-barra-nombre { font-weight: 800; }
+.mvp-barra-tuyo { margin-left: 6px; font-size: 11px; font-weight: 700; color: var(--gold); }
+.mvp-barra-pista { height: 14px; border-radius: 7px; background: var(--bg-card-alt); overflow: hidden; }
+.mvp-barra { display: block; height: 100%; min-width: 4px; border-radius: 7px; background: var(--gold-dim); transition: width 0.3s ease; }
+.mvp-barras li.lider .mvp-barra { background: var(--gold); }
+.mvp-barra-n { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; }
+.sr-solo { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* Comentarios y reacciones del partido */
 .charla-reacciones { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }

@@ -5,7 +5,8 @@ import { correrDias, hoyIso } from './fechas.js';
 // Lo que pasa después del partido (migración 0027): el jugador del partido
 // (MVP), los comentarios en cadena y las reacciones con emoji.
 //   · MVP: votan solo los que jugaron, no a sí mismos. Abre al anotar el
-//     resultado y cierra a las 23:59 del sexto día después (0034). El conteo se ve al cerrar.
+//     resultado y cierra a las 23:59 del sexto día después (0034). El conteo lo ve quien ya
+//     votó o no puede votar, y todos al cerrar (0035).
 //   · Comentarios: todo el club; cada uno borra los suyos, y los moderan
 //     Comunicaciones, el encargado del plantel y los administradores.
 
@@ -20,6 +21,8 @@ const desdeFila = (f) => ({
     puedoVotar: f.mvp.puedo_votar, jugue: f.mvp.jugue, miVoto: f.mvp.mi_voto ?? null, votaron: f.mvp.votaron,
     candidatos: f.mvp.candidatos.map((c) => ({ id: c.persona_id, nombre: c.nombre })),
     ganadores: f.mvp.ganadores.map((g) => ({ id: g.persona_id, nombre: g.nombre, votos: g.votos })),
+    verConteo: !!f.mvp.ver_conteo,
+    conteo: (f.mvp.conteo ?? []).map((c) => ({ id: c.persona_id, nombre: c.nombre, votos: c.votos })),
   },
   reacciones: desdeReacciones(f.reacciones),
   puedoModerar: f.puedo_moderar,
@@ -44,6 +47,8 @@ const base = {
 // --- Modo demostración: lo mismo, en memoria ------------------------------
 const hace = (min) => new Date(Date.now() - min * 60000).toISOString();
 const memoria = {
+  // Jugado ayer: votación abierta, con algunos votos para ver las barras (0035).
+  p6: { votos: { 'd-Pancho': 'd-Tito', 'd-Lalo': 'd-Tito', 'd-Nico': 'd-Pancho' }, reacciones: [], comentarios: [] },
   p4: {
     votos: { 'd-Pancho': 'd-Lalo', 'd-Lalo': 'd-Pancho', demo: 'd-Lalo' },
     reacciones: [['d-Pancho', '🔥'], ['d-Lalo', '🔥'], ['demo', '👏'], ['d-Tito', '💪']],
@@ -66,11 +71,14 @@ const ganadores = (votos, nombreDe) => {
   const max = Math.max(0, ...Object.values(n));
   return Object.entries(n).filter(([, v]) => v === max).map(([id, votos]) => ({ id, nombre: nombreDe(id), votos }));
 };
-const estado = (partido) => {
+const estado = (partido, votos = {}) => {
   const hay = partido.golesFavor != null;
-  // Cierra a las 23:59 del sexto día después: sigue abierta si el partido fue hace seis días o menos.
-  const abierta = hay && partido.fecha >= correrDias(hoyIso(), -6) && (partido.jugaron ?? []).length > 0;
-  return { hay, abierta, cerrada: hay && !abierta && partido.fecha < correrDias(hoyIso(), -6) };
+  const jugaron = partido.jugaron ?? [];
+  // Cierra a las 23:59 del sexto día después (0034), o antes si ya votaron todos los que jugaron (0035).
+  const todos = jugaron.length > 0 && jugaron.every((id) => votos[id]);
+  const plazo = partido.fecha < correrDias(hoyIso(), -6);
+  const cerrada = hay && (plazo || todos);
+  return { hay, abierta: hay && !cerrada && jugaron.length > 0, cerrada };
 };
 
 const enDemo = {
@@ -78,12 +86,18 @@ const enDemo = {
     const m = de(partido.id);
     const nombres = [...partido.plantel, ...partido.respuestas.map((r) => ({ id: r.personaId, nombre: r.nombre }))];
     const nombreDe = (id) => nombres.find((j) => j.id === id)?.nombre ?? '';
-    const { abierta, cerrada } = estado(partido);
+    const { abierta, cerrada } = estado(partido, m.votos);
     const jugue = (partido.jugaron ?? []).includes(yo.id);
+    const miVoto = m.votos[yo.id] ?? null;
+    const verConteo = cerrada || (abierta && (miVoto != null || !jugue));
+    const n = {};
+    Object.values(m.votos).forEach((id) => { n[id] = (n[id] ?? 0) + 1; });
+    const conteo = verConteo ? Object.entries(n).map(([id, votos]) => ({ id, nombre: nombreDe(id), votos }))
+      .sort((a, b) => b.votos - a.votos || a.nombre.localeCompare(b.nombre)) : [];
     return {
       mvp: {
         abierta, cerrada, cierra: null, puedoVotar: abierta && jugue, jugue,
-        miVoto: m.votos[yo.id] ?? null, votaron: Object.keys(m.votos).length,
+        miVoto, votaron: Object.keys(m.votos).length, verConteo, conteo,
         candidatos: (partido.jugaron ?? []).map((id) => ({ id, nombre: nombreDe(id) })).sort((a, b) => a.nombre.localeCompare(b.nombre)),
         ganadores: cerrada ? ganadores(m.votos, nombreDe) : [],
       },

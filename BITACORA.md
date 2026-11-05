@@ -4,6 +4,21 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-05 · Cómo va la votación del jugador del partido, con barras, y cierre cuando votan todos
+
+**Para qué:** ver cuántos votos lleva cada uno después de votar, no solo al cierre.
+
+**Qué se hizo** (migración `0035_mvp_como_va.sql`, se corre antes del merge):
+- `partido_charla` trae el conteo (persona y votos, de más a menos). Lo ve quien ya votó o no puede votar mientras está abierta, y todos al cerrar. Quien puede votar y no ha votado no lo ve, para no votar "por el que va ganando". Nadie ve quién votó por quién.
+- En el partido: "Así va la votación" con barras horizontales (el que va primero en dorado y "tu voto" marcado). Al cerrar, debajo del MVP, las barras de todos los votados.
+- Si ya votaron todos los que pueden votar (los que jugaron y el cuerpo técnico, con cuenta en la app), la votación cierra sola y se conoce el MVP sin esperar el plazo. Nuevas `mvp_votantes` y `mvp_cerrada`; `mvp_abierta` y `mvp_conteo` las usan.
+- Se corrigió el texto de cierre de la votación, que seguía diciendo el día siguiente al partido (debió cambiar con la 0034).
+- Modo demostración con la misma regla y votos de ejemplo. 10 pruebas nuevas en `supabase/tests/charla.mjs`.
+
+**Comprobado:** `npm run build` y `npm run test:db` pasan. Pantalla revisada en modo demostración (iPhone 13).
+
+---
+
 ## 2026-11-05 · La votación del jugador del partido dura la semana
 
 **Para qué:** dos días era poco para que todos alcancen a votar.
