@@ -3,6 +3,7 @@ import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos, tablaEstadisticas, equiposDelClub } from '../lib/partidos.js';
 import NombreConApodo from '../components/NombreConApodo.jsx';
 import { hoyIso } from '../lib/fechas.js';
+import { conteoMvp } from '../lib/charla.js';
 
 // La tabla del club: partidos jugados, goles, asistencias y tarjetas de cada
 // jugador, armada con lo que se anota en cada partido. Aparece todo el que jugó,
@@ -28,6 +29,9 @@ function categorias(equipos) {
   return [...grupos.entries()].filter(([, ids]) => ids.length > 1).map(([nombre, ids]) => ({ clave: `cat:${nombre}`, nombre, ids }));
 }
 
+// "★3": las veces que fue elegido jugador del partido.
+const Mvp = ({ n }) => (n ? <span className="mvp-marca" title={`Jugador del partido ${n} ${n === 1 ? 'vez' : 'veces'}`}>★{n > 1 ? n : ''}</span> : null);
+
 export default function Estadisticas() {
   const { persona } = useSesion();
   const { todos, cargando: cargandoPartidos } = usePartidos(persona);
@@ -39,6 +43,7 @@ export default function Estadisticas() {
   const [anio, setAnio] = useState(anioActual);
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState('');
+  const [mvps, setMvps] = useState({});
 
   // Cambia solo cuando cambia algún resultado: así la tabla se recarga después de anotar.
   const huella = todos.map((p) => `${p.id}:${p.golesFavor}:${(p.jugaron ?? []).join()}:${(p.estadisticas ?? []).map((g) => `${g.personaId}.${g.goles}.${g.asistencias}.${g.amarillas}.${g.rojas}`).join()}`).join('|');
@@ -57,6 +62,8 @@ export default function Estadisticas() {
       (l) => vigente && setDatos(l),
       (e) => vigente && setError(e.message),
     );
+    // Veces que fue jugador del partido (0027). Si la base no lo tiene, no se muestra.
+    conteoMvp(idsFiltro, anio || null).then((m) => vigente && setMvps(m), () => vigente && setMvps({}));
     return () => { vigente = false; };
   }, [claveIds, anio, huella]); // eslint-disable-line react-hooks/exhaustive-deps
   const filtrar = (f) => { setFiltro(f); setVerTodos(false); };
@@ -121,14 +128,14 @@ export default function Estadisticas() {
             <div key={g.personaId} role="row"
                  className={`fila-tabla ${hayAlgo && g[orden] > 0 && puestos[i] <= 3 && orden !== 'amarillas' && orden !== 'rojas' ? 'top' : ''} ${g.personaId === persona.id ? 'yo' : ''}`}>
               <span className="puesto">{g[orden] > 0 ? puestos[i] : ''}</span>
-              <span className="quien"><NombreConApodo id={g.personaId} nombre={g.nombre} enlace /></span>
+              <span className="quien"><NombreConApodo id={g.personaId} nombre={g.nombre} enlace /><Mvp n={mvps[g.personaId]} /></span>
               {COLUMNAS.map((c) => <span key={c.clave} className={`col ${orden === c.clave ? 'activa' : ''} ${g[c.clave] === 0 ? 'cero' : ''}`}>{g[c.clave]}</span>)}
             </div>
           ))}
           {!verTodos && yo >= PRIMEROS && (
             <div role="row" className="fila-tabla yo">
               <span className="puesto">{lista[yo][orden] > 0 ? puestos[yo] : ''}</span>
-              <span className="quien"><NombreConApodo id={persona.id} nombre={lista[yo].nombre} /></span>
+              <span className="quien"><NombreConApodo id={persona.id} nombre={lista[yo].nombre} /><Mvp n={mvps[persona.id]} /></span>
               {COLUMNAS.map((c) => <span key={c.clave} className={`col ${orden === c.clave ? 'activa' : ''} ${lista[yo][c.clave] === 0 ? 'cero' : ''}`}>{lista[yo][c.clave]}</span>)}
             </div>
           )}

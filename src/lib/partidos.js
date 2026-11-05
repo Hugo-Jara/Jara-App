@@ -97,6 +97,16 @@ let demo = [{
   ],
   plantel: gente('Mati', 'Cote'), respuestas: [va('Mati', 'voy'), va('Cote', 'voy')], jugaron: ['d-Mati', 'd-Cote'],
 },
+// Jugado ayer: la votación del jugador del partido sigue abierta (0027).
+{
+  id: 'p6', equipoId: 'e-sabado', equipo: 'Senior Sábado', torneo: 'Liga de ejemplo',
+  rival: 'Rival de ayer', fecha: correrDias(hoyIso(), -1), citacion: '08:15', cancha: 'Cancha 2',
+  tercerTiempo: null, esMio: true, puedoEditar: true, puedoAnotar: true, golesFavor: 1, golesContra: 0,
+  estadisticas: [{ personaId: 'd-Tito', nombre: 'Tito', goles: 1, asistencias: 0, amarillas: 0, rojas: 0 }],
+  plantel: gente('Pancho', 'Lalo', 'Tito', 'Nico', 'Seba'),
+  respuestas: [va('Pancho', 'voy'), va('Lalo', 'voy'), va('Tito', 'voy'), va('Nico', 'voy'), va('Seba', 'voy')],
+  jugaron: ['d-Pancho', 'd-Lalo', 'd-Tito', 'd-Nico', 'demo'],
+},
 // Fechas anteriores, para ver la racha y la tabla con más gente.
 ...[
   ['e-sabado', 'Senior Sábado', [[2, 0], [1, 1], [0, 2], [4, 1], [2, 1]], ['Pancho', 'Lalo', 'Tito', 'Nico', 'Seba']],
