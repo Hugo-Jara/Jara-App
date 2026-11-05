@@ -4,6 +4,22 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-04 · Tabla de posiciones y fechas del campeonato
+
+**Para qué:** que cualquiera vea "cómo vamos" en la liga de cada plantel y las fechas que vienen, sin salir de la app.
+
+**De dónde salen los datos:** se revisaron las páginas de las ligas. La de los planteles del sábado publica la tabla, las fechas y los goleadores como imágenes, y la del jueves arma todo con JavaScript desde su servidor, sin una forma pública de leerla. Por eso no se importa sola: el encargado la copia en la app.
+
+**Qué se hizo** (migración `0026_tabla_posiciones.sql`, se corre antes del merge):
+- **Partidos > Tabla de posiciones** (`/tabla`): una tabla por plantel (PJ, G, E, P, GF, GC, DG, Pts; GF y GC se esconden en pantallas angostas), con el Jara destacado, "El Jara va 2º de 8, con 15 puntos", la fecha de actualización y el link a la página de la liga.
+- **Actualizar la tabla:** el encargado del plantel (o un administrador) pega la tabla como texto, una línea por equipo ("Equipo 9 6 2 1 20 8 20"), ve cómo queda y la guarda. La base revisa los números y que solo una fila sea el Jara. Las cuentas de prueba solo miran.
+- **Próximas fechas** del plantel en la misma pantalla y **Cargar varias fechas de una vez:** se pegan las fechas ("14/11 Rival" o "21/11 09:00 Rival") con campeonato, citación y cancha comunes, y se crean como partidos normales (`partido_guardar`, sin cambios en la base). No repite un día que ya tiene partido. Los cambios por suspensión o de día se corrigen en cada partido, como siempre.
+- Archivos nuevos `src/lib/tabla.js`, `src/pages/Tabla.jsx` y `supabase/tests/tabla.mjs` (20 pruebas, entra en `npm run test:db`); ruta en `App.jsx`, botón en `Partidos.jsx` y estilos `posiciones-` al final de `styles.css`.
+
+**Comprobado:** `npm run build` y `npm run test:db` pasan (con la 0025, 0027, 0028, 0029 y 0030 ya en main). Pantallas revisadas en modo demostración a 375 px, sin scroll horizontal ni errores. Falta probar con la base real.
+
+---
+
 ## 2026-11-04 · Jugador del partido (MVP), comentarios y reacciones
 
 **Para qué:** que después de cada partido el club vote al mejor, comente y reaccione, como en las redes sociales. Sale de las ideas que llegaron después de la reunión de tesoreros del 3/11.

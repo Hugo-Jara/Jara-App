@@ -107,6 +107,7 @@ export default function Partidos() {
     <>
       <h1 className="titulo display">Partidos</h1>
       <p className="subtitulo">Los que vienen y los que ya se jugaron. Respondes en los de tu plantel.</p>
+      <Link to="/tabla" className="btn secundario" style={{ marginBottom: 14 }}>Tabla de posiciones</Link>
       {persona.esEncargado && <Link to="/partidos/nuevo" className="btn secundario" style={{ marginBottom: 14 }}>Programar un partido</Link>}
       {error && <p className="error" role="alert">{error}</p>}
       {cargando ? <p className="vacio suelto">Cargando…</p> : (
