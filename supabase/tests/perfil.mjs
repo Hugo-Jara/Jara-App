@@ -205,5 +205,21 @@ ok('La tabla perfiles no se lee directo', /permission denied/.test(r.error ?? ''
 r = await como('jugador', 'select * from dorsales');
 ok('La tabla dorsales no se lee directo', /permission denied/.test(r.error ?? ''), r.error);
 
+// Instagram (0030)
+for (const [entra, sale] of [['@El.Inventado_9', 'el.inventado_9'], ['https://www.instagram.com/el.inventado/?hl=es', 'el.inventado'],
+                             ['instagram.com/otro_user', 'otro_user'], ['  el_inventado  ', 'el_inventado']]) {
+  r = await como('jugador', 'select perfil_instagram_guardar($1) as u', [entra]);
+  ok(`Instagram "${entra.trim()}" queda como ${sale}`, r.rows[0]?.u === sale, r.error ?? r.rows[0]?.u);
+}
+x = await ver('otro', PER.jugador);
+ok('Otro socio ve el Instagram', x.v?.instagram === 'el_inventado', JSON.stringify(x.v));
+r = await como('jugador', 'select perfil_instagram_guardar($1)', ['no vale con espacios']);
+ok('Instagram inválido se rechaza', /no parece válido/.test(r.error ?? ''), r.error);
+r = await como('jugador', 'select perfil_instagram_guardar($1) as u', ['']);
+x = await ver('jugador');
+ok('Vacío borra el Instagram', !r.error && x.v?.instagram === null, r.error);
+r = await anon('select perfil_instagram_guardar($1)', ['x']);
+ok('Sin cuenta no se guarda Instagram', /permission denied/.test(r.error ?? ''), r.error);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

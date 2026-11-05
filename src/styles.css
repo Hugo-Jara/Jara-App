@@ -335,10 +335,11 @@ select:disabled, input:disabled { opacity: 0.6; }
 .fila-tabla { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .fila-tabla:last-child { border-bottom: none; }
 .fila-tabla .puesto { width: 24px; flex: none; color: var(--text-dim); font-size: 14px; font-variant-numeric: tabular-nums; }
-.fila-tabla .quien { flex: 1; min-width: 0; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tabla-club { padding: 4px 12px; margin-top: 14px; }
+.fila-tabla .quien { flex: 1; min-width: 0; font-size: 14px; line-height: 1.25; overflow-wrap: break-word; }
+.tabla-club { padding: 4px 10px; margin-top: 14px; }
 .tabla-club .fila-tabla { gap: 4px; padding: 11px 0; }
-.tabla-club .col { width: 38px; flex: none; text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; background: none; border: 0; color: var(--text); padding: 0; font-family: inherit; }
+.tabla-club .puesto { width: 20px; }
+.tabla-club .col { width: 34px; flex: none; text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; background: none; border: 0; color: var(--text); padding: 0; font-family: inherit; }
 .tabla-club .col.cero { color: var(--text-dim); opacity: 0.45; }
 .tabla-club .col.activa { color: var(--gold); font-weight: 700; }
 .fila-tabla.cabeza { padding: 6px 0; }
@@ -500,26 +501,6 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .apodo { font-size: 0.8em; font-weight: 400; font-style: italic; color: var(--gold); white-space: nowrap; }
 .tes-solo-mirar { margin-bottom: 14px; }
 
-/* Perfil del jugador y planteles (0028) */
-.perfil-foto { display: inline-grid; place-items: center; flex: none; border-radius: 50%; overflow: hidden; background: var(--bg-card-alt); border: 1px solid var(--gold-dim); color: var(--gold); font-weight: 700; }
-.perfil-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.perfil-cabeza { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; margin: 8px 0 18px; }
-.perfil-nombre { margin: 6px 0 0; }
-.perfil-apodo { margin: 0; font-size: 15px; }
-.perfil-planteles { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-.perfil-foto-botones { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
-.perfil-datos { margin: 0; display: grid; gap: 0; }
-.perfil-datos > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-.perfil-datos > div:last-child { border-bottom: none; }
-.perfil-datos dt { color: var(--text-dim); font-size: 14px; }
-.perfil-datos dd { margin: 0; font-size: 15px; text-align: right; overflow-wrap: anywhere; }
-.perfil-dorsales { display: grid; gap: 8px; }
-.perfil-dorsales label { display: grid; grid-template-columns: 1fr 90px; align-items: center; gap: 10px; font-size: 14px; }
-.perfil-fisico { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.perfil-check { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 14px; color: var(--text-dim); }
-.perfil-check input { width: 20px; height: 20px; flex: none; accent-color: var(--gold); }
-.perfil-fila { color: var(--text); }
-.perfil-dorsal { width: 26px; flex: none; text-align: right; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
 /* Estadísticas: ordenar, ver todos (0025) */
 .orden-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
 .orden-titulo { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-right: 2px; }
@@ -554,6 +535,34 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .jugaron-item { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; margin: 0; border: 1px solid var(--border); border-radius: 12px; font-size: 14px; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .jugaron-item.si { border-color: var(--gold); background: rgba(198, 161, 91, 0.12); }
 .jugaron-item input { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--gold); }
+/* Perfil del jugador y planteles (0028) */
+.perfil-foto { display: inline-grid; place-items: center; flex: none; border-radius: 50%; overflow: hidden; background: var(--bg-card-alt); border: 1px solid var(--gold-dim); color: var(--gold); font-weight: 700; }
+.perfil-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.perfil-cabeza { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; margin: 8px 0 18px; }
+.perfil-nombre { margin: 6px 0 0; }
+.perfil-apodo { margin: 0; font-size: 15px; }
+.perfil-planteles { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.perfil-foto-botones { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
+.perfil-datos { margin: 0; display: grid; gap: 0; }
+.perfil-datos > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.perfil-datos > div:last-child { border-bottom: none; }
+.perfil-datos dt { color: var(--text-dim); font-size: 14px; }
+.perfil-datos dd { margin: 0; font-size: 15px; text-align: right; overflow-wrap: anywhere; }
+.perfil-dorsales { display: grid; gap: 8px; }
+.perfil-dorsales label { display: grid; grid-template-columns: 1fr 90px; align-items: center; gap: 10px; font-size: 14px; }
+.perfil-fisico { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.perfil-check { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 14px; color: var(--text-dim); }
+.perfil-check input { width: 20px; height: 20px; flex: none; accent-color: var(--gold); }
+.perfil-fila { color: var(--text); }
+.perfil-dorsal { width: 26px; flex: none; text-align: right; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+.nombre-enlace { color: inherit; text-decoration: underline; text-decoration-color: rgba(198, 161, 91, 0.35); text-underline-offset: 3px; }
+.nombre-enlace:active { color: var(--gold); }
+.perfil-datos a { color: var(--gold); font-weight: 600; }
+.enlace-volver { background: none; border: 0; padding: 4px 0; font-family: inherit; cursor: pointer; }
+.tabla-club .fila-tabla.cabeza .col { font-size: 9.5px; letter-spacing: 0; }
+.perfil-instagram { display: flex; gap: 8px; align-items: center; }
+.perfil-instagram input { flex: 1; min-width: 0; }
+.btn.apagado { opacity: 0.4; pointer-events: none; }
 
 /* Jugador del partido (MVP) */
 .mvp { border-color: rgba(198, 161, 91, 0.45); }

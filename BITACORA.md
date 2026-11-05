@@ -21,6 +21,39 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-04 · Partidos jugados por plantel, racha y PJ en las estadísticas
+
+**Para qué:** pedido del administrador después de la reunión de tesoreros. Que "Ya jugados" con **Todos** no sea una lista larga mezclada, que se vea la racha de cada plantel como en las apps de fútbol, y que en Jugadores aparezca todo el que jugó un partido, con filtros para no ver una lista gigante.
+
+**Qué se hizo** (migración `0025_partidos_jugados.sql`, se corre antes del merge):
+- **Ya jugados con "Todos":** una sección por plantel (primero los propios) con su racha y sus 3 últimos partidos en filas cortas (fecha, rival, marcador en verde/gris/rojo). "Ver todos los del …" filtra ese plantel. Con un plantel elegido se ve la racha arriba y las tarjetas de siempre.
+- **Racha:** los últimos 5 resultados, ✓ ganado, = empatado, ✗ perdido, el más reciente a la derecha. Cada marca lleva al partido. Componente `src/components/Racha.jsx`.
+- **Quiénes jugaron:** al anotar el resultado aparece "¿Quiénes jugaron?" con el plantel marcado según los que dijeron "voy"; quien anota corrige si alguien no llegó. Quien tiene goles, asistencias o tarjetas cuenta siempre como que jugó. Tabla nueva `partido_jugadores`; los partidos que ya tenían resultado se rellenan con "voy" + quienes tienen cifras.
+- **Jugadores (estadísticas):** columna **PJ**; aparece todo el que jugó al menos un partido con resultado, aunque no tenga goles. Botones "Más: Partidos · Goles · Asistencias · Amarillas · Rojas" para ordenar (además de tocar la columna). Se ven los 10 primeros con "Ver todos"; si tú quedas más abajo, tu fila aparece igual. Filtro por plantel y por categoría ("Senior (todos)" junta los planteles que empiezan igual).
+- `partido_resultado` recibe `p_jugaron` (opcional: sin ella toma los "voy", así la app anterior sigue funcionando) y `estadisticas` recibe `p_equipos` (varios planteles) y devuelve `pj`.
+
+**Comprobado:** `npm run build`, `npm run test:db` (7 pruebas nuevas de PJ en `supabase/tests/club.mjs`) y `npm run test:pedidos` pasan. Pantallas revisadas en modo demostración a 375 px, sin scroll horizontal ni errores.
+
+---
+
+## 2026-11-04 · Perfil: botón "Comprobar" en Instagram
+
+En "Editar mi perfil", junto al campo de Instagram, un botón **Comprobar** abre instagram.com/<usuario> para que el jugador confirme que es su cuenta antes de guardar, y se muestra cómo quedará guardado (@usuario). Las sugerencias de Instagram mientras se escribe no son posibles sin una app aprobada por Meta. Solo frontend, sin migración.
+
+---
+
+## 2026-11-04 · Perfil: Instagram, nombres que llevan al perfil y nombres completos
+
+**Qué se hizo** (migración `0030_perfil_instagram.sql`, se corre antes del merge; la 0025, 0026 y 0027 van en otros PR):
+- **Instagram:** cada jugador pone su usuario (o pega el link o el @, la base lo limpia) y el club lo ve en su perfil como enlace a su cuenta. Lo cambia solo él. Es un enlace, no una conexión con la cuenta de Instagram.
+- **Nombres con enlace:** `NombreConApodo` acepta `enlace`; tocar el nombre abre `/perfil/:id`. Activado en Estadísticas, goleadores y asistencia de cada partido, y listas de entrenamiento (invitados sin cuenta no llevan enlace). No se usa dentro de botones (por ejemplo, al votar el MVP). En el perfil ajeno, "‹ Volver" regresa a la pantalla de donde se vino.
+- **Nombres completos en Estadísticas:** el nombre ya no se corta con "…": baja a una segunda línea, y las columnas de números son más angostas (probado en iPhone SE y 13).
+- **Mis fotos:** queda el espacio en el perfil con un "Pronto". La galería es de la Fase F (carril de Comunicaciones); se coordina con ese carril.
+
+**Comprobado:** `npm run build`, `npm run test:db` (8 pruebas nuevas de Instagram en `perfil.mjs`).
+
+---
+
 ## 2026-11-04 · RUT y fecha de nacimiento en Tesorería
 
 **Para qué:** la liga pide seguido el RUT y la fecha de nacimiento de cada jugador, y las fechas alimentan los cumpleaños. Los tesoreros los tienen en una planilla común (fuera del repo); con esto quedan en la app y se puede importar esa planilla.

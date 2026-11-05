@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import {
-  POSICIONES, PIES, nombrePosicion, nombrePie, textoCumple,
+  POSICIONES, PIES, nombrePosicion, limpiarInstagram, nombrePie, textoCumple,
   leerPerfil, guardarPerfil, urlsDeFotos, subirMiFoto, quitarMiFoto,
 } from '../lib/perfil.js';
 import FotoJugador from '../components/FotoJugador.jsx';
@@ -14,6 +14,8 @@ import FotoJugador from '../components/FotoJugador.jsx';
 export default function Perfil() {
   const { id } = useParams();
   const { persona } = useSesion();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [perfil, setPerfil] = useState(null);
   const [foto, setFoto] = useState(null);
   const [error, setError] = useState('');
@@ -48,7 +50,10 @@ export default function Perfil() {
     catch (err) { setFotoEstado({ ocupado: false, error: err.message }); }
   };
 
-  const volver = <Link to={id ? '/planteles' : '/mas'} className="volver">‹ {id ? 'Planteles' : 'Más'}</Link>;
+  // Si se llegó desde otra pantalla (estadísticas, un partido), vuelve a ella.
+  const volver = id && location.key !== 'default'
+    ? <button type="button" className="volver enlace-volver" onClick={() => navigate(-1)}>‹ Volver</button>
+    : <Link to={id ? '/planteles' : '/mas'} className="volver">‹ {id ? 'Planteles' : 'Más'}</Link>;
   if (error) return <>{volver}<p className="error" role="alert">{error}</p></>;
   if (!perfil) return <>{volver}<p className="vacio suelto">Cargando…</p></>;
 
@@ -59,6 +64,9 @@ export default function Perfil() {
     ['Cumpleaños', textoCumple(perfil.cumple)],
     ['Estatura', perfil.estatura_cm && `${(perfil.estatura_cm / 100).toFixed(2).replace('.', ',')} m`],
     ['Peso', perfil.peso_kg && `${perfil.peso_kg} kg`],
+    ['Instagram', perfil.instagram && (
+      <a href={`https://www.instagram.com/${perfil.instagram}/`} target="_blank" rel="noopener noreferrer">@{perfil.instagram}</a>
+    )],
   ].filter(([, v]) => v);
 
   return (
@@ -108,6 +116,13 @@ export default function Perfil() {
         <Editor perfil={perfil} onListo={async () => { setEditando(false); await cargar(); }} onCancelar={() => setEditando(false)} />
       )}
 
+      {/* Espacio para la galería del club (Fase F, carril de Comunicaciones): acá
+          irán las fotos de los partidos donde sale el jugador. */}
+      <div className="card perfil-fotos">
+        <div className="item-que">{perfil.propio ? 'Mis fotos' : 'Fotos'}</div>
+        <p className="item-meta">Pronto: las fotos de los partidos donde {perfil.propio ? 'sales' : 'sale'}, desde la galería del club.</p>
+      </div>
+
       {perfil.propio && (
         <div className="card">
           <div className="item-que">Tus datos del club</div>
@@ -127,6 +142,7 @@ function Editor({ perfil, onListo, onCancelar }) {
   const propio = perfil.propio;
   const [f, setF] = useState(() => ({
     apodo: perfil.apodo ?? '',
+    instagram: perfil.instagram ?? '',
     posicion: perfil.posicion ?? '',
     pie: perfil.pie ?? '',
     nacimiento: perfil.nacimiento ?? '',
@@ -144,6 +160,7 @@ function Editor({ perfil, onListo, onCancelar }) {
     const igual = (a, b) => String(a ?? '') === String(b ?? '');
     const campos = propio ? ['apodo', 'posicion', 'pie', 'nacimiento', 'estatura_cm', 'peso_kg'] : ['posicion', 'pie'];
     campos.forEach((k) => { if (!igual(f[k], perfil[k])) cambios[k] = String(f[k]).trim() || null; });
+    if (propio && !igual(limpiarInstagram(f.instagram), perfil.instagram)) cambios.instagram = limpiarInstagram(f.instagram);
     if (propio && f.muestra_fisico !== !!perfil.muestra_fisico) cambios.muestra_fisico = f.muestra_fisico;
     const dorsales = {};
     perfil.planteles.forEach((p) => { if (!igual(f.dorsales[p.id], p.dorsal)) dorsales[p.id] = f.dorsales[p.id] === '' ? null : Number(f.dorsales[p.id]); });
@@ -163,6 +180,24 @@ function Editor({ perfil, onListo, onCancelar }) {
           <span className="campo-etiqueta">Apodo (opcional, sale chico al lado de tu nombre)</span>
           <input maxLength={20} placeholder="Ej: el Checho" value={f.apodo} onChange={(e) => poner('apodo', e.target.value)} />
         </label>
+      )}
+
+      {propio && (
+        <div className="campo">
+          <label className="campo-etiqueta" htmlFor="perfil-instagram">Instagram (opcional, tu usuario o el link a tu perfil)</label>
+          <div className="perfil-instagram">
+            <input id="perfil-instagram" autoCapitalize="none" autoCorrect="off" spellCheck={false} maxLength={80} placeholder="@tu.usuario"
+                   value={f.instagram} onChange={(e) => poner('instagram', e.target.value)} />
+            {/* Abre la cuenta en Instagram para confirmar que es la tuya antes de guardar. */}
+            <a className={`btn chico secundario ${limpiarInstagram(f.instagram) ? '' : 'apagado'}`}
+               aria-disabled={!limpiarInstagram(f.instagram)}
+               href={limpiarInstagram(f.instagram) ? `https://www.instagram.com/${limpiarInstagram(f.instagram)}/` : undefined}
+               target="_blank" rel="noopener noreferrer">Comprobar</a>
+          </div>
+          {limpiarInstagram(f.instagram) && (
+            <p className="item-meta">Toca Comprobar: si se abre tu cuenta, está bien escrito. Se guardará como @{limpiarInstagram(f.instagram)}.</p>
+          )}
+        </div>
       )}
 
       {perfil.planteles.length > 0 && (

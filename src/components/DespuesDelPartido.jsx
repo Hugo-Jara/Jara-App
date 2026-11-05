@@ -69,7 +69,7 @@ export function JugadorDelPartido({ partido, yo, mvp, votar }) {
               {mvp.ganadores.map((g) => (
                 <li key={g.id}>
                   <span className="mvp-estrella" aria-hidden="true">★</span>
-                  <span className="mvp-nombre"><NombreConApodo id={g.id} nombre={g.nombre} /></span>
+                  <span className="mvp-nombre"><NombreConApodo id={g.id} nombre={g.nombre} enlace /></span>
                   <span className="mvp-votos">{g.votos} {g.votos === 1 ? 'voto' : 'votos'}</span>
                 </li>
               ))}
@@ -142,7 +142,7 @@ function Comentario({ c, respuestas = [], acciones, respondiendo, setRespondiend
   const uno = (x, esRespuesta) => (
     <div className={`charla-comentario ${esRespuesta ? 'charla-respuesta' : ''}`} key={x.id}>
       <div className="charla-cabeza">
-        <span className="charla-autor"><NombreConApodo id={x.personaId} nombre={x.nombre} /></span>
+        <span className="charla-autor"><NombreConApodo id={x.personaId} nombre={x.nombre} enlace /></span>
         <span className="charla-cuando">{cuando(x.creadoEn)}</span>
       </div>
       {x.borrado ? <p className="charla-texto borrado">Comentario borrado</p> : <p className="charla-texto">{x.texto}</p>}
