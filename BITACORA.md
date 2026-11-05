@@ -4,6 +4,20 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-05 · El cuerpo técnico vota por el jugador del partido
+
+**Para qué:** el DT y su ayudante no juegan, así que no quedan en "quiénes jugaron" y no podían votar por el MVP.
+
+**Qué se hizo** (migración `0033_cuerpo_tecnico_vota_mvp.sql`, se corre antes del merge):
+- Permiso personal nuevo `personas.cuerpo_tecnico`. Lo prende el administrador por SQL, solo a quien corresponda; no hay pantalla para darlo.
+- Quien lo tiene vota en los partidos de los planteles en que está, aunque no haya jugado. No pasa a ser candidato ni suma partidos jugados. Las demás reglas del MVP no cambian.
+- Cambian `partido_charla` (muestra el botón) y `mvp_votar` (lo acepta). Textos de la votación: "Votan los que jugaron y el cuerpo técnico".
+- Pruebas: 7 nuevas en `supabase/tests/charla.mjs`.
+
+**Comprobado:** `npm run build` y `npm run test:db` pasan. Falta probar con la base real.
+
+---
+
 ## 2026-11-05 · La tabla de posiciones se actualiza sola desde la liga
 
 **Para qué:** que nadie tenga que copiar la tabla después de cada fecha. Las imágenes de la liga del sábado salen de Deporstar, y Deporstar entrega la tabla como datos en una dirección pública (`api.deporstar.com/api/fixture/match/tabla-positions/<número>/`), sin login.
