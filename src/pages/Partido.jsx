@@ -77,7 +77,7 @@ function Estadisticas({ partido }) {
     <ul className="goleadores">
       {partido.estadisticas.map((g) => (
         <li key={g.personaId}>
-          <span><NombreConApodo id={g.personaId} nombre={g.nombre} /></span>
+          <span><NombreConApodo id={g.personaId} nombre={g.nombre} enlace /></span>
           <span className="cifras">
             {g.goles > 0 && <strong>{plural(g.goles, 'gol', 'goles')}</strong>}
             {g.asistencias > 0 && <em>{plural(g.asistencias, 'asistencia', 'asistencias')}</em>}
@@ -233,7 +233,7 @@ function Grupo({ titulo, clase, lista }) {
       <ol className="nombres">
         {lista.map((r) => (
           <li key={r.personaId ?? r.id}>
-            <span className="nombre"><NombreConApodo id={r.personaId} nombre={r.nombre} /></span>
+            <span className="nombre"><NombreConApodo id={r.personaId} nombre={r.nombre} enlace /></span>
             {r.asado && <span className="marca">tercer tiempo</span>}
             {r.nota && <span className="comentario">{r.nota}</span>}
           </li>

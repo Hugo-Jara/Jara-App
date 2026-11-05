@@ -121,7 +121,7 @@ export default function Estadisticas() {
             <div key={g.personaId} role="row"
                  className={`fila-tabla ${hayAlgo && g[orden] > 0 && puestos[i] <= 3 && orden !== 'amarillas' && orden !== 'rojas' ? 'top' : ''} ${g.personaId === persona.id ? 'yo' : ''}`}>
               <span className="puesto">{g[orden] > 0 ? puestos[i] : ''}</span>
-              <span className="quien"><NombreConApodo id={g.personaId} nombre={g.nombre} /></span>
+              <span className="quien"><NombreConApodo id={g.personaId} nombre={g.nombre} enlace /></span>
               {COLUMNAS.map((c) => <span key={c.clave} className={`col ${orden === c.clave ? 'activa' : ''} ${g[c.clave] === 0 ? 'cero' : ''}`}>{g[c.clave]}</span>)}
             </div>
           ))}
