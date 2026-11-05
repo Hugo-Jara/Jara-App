@@ -10,6 +10,7 @@ const NUMEROS = ['pj', 'pg', 'pe', 'pp', 'gf', 'gc', 'pts'];
 const desdeFila = (t) => ({
   equipoId: t.equipo_id, equipo: t.equipo, torneo: t.torneo ?? '', fuente: t.fuente ?? '',
   actualizadaEn: t.actualizada_en, puedoEditar: !!t.puedo_editar,
+  conectada: !!t.conectada, deporstarTabla: t.deporstar_tabla ?? null, revisadaEn: t.revisada_en ?? null,
   filas: (t.filas ?? []).map((f) => ({ ...f, esJara: !!f.es_jara })),
 });
 
@@ -19,6 +20,9 @@ const base = {
     p_equipo: equipoId, p_torneo: torneo || null, p_fuente: fuente || null,
     p_filas: filas.map(({ esJara, ...f }) => ({ ...f, es_jara: esJara })),
   }),
+  // Traer la tabla desde la liga (0032). Sin forzar, la base decide si ya toca.
+  refrescar: (equipoId, forzar = false) => llamar('tabla_refrescar', { p_equipo: equipoId, p_forzar: forzar }),
+  conectar: (equipoId, numero) => llamar('tabla_conectar', { p_equipo: equipoId, p_deporstar: numero ?? null }),
 };
 
 // --- Modo demostración: equipos inventados, en memoria --------------------
@@ -27,7 +31,7 @@ let demo = [
   { equipoId: 'e-jueves', equipo: 'Senior Jueves', torneo: 'Liga de ejemplo · Clausura', fuente: '', actualizadaEn: new Date().toISOString(), puedoEditar: true,
     filas: [f('Rival Uno de Ejemplo', 7, 5, 1, 1, 18, 7), f('Hugo Jara', 7, 4, 2, 1, 15, 9, true), f('Rival Dos de Ejemplo', 7, 3, 2, 2, 11, 10),
             f('Rival Tres de Ejemplo', 7, 2, 1, 4, 9, 14), f('Rival Cuatro de Ejemplo', 7, 0, 2, 5, 5, 18)] },
-  { equipoId: 'e-sabado', equipo: 'Senior Sábado', torneo: 'Liga de ejemplo', fuente: '', actualizadaEn: new Date().toISOString(), puedoEditar: true,
+  { equipoId: 'e-sabado', equipo: 'Senior Sábado', torneo: 'Liga de ejemplo', fuente: '', actualizadaEn: new Date().toISOString(), puedoEditar: true, conectada: true, deporstarTabla: 71290, revisadaEn: new Date().toISOString(),
     filas: [f('Hugo Jara', 9, 6, 2, 1, 20, 8, true), f('Rival Cinco de Ejemplo', 9, 6, 1, 2, 19, 11), f('Rival Seis de Ejemplo', 9, 4, 3, 2, 14, 12),
             f('Rival Siete de Ejemplo', 9, 2, 2, 5, 10, 17), f('Rival Ocho de Ejemplo', 9, 1, 2, 6, 7, 22)] },
   { equipoId: 'e-junior', equipo: 'Junior Sábado', torneo: '', fuente: '', actualizadaEn: null, puedoEditar: true, filas: [] },
@@ -36,6 +40,13 @@ const enDemo = {
   cargar: async () => demo,
   guardar: async (equipoId, torneo, filas, fuente) => {
     demo = demo.map((t) => (t.equipoId === equipoId ? { ...t, torneo, fuente, filas, actualizadaEn: new Date().toISOString() } : t));
+  },
+  refrescar: async (equipoId, forzar) => {
+    if (forzar) demo = demo.map((t) => (t.equipoId === equipoId ? { ...t, revisadaEn: new Date().toISOString() } : t));
+    return false;
+  },
+  conectar: async (equipoId, numero) => {
+    demo = demo.map((t) => (t.equipoId === equipoId ? { ...t, deporstarTabla: numero ?? null, conectada: !!numero } : t));
   },
 };
 
@@ -47,6 +58,13 @@ export function useTablas() {
   return {
     cargando, error, tablas: datos ?? [], recargar: almacen.recargar,
     guardar: async (...a) => { await origen.guardar(...a); await almacen.recargar(); },
+    conectar: async (...a) => { await origen.conectar(...a); await almacen.recargar(); },
+    // Devuelve true si la tabla cambió.
+    refrescar: async (equipoId, forzar) => {
+      const cambio = await origen.refrescar(equipoId, forzar);
+      if (cambio || forzar) await almacen.recargar();
+      return cambio;
+    },
   };
 }
 

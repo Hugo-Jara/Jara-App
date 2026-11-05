@@ -33,6 +33,22 @@ await db.exec(`
   grant usage on schema storage to anon, authenticated;
   grant select, insert on storage.objects to anon, authenticated;
 `);
+// La extensión http de Supabase, de mentira: responde lo que diga la tabla
+// extensions.respuesta (así se prueba la 0032 sin salir a internet).
+await db.exec(`
+  create schema extensions;
+  create table extensions.respuesta (status int, content text, pedida text);
+  insert into extensions.respuesta values (200, '[]', null);
+  create type extensions.http_response as (status int, content_type varchar, content varchar);
+  create function extensions.http_set_curlopt(curlopt varchar, value varchar) returns boolean language sql as $$ select true $$;
+  create function extensions.http_get(uri varchar) returns extensions.http_response language plpgsql as $$
+  declare r extensions.http_response;
+  begin
+    update extensions.respuesta set pedida = uri;
+    select status, 'application/json', content into r from extensions.respuesta limit 1;
+    return r;
+  end $$;
+`);
 const CLUB = '10000000-0000-0000-0000-000000000001';
 const migs = readdirSync(join(here, '..', 'migrations')).filter((f) => f.endsWith('.sql')).sort();
 for (const f of migs) {
@@ -125,6 +141,58 @@ r = await como('jugador', 'select * from tablas_posiciones');
 ok('La tabla no se lee directo desde el navegador', /permission denied/.test(r.error ?? ''), r.error);
 r = await anon('select tablas_posiciones()');
 ok('Sin cuenta no se ve la tabla', /permission denied/.test(r.error ?? ''), r.error);
+
+
+console.log('\nTabla desde la liga (Deporstar)');
+const liga = (filas) => JSON.stringify(filas.map(([team, pj, pg, pe, pp, gf, gc, pts], i) =>
+  ({ fixture: 71290, team, ins: i, bonus: 0, pg, pp, pe, gf, gc, pj, dg: gf - gc, pts, ext: 0, last_results: 'G', team_delete: false, enable: true, team_img: '' })));
+const responder = (status, content) => db.query('update extensions.respuesta set status = $1, content = $2, pedida = null', [status, content]);
+await responder(200, liga([['Mantis', 4, 4, 0, 0, 14, 2, 12], ['Hugo Jara Sr', 4, 1, 1, 2, 5, 10, 4], ['Henry FC', 3, 0, 0, 3, 1, 9, 0]]));
+
+r = await como('jugador', 'select tabla_refrescar($1)', [SENIOR]);
+ok('Sin conectar no se actualiza desde la liga', /no está conectada/.test(r.error ?? ''), r.error);
+r = await como('jugador', 'select tabla_conectar($1, 71290)', [JUNIOR]);
+ok('El jugador no conecta la tabla', /Solo el encargado/.test(r.error ?? ''), r.error);
+r = await como('prueba', 'select tabla_conectar($1, 71290)', [JUNIOR]);
+ok('La cuenta de prueba no conecta la tabla', /Cuenta de prueba/.test(r.error ?? ''), r.error);
+r = await como('encargado', 'select tabla_conectar($1, 71290)', [JUNIOR]);
+ok('El encargado conecta su tabla a la liga', !r.error, r.error);
+x = (await tablas('jugador'))[0];
+ok('La tabla dice que está conectada', x.conectada === true && x.deporstar_tabla === 71290, JSON.stringify(x));
+
+r = await como('jugador', 'select tabla_refrescar($1) as cambio', [JUNIOR]);
+x = (await tablas('jugador'))[0];
+const pedida = (await db.query('select pedida from extensions.respuesta')).rows[0].pedida;
+ok('Al abrirla, cualquier socio la trae de la liga', !r.error && r.rows[0]?.cambio === true, r.error);
+ok('…pide solo la dirección de Deporstar con el número', pedida === 'https://api.deporstar.com/api/fixture/match/tabla-positions/71290/', pedida);
+ok('…y queda en orden, con el Jara marcado y los números', x.filas.map((f) => f.equipo).join() === 'Mantis,Hugo Jara Sr,Henry FC'
+  && x.filas[1].es_jara && !x.filas[0].es_jara && x.filas[1].pts === 4 && x.filas[1].gc === 10 && !('team_img' in x.filas[0]), JSON.stringify(x.filas));
+
+await responder(200, liga([['Otro', 1, 1, 0, 0, 1, 0, 3]]));
+r = await como('jugador', 'select tabla_refrescar($1) as cambio', [JUNIOR]);
+ok('Antes de 3 horas no vuelve a preguntar', !r.error && r.rows[0]?.cambio === false && (await tablas('jugador'))[0].filas.length === 3, r.error);
+r = await como('jugador', 'select tabla_refrescar($1, true)', [JUNIOR]);
+ok('El jugador no fuerza la actualización', /Solo el encargado/.test(r.error ?? ''), r.error);
+r = await como('encargado', 'select tabla_refrescar($1, true) as cambio', [JUNIOR]);
+ok('El encargado la actualiza en el acto', !r.error && r.rows[0]?.cambio === true && (await tablas('jugador'))[0].filas[0].equipo === 'Otro', r.error);
+
+await responder(500, 'error');
+r = await como('encargado', 'select tabla_refrescar($1, true)', [JUNIOR]);
+ok('Si la liga no responde, se avisa y no se borra la tabla', /no respondió/.test(r.error ?? '') && (await tablas('jugador'))[0].filas.length === 1, r.error);
+await responder(200, '<html>caído</html>');
+r = await como('encargado', 'select tabla_refrescar($1, true)', [JUNIOR]);
+ok('Si la liga responde otra cosa, tampoco', /no es una tabla/.test(r.error ?? ''), r.error);
+await responder(200, '[]');
+r = await como('encargado', 'select tabla_refrescar($1, true)', [JUNIOR]);
+ok('Una tabla vacía de la liga no borra la nuestra', /no devolvió una tabla/.test(r.error ?? '') && (await tablas('jugador'))[0].filas.length === 1, r.error);
+
+r = await como('jugador', 'select * from tabla_desde_deporstar($1::jsonb)', ['[]']);
+ok('La función interna no se llama desde el navegador', /permission denied/.test(r.error ?? ''), r.error);
+r = await anon('select tabla_refrescar($1)', [JUNIOR]);
+ok('Sin cuenta no se actualiza', /permission denied/.test(r.error ?? ''), r.error);
+r = await como('encargado', 'select tabla_conectar($1, null)', [JUNIOR]);
+x = (await tablas('jugador'))[0];
+ok('Se puede desconectar y la tabla queda', !r.error && x.conectada === false && x.filas.length === 1, r.error);
 
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);
