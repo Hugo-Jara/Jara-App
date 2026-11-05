@@ -4,6 +4,21 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-05 · La tabla de posiciones se actualiza sola desde la liga
+
+**Para qué:** que nadie tenga que copiar la tabla después de cada fecha. Las imágenes de la liga del sábado salen de Deporstar, y Deporstar entrega la tabla como datos en una dirección pública (`api.deporstar.com/api/fixture/match/tabla-positions/<número>/`), sin login.
+
+**Qué se hizo** (migración `0032_tabla_desde_la_liga.sql`, se corre antes del merge):
+- Cada plantel guarda el **número de su tabla en Deporstar** (en la app: Tabla de posiciones → "Cambiar a mano o desconectar" → campo "Número de la tabla en Deporstar").
+- **Al mirar la tabla**, si la última revisión tiene más de 3 horas, la base la va a buscar a Deporstar con la extensión `http` y la guarda (`tabla_refrescar`). El encargado tiene además **"Actualizar desde la liga"**, que la trae en el acto.
+- Solo se arma la dirección de Deporstar con un número entero: no se puede pedir otra página. Si la liga no responde, o responde algo que no es una tabla o una tabla vacía, se avisa y la tabla guardada no se toca.
+- El Jara se marca solo (el primer equipo que dice "Jara"). La carga a mano sigue para Senior Jueves (copafacil).
+- Pruebas: 17 nuevas en `supabase/tests/tabla.mjs`, con una extensión `http` de mentira (no sale a internet).
+
+**Comprobado:** `npm run build` y `npm run test:db` pasan. Pantalla revisada en modo demostración a 375 px. Falta probar con la base real.
+
+---
+
 ## 2026-11-04 · Tabla de posiciones y fechas del campeonato
 
 **Para qué:** que cualquiera vea "cómo vamos" en la liga de cada plantel y las fechas que vienen, sin salir de la app.

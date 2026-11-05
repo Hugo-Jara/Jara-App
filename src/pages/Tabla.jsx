@@ -45,20 +45,30 @@ function TablaPosiciones({ filas }) {
   );
 }
 
-function EditarTabla({ tabla, guardar, cerrar }) {
+function EditarTabla({ tabla, guardar, conectar, refrescar, cerrar }) {
   const [texto, setTexto] = useState(textoDeTabla(tabla.filas));
+  const [numero, setNumero] = useState(tabla.deporstarTabla ? String(tabla.deporstarTabla) : '');
   const [torneo, setTorneo] = useState(tabla.torneo);
   const [fuente, setFuente] = useState(tabla.fuente);
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState('');
   const { filas, problemas } = leerTabla(texto);
+  const numeroLimpio = numero.trim();
+  const numeroMalo = numeroLimpio !== '' && !/^\d{1,8}$/.test(numeroLimpio);
+  const cambiaNumero = !numeroMalo && numeroLimpio !== (tabla.deporstarTabla ? String(tabla.deporstarTabla) : '');
 
   const enviar = async (e) => {
     e.preventDefault();
-    if (problemas.length || !filas.length) return;
+    if (problemas.length || (!filas.length && !cambiaNumero)) return;
     setOcupado(true); setError('');
-    try { await guardar(tabla.equipoId, torneo.trim(), filas, fuente.trim()); cerrar(); }
-    catch (err) { setError(err.message); setOcupado(false); }
+    try {
+      if (filas.length) await guardar(tabla.equipoId, torneo.trim(), filas, fuente.trim());
+      if (cambiaNumero) {
+        await conectar(tabla.equipoId, numeroLimpio ? Number(numeroLimpio) : null);
+        if (numeroLimpio) await refrescar(tabla.equipoId, true);
+      }
+      cerrar();
+    } catch (err) { setError(err.message); setOcupado(false); }
   };
 
   return (
@@ -79,9 +89,15 @@ function EditarTabla({ tabla, guardar, cerrar }) {
       )}
       <label htmlFor="tb-fuente">Link a la página de la liga (opcional)</label>
       <input id="tb-fuente" type="url" value={fuente} onChange={(e) => setFuente(e.target.value)} placeholder="https://…" />
+      <label htmlFor="tb-deporstar">Número de la tabla en Deporstar (opcional)</label>
+      <input id="tb-deporstar" inputMode="numeric" value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="Ej.: 71290" />
+      <p className="ayuda abajo">
+        Si la liga publica la tabla en Deporstar, con este número la app la trae sola. Déjalo vacío para cargarla a mano.
+      </p>
+      {numeroMalo && <p className="error">El número de Deporstar son solo dígitos.</p>}
       {error && <p className="error" role="alert">{error}</p>}
       <div className="botones">
-        <button className="btn" disabled={ocupado || !filas.length || problemas.length > 0}>{ocupado ? 'Guardando…' : 'Guardar la tabla'}</button>
+        <button className="btn" disabled={ocupado || numeroMalo || problemas.length > 0 || (!filas.length && !cambiaNumero)}>{ocupado ? 'Guardando…' : 'Guardar la tabla'}</button>
         <button type="button" className="btn secundario" onClick={cerrar} disabled={ocupado}>Cancelar</button>
       </div>
     </form>
@@ -168,7 +184,9 @@ function CargarFixture({ equipoId, equipo, torneo, existentes, guardarUno, recar
 
 export default function Tabla() {
   const { persona } = useSesion();
-  const { cargando, error, tablas, guardar, recargar } = useTablas();
+  const { cargando, error, tablas, guardar, recargar, conectar, refrescar } = useTablas();
+  const [trayendo, setTrayendo] = useState(false);
+  const [aviso, setAviso] = useState('');
   const partidos = usePartidos(persona);
   const [elegido, setElegido] = useState(null);
   const [editando, setEditando] = useState(null); // 'tabla' | 'fixture'
@@ -183,7 +201,21 @@ export default function Tabla() {
   const proximos = partidos.partidos.filter((p) => p.equipoId === actualId).sort((a, b) => a.fecha.localeCompare(b.fecha));
   const delPlantel = partidos.todos.filter((p) => p.equipoId === actualId);
   const jara = tabla?.filas.findIndex((f) => f.esJara) ?? -1;
-  const elegir = (id) => { setElegido(id); setEditando(null); };
+  const elegir = (id) => { setElegido(id); setEditando(null); setAviso(''); };
+
+  // Si está conectada a la liga, al mirarla se revisa sola (la base decide si
+  // ya pasaron 3 horas). Sin ruido si la liga no responde.
+  const conectada = !!tabla?.conectada;
+  useEffect(() => {
+    if (actualId && conectada) refrescar(actualId).catch(() => {});
+  }, [actualId, conectada]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const traerAhora = async () => {
+    setTrayendo(true); setAviso('');
+    try { setAviso((await refrescar(tabla.equipoId, true)) ? 'Listo: la tabla quedó al día con la liga.' : 'La tabla ya estaba al día con la liga.'); }
+    catch (e) { setAviso(e.message); }
+    finally { setTrayendo(false); }
+  };
 
   return (
     <>
@@ -201,7 +233,7 @@ export default function Tabla() {
               ))}
             </div>
           )}
-          {tabla && editando === 'tabla' && <EditarTabla tabla={tabla} guardar={guardar} cerrar={() => setEditando(null)} />}
+          {tabla && editando === 'tabla' && <EditarTabla tabla={tabla} guardar={guardar} conectar={conectar} refrescar={refrescar} cerrar={() => setEditando(null)} />}
           {tabla && editando !== 'tabla' && (
             <>
               {tabla.filas.length ? (
@@ -215,6 +247,7 @@ export default function Tabla() {
                   <TablaPosiciones filas={tabla.filas} />
                   <p className="ayuda abajo">
                     {tabla.actualizadaEn ? `Actualizada el ${fechaCorta(tabla.actualizadaEn.slice(0, 10))}.` : ''}
+                    {tabla.conectada ? ' Se actualiza sola desde la liga.' : ''}
                     {tabla.fuente && <> <a className="enlace" href={tabla.fuente} target="_blank" rel="noopener noreferrer">Ver en la página de la liga</a></>}
                   </p>
                 </>
@@ -223,9 +256,15 @@ export default function Tabla() {
                   Todavía no se carga la tabla de {tabla.equipo}.{tabla.puedoEditar ? ' Cópiala de la página de la liga.' : ' La sube el encargado del plantel.'}
                 </p>
               )}
+              {aviso && <p className="ayuda abajo" role="status">{aviso}</p>}
+              {tabla.puedoEditar && tabla.conectada && (
+                <button type="button" className="btn secundario" style={{ marginTop: 12 }} onClick={traerAhora} disabled={trayendo}>
+                  {trayendo ? 'Trayendo la tabla…' : 'Actualizar desde la liga'}
+                </button>
+              )}
               {tabla.puedoEditar && (
                 <button type="button" className="btn secundario" style={{ marginTop: 12 }} onClick={() => setEditando('tabla')}>
-                  {tabla.filas.length ? 'Actualizar la tabla' : 'Cargar la tabla'}
+                  {tabla.conectada ? 'Cambiar a mano o desconectar' : tabla.filas.length ? 'Actualizar la tabla' : 'Cargar la tabla'}
                 </button>
               )}
             </>
