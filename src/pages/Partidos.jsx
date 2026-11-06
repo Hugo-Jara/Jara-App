@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import FechasLiga from '../components/FechasLiga.jsx';
-import { revisarLiga } from '../lib/liga.js';
+import { revisarLiga, actualizarLiga, useFechasLiga } from '../lib/liga.js';
+import { useTablas } from '../lib/tabla.js';
 import Tabla from './Tabla.jsx';
 import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos, porEstado, sinResponder, tieneResultado, textoResultado, signo } from '../lib/partidos.js';
@@ -163,6 +164,39 @@ const PESTANAS = [
   { v: 'tabla', texto: 'Tabla' },
 ];
 
+// Un solo botón trae todo de la liga: las fechas y las tablas conectadas de
+// los planteles que la persona puede actualizar.
+function ActualizarLiga({ alTerminar }) {
+  const { conectados } = useFechasLiga();
+  const { tablas, refrescar } = useTablas();
+  const [trayendo, setTrayendo] = useState(false);
+  const [aviso, setAviso] = useState('');
+  const fechas = conectados.filter((c) => c.puedoActualizar);
+  const tablasConectadas = tablas.filter((t) => t.conectada && t.puedoEditar);
+  if (!fechas.length && !tablasConectadas.length) return null;
+  const traer = async () => {
+    setTrayendo(true); setAviso('');
+    const fallas = [];
+    for (const c of fechas) {
+      try { await actualizarLiga(c.equipoId); } catch (e) { fallas.push(e.message); }
+    }
+    for (const t of tablasConectadas) {
+      try { await refrescar(t.equipoId, true, t.grupo); } catch (e) { fallas.push(e.message); }
+    }
+    await alTerminar?.();
+    setAviso(fallas.length ? fallas[0] : 'Listo: fechas y tablas al día con la liga.');
+    setTrayendo(false);
+  };
+  return (
+    <>
+      <button type="button" className="btn secundario liga-actualizar" onClick={traer} disabled={trayendo}>
+        {trayendo ? 'Actualizando…' : 'Actualizar la liga'}
+      </button>
+      {aviso && <p className="ayuda liga-aviso" role="status">{aviso}</p>}
+    </>
+  );
+}
+
 export default function LaLiga() {
   const { persona } = useSesion();
   const { recargar } = usePartidos(persona);
@@ -173,7 +207,10 @@ export default function LaLiga() {
   const v = PESTANAS.some((p) => p.v === params.get('v')) ? params.get('v') : 'partidos';
   return (
     <>
-      <h1 className="titulo display">La liga</h1>
+      <div className="liga-cabeza">
+        <h1 className="titulo display">La liga</h1>
+        <ActualizarLiga alTerminar={recargar} />
+      </div>
       <div className="posiciones-pestanas liga-pestanas" role="tablist" aria-label="La liga">
         {PESTANAS.map((p) => (
           <button key={p.v} type="button" role="tab" aria-selected={p.v === v} className={p.v === v ? 'activa' : ''}

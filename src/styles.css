@@ -665,3 +665,7 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .liga-partido-equipo { font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .liga-partido-equipo.gana { font-weight: 700; }
 .liga-partido-goles { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; min-width: 1.5em; }
+.liga-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.liga-cabeza .titulo { margin-bottom: 0; }
+.btn.liga-actualizar { width: auto; padding: 8px 14px; font-size: 14px; margin: 0; }
+.liga-aviso { margin: 6px 0 0; width: 100%; }
