@@ -67,7 +67,8 @@ function EditarTabla({ tabla, nueva, otras, conocidos, guardar, borrar, conectar
   const numeroMalo = numeroLimpio !== '' && !/^\d{1,8}$/.test(numeroLimpio);
   const cambiaNumero = !numeroMalo && numeroLimpio !== (base.deporstarTabla ? String(base.deporstarTabla) : '');
   const grupoLimpio = grupo.trim().slice(0, 30);
-  const conPestanas = nueva || otras.length > 0 || base.grupo !== '';
+  const [nombrar, setNombrar] = useState(false); // el pantallazo trajo el nombre del grupo
+  const conPestanas = nueva || nombrar || otras.length > 0 || base.grupo !== '';
   const grupoMalo = conPestanas && (!grupoLimpio || otras.some((o) => o.toLowerCase() === grupoLimpio.toLowerCase()));
 
   const leer = async (e) => {
@@ -83,7 +84,7 @@ function EditarTabla({ tabla, nueva, otras, conocidos, guardar, borrar, conectar
       }
       setTexto(textoDeTabla(r.filas));
       setAvisos(r.avisos);
-      if (r.grupo && conPestanas && !grupoLimpio) setGrupo(r.grupo);
+      if (r.grupo && !grupoLimpio) { setGrupo(r.grupo); setNombrar(true); }
     } catch (err) {
       setError(`No se pudo leer el pantallazo (${err.message}). Revisa la conexión e intenta de nuevo.`);
     } finally { setLeyendo(null); }
