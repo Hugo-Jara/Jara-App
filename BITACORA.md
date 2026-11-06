@@ -4,6 +4,20 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-06 · Tabla del jueves: pantallazo del celular y editor más simple
+
+**Para qué:** en el celular copafacil muestra solo PTS J G E P y el pantallazo no se leía. Además, el editor tenía demasiados campos para lo que se usa hoy (sábados conectados a Deporstar, jueves con foto).
+
+**Qué se hizo** (sin migración):
+- La lectura entiende la tabla del celular (sin goles). Si el pantallazo trae varios grupos, se queda con el del Jara. Si la tabla guardada tenía goles y el pantallazo no, avisa antes de guardar (mejor la página al 50% o el teléfono horizontal).
+- Si ninguna fila trae goles, la tabla no muestra GF, GC ni DG.
+- Un solo botón, "Actualizar con un pantallazo": se elige la imagen, la app la lee, muestra cómo queda y en qué pestaña se guarda ("GRUPO A" → Grupo A; si no dice grupo, General). Ya no hace falta "Agregar otra tabla".
+- El cuadro para escribir a mano y las opciones de la liga (campeonato, link, número de Deporstar) quedan escondidos en "Corregir a mano" y "Más opciones".
+
+**Comprobado:** `npm run build`, `npm run test:db` y `npm run test:captura` (prueba nueva con el pantallazo del celular) pasan. Probado en modo demostración con el pantallazo real.
+
+---
+
 ## 2026-11-06 · Tabla del jueves desde un pantallazo, con pestañas Grupo A y General
 
 **Para qué:** la liga del Senior Jueves (copafacil) no entrega la tabla como datos, y copiarla a mano cada fecha es lento. Además publica dos tablas: la del grupo y la general.

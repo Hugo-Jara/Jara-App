@@ -36,6 +36,17 @@ test('Con los nombres de la tabla anterior, se corrigen los mal leídos', () => 
   assert.equal(r.filas[3].equipo, 'Peselaco');
 });
 
+test('Pantallazo del celular: solo PTS J G E P, y se queda con el grupo del Jara', () => {
+  const r = tablaDesdeTexto(leer('ocr-copafacil-celular.txt'));
+  assert.equal(r.grupo, 'Grupo A');
+  assert.equal(r.conGoles, false);
+  assert.deepEqual(r.avisos, []);
+  assert.deepEqual(r.filas.map((f) => `${f.equipo} ${f.pj} ${f.pg} ${f.pe} ${f.pp} ${f.pts}`), [
+    'Monarcas 6 4 1 1 13', 'Peselaco 6 4 1 1 13', 'Canadiense 6 3 2 1 11', 'Warriors 6 3 1 2 10',
+    'Mota Classic 6 3 1 2 10', 'Hugo Jara 6 2 0 4 6', 'Sagrados 6 1 2 3 5', 'Cupo Libre 6 0 0 6 0',
+  ]);
+});
+
 test('Si una fila no cuadra, se avisa', () => {
   const r = tablaDesdeTexto('Hugo Jara 9 6 2 0 4 9 10 -1 33');
   assert.equal(r.filas.length, 1);

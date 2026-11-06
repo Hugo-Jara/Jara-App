@@ -9,6 +9,8 @@
 // Las columnas que pueden venir después del nombre, según la página. Se elige
 // la que cuadra (PJ = G + E + P y Pts = 3G + E).
 const FORMATOS = {
+  5: [['pts', 'pj', 'pg', 'pe', 'pp'], ['pj', 'pg', 'pe', 'pp', 'pts']],
+  6: [['pts', 'pj', 'pg', 'pe', 'pp'], ['pj', 'pg', 'pe', 'pp', 'pts']],
   9: [['pts', 'pj', 'pg', 'pe', 'pp', 'gf', 'gc', 'dg', 'pct']],
   8: [['pts', 'pj', 'pg', 'pe', 'pp', 'gf', 'gc', 'dg'], ['pj', 'pg', 'pe', 'pp', 'gf', 'gc', 'dg', 'pts']],
   7: [['pts', 'pj', 'pg', 'pe', 'pp', 'gf', 'gc'], ['pj', 'pg', 'pe', 'pp', 'gf', 'gc', 'pts']],
@@ -59,6 +61,7 @@ export function limpiarNombre(palabras, conocidos = []) {
   let nombre = t.join(' ').trim();
   if (!nombre) return '';
   nombre = nombre[0].toUpperCase() + nombre.slice(1);
+  nombre = nombre.replace(/(\p{Ll})(\p{Lu})/gu, '$1 $2'); // "CupoLibre" → "Cupo Libre"
 
   const cerca = conocidos
     .map((k) => ({ k, d: distancia(normal(k), normal(nombre)) }))
@@ -67,17 +70,19 @@ export function limpiarNombre(palabras, conocidos = []) {
   return (cerca?.k ?? nombre).slice(0, 60);
 }
 
-// Del texto leído a las filas. Devuelve también el grupo si la imagen lo dice
-// ("GRUPO A") y avisos de filas que no cuadran, para que se revisen.
+// Del texto leído a las filas. Si la imagen trae varios grupos ("GRUPO A",
+// "GRUPO B"), se queda con el del Jara y devuelve su nombre; si no dice grupo,
+// es la tabla general. Avisa de filas que no cuadran, para que se revisen.
+// En el celular copafacil muestra solo PTS J G E P: los goles quedan en 0 y
+// conGoles en false (la app no muestra esas columnas).
 export function tablaDesdeTexto(texto, conocidos = []) {
-  const filas = [];
-  const avisos = [];
-  let grupo = '';
+  const secciones = [{ grupo: '', filas: [], avisos: [] }];
   for (const linea of texto.split('\n')) {
     const limpia = linea.replace(/[—–]/g, '-').replace(/[|“”"]/g, ' ').trim();
     if (!limpia) continue;
     const g = limpia.match(/\bgrupo\s+([a-z0-9]{1,2})\s*$/i);
-    if (g) { grupo = `Grupo ${g[1].toUpperCase()}`; continue; }
+    if (g) { secciones.push({ grupo: `Grupo ${g[1].toUpperCase()}`, filas: [], avisos: [] }); continue; }
+    const actual = secciones.at(-1);
 
     const palabras = limpia.split(/\s+/);
     const nums = [];
@@ -88,10 +93,7 @@ export function tablaDesdeTexto(texto, conocidos = []) {
       else break;
       palabras.pop();
     }
-    if (nums.length < 7) {
-      if (nums.length >= 4 && palabras.some((x) => /\p{L}{3,}/u.test(x))) avisos.push(`No se pudo leer bien: "${linea.trim()}". Agrégala a mano.`);
-      continue;
-    }
+    if (nums.length < 5 || !palabras.some((x) => /\p{L}{2,}/u.test(x))) continue;
     const v = nums.slice(-9);
     const candidatos = (FORMATOS[v.length] ?? FORMATOS[9]).map((cols) => {
       const f = {};
@@ -100,13 +102,16 @@ export function tablaDesdeTexto(texto, conocidos = []) {
     });
     const f = candidatos.sort((a, b) => cuadra(b) - cuadra(a))[0];
     const equipo = limpiarNombre(palabras, conocidos);
-    if (!equipo) { avisos.push(`Falta el nombre en: "${linea.trim()}".`); continue; }
+    if (!equipo) continue;
     if (f.pj !== f.pg + f.pe + f.pp || f.pts !== f.pg * 3 + f.pe) {
-      avisos.push(`Revisa ${equipo}: los números no cuadran (puede ser un error de lectura o un descuento de puntos).`);
+      actual.avisos.push(`Revisa ${equipo}: los números no cuadran (puede ser un error de lectura o un descuento de puntos).`);
     }
-    filas.push({ equipo, pj: f.pj, pg: f.pg, pe: f.pe, pp: f.pp, gf: f.gf, gc: f.gc, pts: f.pts });
+    actual.filas.push({ equipo, pj: f.pj, pg: f.pg, pe: f.pe, pp: f.pp, gf: f.gf ?? 0, gc: f.gc ?? 0, pts: f.pts });
   }
-  return { filas, grupo, avisos };
+  const conFilas = secciones.filter((x) => x.filas.length);
+  const elegida = conFilas.find((x) => x.filas.some((f) => /jara/i.test(f.equipo))) ?? conFilas[0] ?? secciones[0];
+  const conGoles = elegida.filas.some((f) => f.gf || f.gc);
+  return { filas: elegida.filas, grupo: elegida.grupo, avisos: elegida.avisos, conGoles };
 }
 
 // La imagen, agrandada y en blanco y negro (así se lee mucho mejor).
