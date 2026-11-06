@@ -1,0 +1,12 @@
+aeFase                                                                     Porgupo - Genera
+GRUPO A
+Pos EQUIPOS                  PTS       J        G        E        p       GF      GC      DIF       %
+  Ó Monarcas             13       6        4        1        1       22       11       11       72
+ Q Peselaco             13       6       4        1        1       15       9        6       72
+ N Canadiense            11       6        3        2        1        13       8        5       61
+ A Warriors              10       6       3        1        2       16       14       2       56
+ E Mota Classic           10       6        3        1        2        8       10       -2       56
+E TN Hugo Jara             6       6       2       0       4       9       10       1       33
+ O Sagrados             5       6       1        2       3       11       14       -3       28
+E “7 Cupo Libre            0       6       0       0       6       0       18      -18       0
+
