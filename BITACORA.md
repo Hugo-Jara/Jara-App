@@ -4,6 +4,20 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-06 · Tabla del jueves desde un pantallazo, con pestañas Grupo A y General
+
+**Para qué:** la liga del Senior Jueves (copafacil) no entrega la tabla como datos, y copiarla a mano cada fecha es lento. Además publica dos tablas: la del grupo y la general.
+
+**Qué se hizo** (migración `0036_varias_tablas_por_plantel.sql`, se corre antes del merge):
+- Un plantel puede tener varias tablas, cada una con su nombre, y se ven con pestañas sobre la tabla. Con una sola tabla no aparece pestaña (los sábados quedan igual, conectados a Deporstar).
+- "Subir un pantallazo de la tabla" en el editor: la app agranda la imagen, la pasa a blanco y negro y la lee con Tesseract en el mismo teléfono (sin llaves ni costo; la imagen no sale del teléfono). Llena el cuadro de texto para revisar antes de guardar. Entiende el orden de copafacil (Pts J G E P GF GC DIF %) y el de siempre, limpia lo que lee de los escudos, usa los nombres ya cargados para corregir los mal leídos, toma "GRUPO A" como nombre de la pestaña y avisa si una fila no cuadra (PJ = G + E + P, Pts = 3G + E).
+- Botones "Agregar otra tabla" y "Borrar esta pestaña" para el encargado.
+- Pruebas: 11 nuevas en `supabase/tests/tabla.mjs` y `tests/captura.test.mjs` (lectura de dos pantallazos reales, `npm run test:captura`).
+
+**Comprobado:** `npm run build`, `npm run test:db` y `npm run test:captura` pasan. Probado en modo demostración con el pantallazo de la tabla general: las 16 filas salen bien.
+
+---
+
 ## 2026-11-05 · Cómo va la votación del jugador del partido, con barras, y cierre cuando votan todos
 
 **Para qué:** ver cuántos votos lleva cada uno después de votar, no solo al cierre.

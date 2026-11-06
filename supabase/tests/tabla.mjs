@@ -194,5 +194,37 @@ r = await como('encargado', 'select tabla_conectar($1, null)', [JUNIOR]);
 x = (await tablas('jugador'))[0];
 ok('Se puede desconectar y la tabla queda', !r.error && x.conectada === false && x.filas.length === 1, r.error);
 
+console.log('\nVarias tablas por plantel (0036)');
+const guardarEn = (quien, grupo, filas, antes = null) =>
+  como(quien, 'select tabla_guardar($1, $2, $3::jsonb, null, $4, $5)', [JUNIOR, 'Liga Inventada', JSON.stringify(filas), grupo, antes]);
+r = await guardarEn('encargado', 'General', [fila('Rival Uno', 5), fila('Hugo Jara', 2, { es_jara: true })]);
+x = (await tablas('jugador')).filter((t) => t.equipo_id === JUNIOR);
+ok('El encargado agrega una segunda pestaña', !r.error && x.length === 2 && x[0].grupo === '' && x[1].grupo === 'General' && x[1].filas.length === 2, r.error ?? JSON.stringify(x));
+ok('La primera pestaña sigue igual (con su conexión)', x[0].filas.length === 1 && x[0].conectada === false);
+r = await guardarEn('encargado', 'Grupo A', [fila('Rival Uno', 5)], '');
+x = (await tablas('jugador')).filter((t) => t.equipo_id === JUNIOR);
+ok('Se puede renombrar una pestaña', !r.error && x.map((t) => t.grupo).join() === 'Grupo A,General', r.error ?? JSON.stringify(x.map((t) => t.grupo)));
+r = await guardarEn('encargado', 'General', [fila('Rival Uno', 5)], 'Grupo A');
+ok('No se puede renombrar a un nombre que ya existe', /Ya hay una tabla/.test(r.error ?? ''), r.error);
+r = await guardarEn('jugador', 'Otra', [fila('Rival Uno', 5)]);
+ok('El jugador no agrega pestañas', /Solo el encargado/.test(r.error ?? ''), r.error);
+r = await guardarEn('encargado', 'x'.repeat(40), [fila('Rival Uno', 5)]);
+x = (await tablas('jugador')).filter((t) => t.equipo_id === JUNIOR);
+ok('El nombre de la pestaña se corta a 30 letras', !r.error && x.some((t) => t.grupo === 'x'.repeat(30)), r.error);
+r = await como('jugador', 'select tabla_borrar($1, $2)', [JUNIOR, 'General']);
+ok('El jugador no borra pestañas', /Solo el encargado/.test(r.error ?? ''), r.error);
+r = await como('prueba', 'select tabla_borrar($1, $2)', [JUNIOR, 'General']);
+ok('La cuenta de prueba no borra pestañas', !!r.error, r.error);
+r = await como('encargado', 'select tabla_borrar($1, $2)', [JUNIOR, 'x'.repeat(30)]);
+x = (await tablas('jugador')).filter((t) => t.equipo_id === JUNIOR);
+ok('El encargado borra una pestaña', !r.error && x.map((t) => t.grupo).join() === 'Grupo A,General', r.error ?? JSON.stringify(x.map((t) => t.grupo)));
+await como('encargado', 'select tabla_conectar($1, 555, $2)', [JUNIOR, 'General']);
+await responder(200, liga([['Liga Uno', 1, 1, 0, 0, 1, 0, 3], ['Hugo Jara', 1, 0, 0, 1, 0, 1, 0]]));
+r = await como('encargado', 'select tabla_refrescar($1, true, $2) as cambio', [JUNIOR, 'General']);
+x = (await tablas('jugador')).filter((t) => t.equipo_id === JUNIOR);
+ok('Cada pestaña se conecta y actualiza por su cuenta', !r.error && x[1].filas[0].equipo === 'Liga Uno' && x[1].conectada && x[0].filas.length === 1 && !x[0].conectada, r.error ?? JSON.stringify(x));
+r = await anon('select tabla_borrar($1, $2)', [JUNIOR, 'General']);
+ok('Sin cuenta no se borra', /permission denied/.test(r.error ?? ''), r.error);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);
