@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { tablaDesdeTexto, limpiarNombre } from '../src/lib/captura.js';
+import { tablaDesdeTexto, limpiarNombre, leerPorColumnas } from '../src/lib/captura.js';
 
 const leer = (f) => readFileSync(new URL(`./fixtures/${f}`, import.meta.url), 'utf8');
 const linea = (f) => [f.equipo, f.pj, f.pg, f.pe, f.pp, f.gf, f.gc, f.pts].join(' ');
@@ -66,4 +66,33 @@ test('Limpieza de nombres', () => {
   assert.equal(limpiarNombre(['3', 'Los', 'Andes']), 'Los Andes');
   assert.equal(limpiarNombre(['a', 'TEN', 'Hugo', 'Jara']), 'Hugo Jara');
   assert.equal(limpiarNombre(['CD', 'Universidad']), 'CD Universidad');
+});
+
+// Una lectura de mentira: palabras con su posición, como las entrega Tesseract.
+function lecturaDeMentira(filasTabla) {
+  const caja = (x, y, w = 40) => ({ x0: x - w / 2, y0: y - 15, x1: x + w / 2, y1: y + 15 });
+  const linea = (palabras) => ({ text: palabras.map((p) => p.text).join(' '), bbox: caja(500, palabras[0].bbox.y0 + 15, 1000), words: palabras });
+  const X = { pts: 400, pj: 460, pg: 520, pe: 580, pp: 640 };
+  const lines = [
+    linea([{ text: 'GRUPO', bbox: caja(40, 50) }, { text: 'A', bbox: caja(90, 50, 10) }]),
+    linea([{ text: 'EQUIPOS', bbox: caja(100, 100) }, ...Object.entries(X).map(([k, x]) => ({ text: k === 'pj' ? 'J' : k === 'pg' ? 'G' : k === 'pe' ? 'E' : k === 'pp' ? 'P' : 'PTS', bbox: caja(x, 100) }))]),
+    ...filasTabla.map(([nombre, ...n], i) => linea([...nombre.split(' ').map((t, k) => ({ text: t, bbox: caja(60 + k * 90, 160 + i * 60, 80) })), ...n.map((v, j) => ({ text: String(v), bbox: caja(Object.values(X)[j], 160 + i * 60) }))])),
+  ];
+  return {
+    alto: 1000,
+    recortar: (x, y, ancho, alto) => ({ x, y, ancho, alto }),
+    leer: async (r) => {
+      if (!r) return { lines };
+      const words = lines.slice(2).flatMap((l) => l.words)
+        .filter((w) => /^\d+$/.test(w.text) && (w.bbox.x0 + w.bbox.x1) / 2 > r.x && (w.bbox.x0 + w.bbox.x1) / 2 < r.x + r.ancho)
+        .map((w) => ({ text: w.text, bbox: { ...w.bbox, y0: w.bbox.y0 - r.y, y1: w.bbox.y1 - r.y } }));
+      return { lines: [{ text: '', bbox: {}, words }] };
+    },
+  };
+}
+
+test('Por columnas: el "GRUPO A" de arriba de los títulos da el nombre de la pestaña', async () => {
+  const r = await leerPorColumnas(lecturaDeMentira([['Monarcas', 13, 6, 4, 1, 1], ['Hugo Jara', 6, 6, 2, 0, 4]]));
+  assert.equal(r.grupo, 'Grupo A');
+  assert.deepEqual(r.filas.map((f) => `${f.equipo} ${f.pts} ${f.pj}`), ['Monarcas 13 6', 'Hugo Jara 6 6']);
 });

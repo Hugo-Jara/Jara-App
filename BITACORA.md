@@ -4,6 +4,20 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-06 · Las dos tablas del jueves y quién las carga
+
+**Para qué:** al subir los dos pantallazos (grupo y general) quedaba una sola tabla, y la tabla solo la podía cargar el encargado del plantel.
+
+**Qué se hizo** (migración `0037_tabla_la_carga_quien_anota.sql`, se corre antes del merge):
+- Arreglo: en la lectura por columnas, el "GRUPO A" está antes de la fila de títulos y no se veía, así que el pantallazo del grupo también quedaba como "General" y reemplazaba a la otra. Ahora cada uno va a su pestaña.
+- Bajo el nombre de la pestaña se dice si la reemplaza o si queda como pestaña nueva.
+- La tabla la cargan, actualizan y borran también quienes anotan partidos (`puedo_anotar`); las cuentas de prueba siguen solo mirando.
+- Pruebas: 4 nuevas en `supabase/tests/tabla.mjs` y una en `tests/captura.test.mjs`.
+
+**Comprobado:** `npm run build`, `npm run test:db` y `npm run test:captura` pasan. En el navegador, subir el pantallazo del grupo y el de la general deja las dos pestañas.
+
+---
+
 ## 2026-11-06 · Pantallazo de la tabla: lectura por columnas
 
 **Para qué:** con la página al 50% los números quedan chicos y la lectura de la línea entera se equivocaba ("11" salía "1", "9" salía "e)") y hasta perdía un equipo.
