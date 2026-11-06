@@ -12,11 +12,17 @@ import Icono from '../components/Icono.jsx';
 // todas las fechas del campeonato de una vez. Un plantel puede tener varias
 // tablas (ej. "Grupo A" y "General"), que se ven con pestañas (0036).
 
+// Pantallazo del celular sin goles: cómo sacar la tabla completa.
+const SIN_GOLES = 'Faltan los goles (GF, GC y diferencia). Para la tabla completa, achica la página de la liga al 50% en tu celular (menú del navegador > zoom) y saca el pantallazo de nuevo.';
+
 const conSigno = (n) => (n > 0 ? `+${n}` : String(n));
 
+// En el celular copafacil no muestra los goles: si ninguna fila los trae, no
+// se muestran esas columnas.
 function TablaPosiciones({ filas }) {
+  const goles = filas.some((f) => f.gf || f.gc);
   return (
-    <div className="card posiciones" role="table" aria-label="Tabla de posiciones">
+    <div className={`card posiciones ${goles ? '' : 'sin-goles'}`} role="table" aria-label="Tabla de posiciones">
       <div className="posiciones-fila cabeza" role="row">
         <span className="posiciones-puesto" role="columnheader">#</span>
         <span className="posiciones-equipo" role="columnheader">Equipo</span>
@@ -24,9 +30,13 @@ function TablaPosiciones({ filas }) {
         <span className="posiciones-col" role="columnheader" title="Ganados">G</span>
         <span className="posiciones-col" role="columnheader" title="Empatados">E</span>
         <span className="posiciones-col" role="columnheader" title="Perdidos">P</span>
-        <span className="posiciones-col ancho" role="columnheader" title="Goles a favor">GF</span>
-        <span className="posiciones-col ancho" role="columnheader" title="Goles en contra">GC</span>
-        <span className="posiciones-col" role="columnheader" title="Diferencia de gol">DG</span>
+        {goles && (
+          <>
+            <span className="posiciones-col ancho" role="columnheader" title="Goles a favor">GF</span>
+            <span className="posiciones-col ancho" role="columnheader" title="Goles en contra">GC</span>
+            <span className="posiciones-col" role="columnheader" title="Diferencia de gol">DG</span>
+          </>
+        )}
         <span className="posiciones-col pts" role="columnheader" title="Puntos">Pts</span>
       </div>
       {filas.map((f, i) => (
@@ -37,9 +47,13 @@ function TablaPosiciones({ filas }) {
           <span className="posiciones-col">{f.pg}</span>
           <span className="posiciones-col">{f.pe}</span>
           <span className="posiciones-col">{f.pp}</span>
-          <span className="posiciones-col ancho">{f.gf}</span>
-          <span className="posiciones-col ancho">{f.gc}</span>
-          <span className="posiciones-col">{conSigno(diferencia(f))}</span>
+          {goles && (
+            <>
+              <span className="posiciones-col ancho">{f.gf}</span>
+              <span className="posiciones-col ancho">{f.gc}</span>
+              <span className="posiciones-col">{conSigno(diferencia(f))}</span>
+            </>
+          )}
           <span className="posiciones-col pts">{f.pts}</span>
         </div>
       ))}
@@ -47,16 +61,19 @@ function TablaPosiciones({ filas }) {
   );
 }
 
-// nueva: se está agregando otra pestaña al plantel. otras: los nombres de las
-// demás pestañas. conocidos: nombres de equipos ya cargados (para corregir lo
-// que se lea mal del pantallazo).
-function EditarTabla({ tabla, nueva, otras, conocidos, guardar, borrar, conectar, refrescar, cerrar }) {
-  const base = nueva ? { ...tabla, grupo: '', filas: [], deporstarTabla: null, fuente: '' } : tabla;
-  const [texto, setTexto] = useState(textoDeTabla(base.filas));
-  const [grupo, setGrupo] = useState(base.grupo);
-  const [numero, setNumero] = useState(base.deporstarTabla ? String(base.deporstarTabla) : '');
-  const [torneo, setTorneo] = useState(base.torneo ?? '');
-  const [fuente, setFuente] = useState(base.fuente ?? '');
+// El encargado actualiza la tabla con un pantallazo: la app lo lee, muestra
+// cómo queda y en qué pestaña se guarda ("GRUPO A" → Grupo A; si la imagen no
+// dice grupo, General). Corregir a mano y las opciones de la liga quedan a un
+// toque, escondidas.
+function EditarTabla({ tabla, pestanas, conocidos, archivoInicial, guardar, borrar, conectar, refrescar, cerrar }) {
+  const [texto, setTexto] = useState(textoDeTabla(tabla.filas));
+  const [destino, setDestino] = useState(tabla.grupo);
+  const [leido, setLeido] = useState(false);
+  const [manual, setManual] = useState(false);
+  const [opciones, setOpciones] = useState(false);
+  const [numero, setNumero] = useState(tabla.deporstarTabla ? String(tabla.deporstarTabla) : '');
+  const [torneo, setTorneo] = useState(tabla.torneo ?? '');
+  const [fuente, setFuente] = useState(tabla.fuente ?? '');
   const [ocupado, setOcupado] = useState(false);
   const [leyendo, setLeyendo] = useState(null); // avance de 0 a 1 mientras lee el pantallazo
   const [avisos, setAvisos] = useState([]);
@@ -65,38 +82,47 @@ function EditarTabla({ tabla, nueva, otras, conocidos, guardar, borrar, conectar
   const { filas, problemas } = leerTabla(texto);
   const numeroLimpio = numero.trim();
   const numeroMalo = numeroLimpio !== '' && !/^\d{1,8}$/.test(numeroLimpio);
-  const cambiaNumero = !numeroMalo && numeroLimpio !== (base.deporstarTabla ? String(base.deporstarTabla) : '');
-  const grupoLimpio = grupo.trim().slice(0, 30);
-  const [nombrar, setNombrar] = useState(false); // el pantallazo trajo el nombre del grupo
-  const conPestanas = nueva || nombrar || otras.length > 0 || base.grupo !== '';
-  const grupoMalo = conPestanas && (!grupoLimpio || otras.some((o) => o.toLowerCase() === grupoLimpio.toLowerCase()));
+  const cambiaNumero = !numeroMalo && numeroLimpio !== (tabla.deporstarTabla ? String(tabla.deporstarTabla) : '');
+  const g = destino.trim().slice(0, 30);
+  const cambiaFilas = leido || manual;
+  const listo = !problemas.length && !numeroMalo && ((cambiaFilas && filas.length > 0) || cambiaNumero || (opciones && !cambiaFilas && tabla.filas.length > 0));
 
-  const leer = async (e) => {
-    const img = e.target.files?.[0];
-    e.target.value = '';
+  const leer = async (img) => {
     if (!img) return;
     setLeyendo(0); setError(''); setAvisos([]);
     try {
       const r = await leerCaptura(img, conocidos, setLeyendo);
       if (!r.filas.length) {
-        setError('No se encontró una tabla en la imagen. Prueba con un pantallazo más nítido, solo de la tabla.');
+        setError('No se encontró una tabla en la imagen. Prueba con un pantallazo solo de la tabla, donde se vean los nombres y los puntos.');
         return;
       }
+      const nombre = r.grupo || 'General';
+      const antes = pestanas.find((t) => t.grupo === nombre) ?? (pestanas.length === 1 ? pestanas[0] : null);
+      const perdidos = !r.conGoles && antes?.filas.some((f) => f.gf || f.gc);
       setTexto(textoDeTabla(r.filas));
-      setAvisos(r.avisos);
-      if (r.grupo && !grupoLimpio) { setGrupo(r.grupo); setNombrar(true); }
+      setAvisos([...(perdidos ? ['Este pantallazo no trae los goles y la tabla guardada sí los tiene: si guardas, se pierden. Mejor saca el pantallazo con la página al 50% (o el teléfono horizontal).'] : []), ...r.avisos]);
+      setDestino(nombre);
+      setLeido(true);
     } catch (err) {
       setError(`No se pudo leer el pantallazo (${err.message}). Revisa la conexión e intenta de nuevo.`);
     } finally { setLeyendo(null); }
   };
+  useEffect(() => { if (archivoInicial) leer(archivoInicial); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const enviar = async (e) => {
     e.preventDefault();
-    if (problemas.length || grupoMalo || (!filas.length && !cambiaNumero)) return;
+    if (!listo) return;
     setOcupado(true); setError('');
-    const g = conPestanas ? grupoLimpio : '';
+    // Se guarda en la pestaña con ese nombre (si existe, se reemplaza). Si el
+    // plantel solo tenía la tabla vacía de siempre, esa pasa a tener el nombre.
+    const existe = pestanas.some((t) => t.grupo === g);
+    const vacia = pestanas.find((t) => t.grupo === '' && !t.filas.length && !t.conectada);
+    const antes = existe ? g : g === tabla.grupo ? tabla.grupo : vacia ? '' : !leido ? tabla.grupo : null;
     try {
-      if (filas.length) await guardar(tabla.equipoId, torneo.trim(), filas, fuente.trim(), g, nueva ? null : base.grupo);
+      if (cambiaFilas || opciones) {
+        const lasFilas = cambiaFilas ? filas : tabla.filas;
+        if (lasFilas.length) await guardar(tabla.equipoId, torneo.trim(), lasFilas, fuente.trim(), g, antes);
+      }
       if (cambiaNumero) {
         await conectar(tabla.equipoId, numeroLimpio ? Number(numeroLimpio) : null, g);
         if (numeroLimpio) await refrescar(tabla.equipoId, true, g);
@@ -106,59 +132,78 @@ function EditarTabla({ tabla, nueva, otras, conocidos, guardar, borrar, conectar
   };
 
   const quitar = async () => {
-    if (!window.confirm(`¿Borrar la tabla "${base.grupo || 'Tabla'}" de ${tabla.equipo}?`)) return;
+    if (!window.confirm(`¿Borrar la tabla "${tabla.grupo || 'Tabla'}" de ${tabla.equipo}?`)) return;
     setOcupado(true); setError('');
-    try { await borrar(tabla.equipoId, base.grupo); cerrar(null); }
+    try { await borrar(tabla.equipoId, tabla.grupo); cerrar(null); }
     catch (err) { setError(err.message); setOcupado(false); }
   };
 
   return (
     <form className="card" onSubmit={enviar}>
-      <h2 className="posiciones-form-titulo">{nueva ? 'Otra tabla' : 'Actualizar la tabla'} · {tabla.equipo}</h2>
-      {conPestanas && (
-        <>
-          <label htmlFor="tb-grupo">Nombre de la pestaña</label>
-          <input id="tb-grupo" value={grupo} maxLength={30} onChange={(e) => setGrupo(e.target.value)} placeholder="Ej.: Grupo A o General" />
-          {grupoMalo && <p className="error">{grupoLimpio ? 'Ya hay una pestaña con ese nombre.' : 'Ponle un nombre a la pestaña.'}</p>}
-        </>
+      <h2 className="posiciones-form-titulo">Actualizar la tabla · {tabla.equipo}</h2>
+      <input ref={archivo} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; leer(f); }} />
+      <button type="button" className={`btn ${leido ? 'secundario' : ''}`} style={{ marginTop: 12 }} onClick={() => archivo.current?.click()} disabled={ocupado || leyendo != null}>
+        {leyendo != null ? `Leyendo el pantallazo… ${Math.round(leyendo * 100)}%` : leido ? 'Subir otro pantallazo' : 'Subir un pantallazo de la tabla'}
+      </button>
+      {!leido && (
+        <p className="ayuda abajo">Sirve el de "Por grupo" o el de "General". Con el teléfono horizontal salen también los goles.</p>
       )}
-      <div className="posiciones-captura">
-        <input ref={archivo} type="file" accept="image/*" hidden onChange={leer} />
-        <button type="button" className="btn secundario" onClick={() => archivo.current?.click()} disabled={ocupado || leyendo != null}>
-          {leyendo != null ? `Leyendo el pantallazo… ${Math.round(leyendo * 100)}%` : 'Subir un pantallazo de la tabla'}
-        </button>
-        <p className="ayuda abajo">
-          La app lee la imagen y llena la tabla de abajo. Revísala antes de guardar: a veces confunde un número o un nombre.
-        </p>
-      </div>
-      {avisos.map((a) => <p key={a} className="aviso-captura">{a}</p>)}
-      <label htmlFor="tb-torneo">Campeonato (opcional)</label>
-      <input id="tb-torneo" value={torneo} maxLength={80} onChange={(e) => setTorneo(e.target.value)} placeholder="Ej.: Clausura 2026" />
-      <label htmlFor="tb-texto">La tabla, una línea por equipo</label>
-      <p className="ayuda">En orden: equipo, PJ, G, E, P, GF, GC y puntos. Ej.: <em>Hugo Jara 9 6 2 1 20 8 20</em>. Se puede copiar de la página de la liga.</p>
-      <textarea id="tb-texto" rows={10} value={texto} onChange={(e) => setTexto(e.target.value)} spellCheck={false}
-                placeholder={'Rival Uno 9 7 1 1 22 9 22\nHugo Jara 9 6 2 1 20 8 20\n…'} />
-      {problemas.map((p) => <p key={p} className="error">{p}</p>)}
-      {filas.length > 0 && !problemas.length && (
-        <>
-          <p className="ayuda abajo">Así va a quedar{filas.some((f) => f.esJara) ? ' (el Jara destacado)' : ''}:</p>
-          <TablaPosiciones filas={filas} />
-        </>
-      )}
-      <label htmlFor="tb-fuente">Link a la página de la liga (opcional)</label>
-      <input id="tb-fuente" type="url" value={fuente} onChange={(e) => setFuente(e.target.value)} placeholder="https://…" />
-      <label htmlFor="tb-deporstar">Número de la tabla en Deporstar (opcional)</label>
-      <input id="tb-deporstar" inputMode="numeric" value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="Ej.: 71290" />
-      <p className="ayuda abajo">
-        Si la liga publica la tabla en Deporstar, con este número la app la trae sola. Déjalo vacío para cargarla a mano.
-      </p>
-      {numeroMalo && <p className="error">El número de Deporstar son solo dígitos.</p>}
       {error && <p className="error" role="alert">{error}</p>}
+
+      {leido && (
+        <>
+          {avisos.map((a) => <p key={a} className="aviso-captura">{a}</p>)}
+          <label htmlFor="tb-grupo">Se guarda en la pestaña</label>
+          <input id="tb-grupo" value={destino} maxLength={30} onChange={(e) => setDestino(e.target.value)} />
+        </>
+      )}
+      {(leido || manual) && filas.length > 0 && !problemas.length && (
+        <>
+          <p className="ayuda abajo">Así va a quedar. Revísala: a veces se lee mal un número o un nombre.</p>
+          <TablaPosiciones filas={filas} />
+          {!filas.some((f) => f.gf || f.gc) && <p className="aviso-captura">{SIN_GOLES}</p>}
+        </>
+      )}
+
+      {manual ? (
+        <>
+          <label htmlFor="tb-texto">Corregir a mano, una línea por equipo</label>
+          <p className="ayuda">Equipo, PJ, G, E, P, GF, GC y puntos. Ej.: <em>Hugo Jara 9 6 2 1 20 8 20</em>.</p>
+          <textarea id="tb-texto" rows={8} value={texto} onChange={(e) => setTexto(e.target.value)} spellCheck={false} />
+          {problemas.map((p) => <p key={p} className="error">{p}</p>)}
+        </>
+      ) : (
+        <button type="button" className="enlace posiciones-mas" onClick={() => setManual(true)}>
+          {leido ? 'Corregir a mano' : 'O escribirla a mano'}
+        </button>
+      )}
+
+      {opciones ? (
+        <>
+          {!leido && (
+            <>
+              <label htmlFor="tb-grupo2">Nombre de la pestaña</label>
+              <input id="tb-grupo2" value={destino} maxLength={30} onChange={(e) => setDestino(e.target.value)} placeholder="Ej.: Grupo A o General" />
+            </>
+          )}
+          <label htmlFor="tb-torneo">Campeonato</label>
+          <input id="tb-torneo" value={torneo} maxLength={80} onChange={(e) => setTorneo(e.target.value)} placeholder="Ej.: Clausura 2026" />
+          <label htmlFor="tb-fuente">Link a la página de la liga</label>
+          <input id="tb-fuente" type="url" value={fuente} onChange={(e) => setFuente(e.target.value)} placeholder="https://…" />
+          <label htmlFor="tb-deporstar">Número de la tabla en Deporstar</label>
+          <input id="tb-deporstar" inputMode="numeric" value={numero} onChange={(e) => setNumero(e.target.value)} placeholder="Ej.: 71290" />
+          <p className="ayuda abajo">Si la liga publica la tabla en Deporstar, con este número la app la trae sola. Vacío para desconectarla.</p>
+          {numeroMalo && <p className="error">El número de Deporstar son solo dígitos.</p>}
+        </>
+      ) : (
+        <button type="button" className="enlace posiciones-mas" onClick={() => setOpciones(true)}>Más opciones</button>
+      )}
+
       <div className="botones">
-        <button className="btn" disabled={ocupado || numeroMalo || problemas.length > 0 || (!filas.length && !cambiaNumero)}>{ocupado ? 'Guardando…' : 'Guardar la tabla'}</button>
+        <button className="btn" disabled={ocupado || !listo}>{ocupado ? 'Guardando…' : 'Guardar la tabla'}</button>
         <button type="button" className="btn secundario" onClick={() => cerrar(undefined)} disabled={ocupado}>Cancelar</button>
       </div>
-      {!nueva && otras.length > 0 && (
+      {pestanas.length > 1 && tabla.filas.length > 0 && (
         <button type="button" className="btn secundario posiciones-borrar" style={{ marginTop: 12 }} onClick={quitar} disabled={ocupado}>Borrar esta pestaña</button>
       )}
     </form>
@@ -251,7 +296,9 @@ export default function Tabla() {
   const partidos = usePartidos(persona);
   const [elegido, setElegido] = useState(null);
   const [pestana, setPestana] = useState(null);
-  const [editando, setEditando] = useState(null); // 'tabla' | 'nueva' | 'fixture'
+  const [editando, setEditando] = useState(null); // 'tabla' | 'fixture'
+  const [archivoInicial, setArchivoInicial] = useState(null);
+  const subir = useRef(null);
 
   // Siempre fresca al entrar: otro encargado pudo actualizarla.
   useEffect(() => { recargar(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -270,7 +317,13 @@ export default function Tabla() {
   const jara = tabla?.filas.findIndex((f) => f.esJara) ?? -1;
   const elegir = (id) => { setElegido(id); setPestana(null); setEditando(null); setAviso(''); };
   const elegirPestana = (g) => { setPestana(g); setEditando(null); setAviso(''); };
-  const cerrarEditor = (g) => { setEditando(null); if (g !== undefined) setPestana(g); };
+  const cerrarEditor = (g) => { setEditando(null); setArchivoInicial(null); if (g !== undefined) setPestana(g); };
+  // Un toque: se elige la imagen y se abre el editor ya leyéndola.
+  const conPantallazo = (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (f) { setArchivoInicial(f); setEditando('tabla'); setAviso(''); }
+  };
 
   // Si está conectada a la liga, al mirarla se revisa sola (la base decide si
   // ya pasaron 3 horas). Sin ruido si la liga no responde.
@@ -302,7 +355,7 @@ export default function Tabla() {
               ))}
             </div>
           )}
-          {pestanas.length > 1 && editando !== 'nueva' && (
+          {pestanas.length > 1 && (
             <div className="posiciones-pestanas" role="tablist" aria-label="Tablas de este plantel">
               {pestanas.map((t) => (
                 <button key={t.grupo} type="button" role="tab" aria-selected={t.grupo === grupo}
@@ -310,12 +363,11 @@ export default function Tabla() {
               ))}
             </div>
           )}
-          {tabla && (editando === 'tabla' || editando === 'nueva') && (
-            <EditarTabla key={`${actualId}-${grupo}-${editando}`} tabla={tabla} nueva={editando === 'nueva'}
-                         otras={pestanas.filter((t) => editando === 'nueva' || t.grupo !== grupo).map((t) => t.grupo)}
-                         conocidos={conocidos} guardar={guardar} borrar={borrar} conectar={conectar} refrescar={refrescar} cerrar={cerrarEditor} />
+          {tabla && editando === 'tabla' && (
+            <EditarTabla key={`${actualId}-${grupo}`} tabla={tabla} pestanas={pestanas} conocidos={conocidos} archivoInicial={archivoInicial}
+                         guardar={guardar} borrar={borrar} conectar={conectar} refrescar={refrescar} cerrar={cerrarEditor} />
           )}
-          {tabla && editando !== 'tabla' && editando !== 'nueva' && (
+          {tabla && editando !== 'tabla' && (
             <>
               {tabla.filas.length ? (
                 <>
@@ -326,6 +378,7 @@ export default function Tabla() {
                     </p>
                   )}
                   <TablaPosiciones filas={tabla.filas} />
+                  {tabla.puedoEditar && !tabla.conectada && !tabla.filas.some((f) => f.gf || f.gc) && <p className="aviso-captura">{SIN_GOLES}</p>}
                   <p className="ayuda abajo">
                     {tabla.actualizadaEn ? `Actualizada el ${fechaCorta(tabla.actualizadaEn.slice(0, 10))}.` : ''}
                     {tabla.conectada ? ' Se actualiza sola desde la liga.' : ''}
@@ -334,7 +387,7 @@ export default function Tabla() {
                 </>
               ) : (
                 <p className="vacio suelto">
-                  Todavía no se carga la tabla de {tabla.equipo}.{tabla.puedoEditar ? ' Cópiala de la página de la liga o sube un pantallazo.' : ' La sube el encargado del plantel.'}
+                  Todavía no se carga la tabla de {tabla.equipo}.{tabla.puedoEditar ? ' Sube un pantallazo de la tabla de la liga.' : ' La sube el encargado del plantel.'}
                 </p>
               )}
               {aviso && <p className="ayuda abajo" role="status">{aviso}</p>}
@@ -343,14 +396,17 @@ export default function Tabla() {
                   {trayendo ? 'Trayendo la tabla…' : 'Actualizar desde la liga'}
                 </button>
               )}
-              {tabla.puedoEditar && (
-                <button type="button" className="btn secundario" style={{ marginTop: 12 }} onClick={() => setEditando('tabla')}>
-                  {tabla.conectada ? 'Cambiar a mano o desconectar' : tabla.filas.length ? 'Actualizar la tabla' : 'Cargar la tabla'}
-                </button>
+              {tabla.puedoEditar && !tabla.conectada && (
+                <>
+                  <input ref={subir} type="file" accept="image/*" hidden onChange={conPantallazo} />
+                  <button type="button" className="btn" style={{ marginTop: 12 }} onClick={() => subir.current?.click()}>
+                    Actualizar con un pantallazo
+                  </button>
+                </>
               )}
-              {tabla.puedoEditar && tabla.filas.length > 0 && (
-                <button type="button" className="btn secundario" style={{ marginTop: 12 }} onClick={() => setEditando('nueva')}>
-                  Agregar otra tabla (ej. la general)
+              {tabla.puedoEditar && (
+                <button type="button" className="enlace posiciones-mas" onClick={() => setEditando('tabla')}>
+                  {tabla.conectada ? 'Opciones de la tabla' : 'Corregir a mano u otras opciones'}
                 </button>
               )}
             </>
