@@ -4,6 +4,19 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-06 · Pantallazo de la tabla: lectura por columnas
+
+**Para qué:** con la página al 50% los números quedan chicos y la lectura de la línea entera se equivocaba ("11" salía "1", "9" salía "e)") y hasta perdía un equipo.
+
+**Qué se hizo** (sin migración):
+- Se busca la fila de títulos (PTS J G E P GF GC DIF %) y cada columna se lee por separado y solo con dígitos; cada número va a la fila del equipo que está a su altura.
+- Lo que falte se completa con la lectura de la línea o con las cuentas (PJ = G + E + P, Pts = 3G + E, GF − GC = DIF). Si no se encuentran los títulos, queda la lectura de antes.
+- Se limpian siglas del escudo antes del nombre ("TEN Hugo Jara" → "Hugo Jara").
+
+**Comprobado:** en el navegador, con los cuatro pantallazos reales (escritorio grupo y general, celular normal y celular al 50%), todas las filas salen exactas. `npm run build`, `npm run test:db` y `npm run test:captura` pasan.
+
+---
+
 ## 2026-11-06 · Tabla del jueves: pantallazo del celular y editor más simple
 
 **Para qué:** en el celular copafacil muestra solo PTS J G E P y el pantallazo no se leía. Además, el editor tenía demasiados campos para lo que se usa hoy (sábados conectados a Deporstar, jueves con foto).
