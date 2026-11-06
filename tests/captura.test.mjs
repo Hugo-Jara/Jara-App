@@ -64,4 +64,6 @@ test('Limpieza de nombres', () => {
   assert.equal(limpiarNombre(['El', 'de', 'Gross', 'x']), 'Gross x');
   assert.equal(limpiarNombre(['El', 'E', 'Warriors']), 'Warriors');
   assert.equal(limpiarNombre(['3', 'Los', 'Andes']), 'Los Andes');
+  assert.equal(limpiarNombre(['a', 'TEN', 'Hugo', 'Jara']), 'Hugo Jara');
+  assert.equal(limpiarNombre(['CD', 'Universidad']), 'CD Universidad');
 });
