@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import FechasLiga from '../components/FechasLiga.jsx';
+import Tabla from './Tabla.jsx';
 import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos, porEstado, sinResponder, tieneResultado, textoResultado, signo } from '../lib/partidos.js';
 import { fechaLarga } from '../lib/fechas.js';
@@ -84,7 +86,7 @@ function ColumnaPlantel({ nombre, lista, verTodos }) {
   );
 }
 
-export default function Partidos() {
+function NuestrosPartidos() {
   const { persona } = useSesion();
   const { cargando, error, partidos, mios, jugados } = usePartidos(persona);
   const otros = partidos.filter((p) => !p.esMio);
@@ -105,9 +107,7 @@ export default function Partidos() {
 
   return (
     <>
-      <h1 className="titulo display">Partidos</h1>
-      <p className="subtitulo">Los que vienen y los que ya se jugaron. Respondes en los de tu plantel.</p>
-      <Link to="/tabla" className="btn secundario" style={{ marginBottom: 14 }}>Tabla de posiciones</Link>
+      <p className="subtitulo">Los del Jara que vienen y los que ya se jugaron. Respondes en los de tu plantel.</p>
       {persona.esEncargado && <Link to="/partidos/nuevo" className="btn secundario" style={{ marginBottom: 14 }}>Programar un partido</Link>}
       {error && <p className="error" role="alert">{error}</p>}
       {cargando ? <p className="vacio suelto">Cargando…</p> : (
@@ -150,6 +150,33 @@ export default function Partidos() {
           )}
         </>
       )}
+    </>
+  );
+}
+
+// "La liga": los partidos del Jara (con voy / no voy), las fechas de todo el
+// campeonato y la tabla, en pestañas. La pestaña queda en el link (?v=fechas).
+const PESTANAS = [
+  { v: 'partidos', texto: 'Partidos' },
+  { v: 'fechas', texto: 'Fechas' },
+  { v: 'tabla', texto: 'Tabla' },
+];
+
+export default function LaLiga() {
+  const [params, setParams] = useSearchParams();
+  const v = PESTANAS.some((p) => p.v === params.get('v')) ? params.get('v') : 'partidos';
+  return (
+    <>
+      <h1 className="titulo display">La liga</h1>
+      <div className="posiciones-pestanas liga-pestanas" role="tablist" aria-label="La liga">
+        {PESTANAS.map((p) => (
+          <button key={p.v} type="button" role="tab" aria-selected={p.v === v} className={p.v === v ? 'activa' : ''}
+                  onClick={() => setParams(p.v === 'partidos' ? {} : { v: p.v }, { replace: true })}>{p.texto}</button>
+        ))}
+      </div>
+      {v === 'partidos' && <NuestrosPartidos />}
+      {v === 'fechas' && <FechasLiga />}
+      {v === 'tabla' && <Tabla incrustada />}
     </>
   );
 }
