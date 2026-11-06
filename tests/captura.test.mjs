@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { tablaDesdeTexto, limpiarNombre, leerPorColumnas } from '../src/lib/captura.js';
+import { tablaDesdeTexto, limpiarNombre, leerPorColumnas, pestanaDeCaptura } from '../src/lib/captura.js';
 
 const leer = (f) => readFileSync(new URL(`./fixtures/${f}`, import.meta.url), 'utf8');
 const linea = (f) => [f.equipo, f.pj, f.pg, f.pe, f.pp, f.gf, f.gc, f.pts].join(' ');
@@ -95,4 +95,13 @@ test('Por columnas: el "GRUPO A" de arriba de los títulos da el nombre de la pe
   const r = await leerPorColumnas(lecturaDeMentira([['Monarcas', 13, 6, 4, 1, 1], ['Hugo Jara', 6, 6, 2, 0, 4]]));
   assert.equal(r.grupo, 'Grupo A');
   assert.deepEqual(r.filas.map((f) => `${f.equipo} ${f.pts} ${f.pj}`), ['Monarcas 13 6', 'Hugo Jara 6 6']);
+});
+
+test('La pestaña se elige sola: grupo, general, o grupo por la cantidad de equipos', () => {
+  const filas = (n) => Array.from({ length: n }, (_, i) => ({ equipo: `E${i}` }));
+  assert.equal(pestanaDeCaptura({ grupo: 'Grupo A', filas: filas(8) }, []), 'Grupo A');
+  assert.equal(pestanaDeCaptura({ grupo: '', filas: filas(16) }, []), 'General');
+  const hay = [{ grupo: 'Grupo A', filas: filas(8) }, { grupo: 'General', filas: filas(16) }];
+  assert.equal(pestanaDeCaptura({ grupo: '', filas: filas(8) }, hay), 'Grupo A');
+  assert.equal(pestanaDeCaptura({ grupo: '', filas: filas(16) }, hay), 'General');
 });

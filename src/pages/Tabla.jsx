@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos } from '../lib/partidos.js';
 import { useTablas, diferencia, leerTabla, textoDeTabla, leerFixture, crearPartidoSuelto } from '../lib/tabla.js';
-import { leerCaptura } from '../lib/captura.js';
-import { fechaLarga, fechaCorta, hoyIso } from '../lib/fechas.js';
+import { leerCaptura, pestanaDeCaptura } from '../lib/captura.js';
+import { fechaLarga, fechaCorta, hoyIso, correrDias } from '../lib/fechas.js';
 import Icono from '../components/Icono.jsx';
 
 // "Cómo vamos": la tabla de cada plantel y sus próximas fechas. El encargado
@@ -14,6 +14,17 @@ import Icono from '../components/Icono.jsx';
 
 // Pantallazo del celular sin goles: cómo sacar la tabla completa.
 const SIN_GOLES = 'Faltan los goles (GF, GC y diferencia). Para la tabla completa, achica la página de la liga al 50% en tu celular (menú del navegador > zoom) y saca el pantallazo de nuevo.';
+
+// "hoy a las 18:05", "ayer a las 9:30", "el 3 de noviembre a las 18:05".
+function cuando(iso) {
+  const d = new Date(iso);
+  const dia = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const hora = d.toLocaleTimeString('es-CL', { hour: 'numeric', minute: '2-digit' });
+  const hoy = hoyIso();
+  if (dia === hoy) return `hoy a las ${hora}`;
+  if (dia === correrDias(hoy, -1)) return `ayer a las ${hora}`;
+  return `el ${fechaCorta(dia)} a las ${hora}`;
+}
 
 const conSigno = (n) => (n > 0 ? `+${n}` : String(n));
 
@@ -96,7 +107,7 @@ function EditarTabla({ tabla, pestanas, conocidos, archivoInicial, guardar, borr
         setError('No se encontró una tabla en la imagen. Prueba con un pantallazo solo de la tabla, donde se vean los nombres y los puntos.');
         return;
       }
-      const nombre = r.grupo || 'General';
+      const nombre = pestanaDeCaptura(r, pestanas);
       const antes = pestanas.find((t) => t.grupo === nombre) ?? (pestanas.length === 1 ? pestanas[0] : null);
       const perdidos = !r.conGoles && antes?.filas.some((f) => f.gf || f.gc);
       setTexto(textoDeTabla(r.filas));
@@ -153,12 +164,9 @@ function EditarTabla({ tabla, pestanas, conocidos, archivoInicial, guardar, borr
       {leido && (
         <>
           {avisos.map((a) => <p key={a} className="aviso-captura">{a}</p>)}
-          <label htmlFor="tb-grupo">Se guarda en la pestaña</label>
-          <input id="tb-grupo" value={destino} maxLength={30} onChange={(e) => setDestino(e.target.value)} />
-          <p className="ayuda abajo">
-            {pestanas.some((t) => t.grupo === g && t.filas.length)
-              ? `Reemplaza la pestaña "${g}". Si es otra tabla, cámbiale el nombre.`
-              : `Queda como pestaña nueva "${g}", junto a las que ya hay.`}
+          <p className="posiciones-destino">
+            {g === 'General' ? 'Es la tabla general' : `Es la tabla del ${g}`} ({filas.length} equipos)
+            {pestanas.some((t) => t.grupo === g && t.filas.length) ? ': reemplaza la que había.' : ': queda como pestaña nueva.'}
           </p>
         </>
       )}
@@ -185,12 +193,6 @@ function EditarTabla({ tabla, pestanas, conocidos, archivoInicial, guardar, borr
 
       {opciones ? (
         <>
-          {!leido && (
-            <>
-              <label htmlFor="tb-grupo2">Nombre de la pestaña</label>
-              <input id="tb-grupo2" value={destino} maxLength={30} onChange={(e) => setDestino(e.target.value)} placeholder="Ej.: Grupo A o General" />
-            </>
-          )}
           <label htmlFor="tb-torneo">Campeonato</label>
           <input id="tb-torneo" value={torneo} maxLength={80} onChange={(e) => setTorneo(e.target.value)} placeholder="Ej.: Clausura 2026" />
           <label htmlFor="tb-fuente">Link a la página de la liga</label>
@@ -313,7 +315,9 @@ export default function Tabla() {
   const actualId = elegido ?? propio ?? tablas[0]?.equipoId;
   // Un botón por plantel (las pestañas vienen como filas aparte).
   const planteles = tablas.filter((t, i) => tablas.findIndex((x) => x.equipoId === t.equipoId) === i);
-  const pestanas = tablas.filter((t) => t.equipoId === actualId);
+  // Primero los grupos, al final la general.
+  const orden = (t) => (/^Grupo /.test(t.grupo) ? 0 : t.grupo === 'General' ? 2 : 1);
+  const pestanas = tablas.filter((t) => t.equipoId === actualId).sort((a, b) => orden(a) - orden(b) || a.grupo.localeCompare(b.grupo));
   const tabla = pestanas.find((t) => t.grupo === pestana) ?? pestanas[0];
   const grupo = tabla?.grupo ?? '';
   const conocidos = [...new Set(pestanas.flatMap((t) => t.filas.map((f) => f.equipo)))];
@@ -382,10 +386,11 @@ export default function Tabla() {
                       {tabla.torneo ? ` · ${tabla.torneo}` : ''}.
                     </p>
                   )}
+                  {tabla.actualizadaEn && <p className="posiciones-cuando">Última actualización: {cuando(tabla.actualizadaEn)}</p>}
                   <TablaPosiciones filas={tabla.filas} />
                   {tabla.puedoEditar && !tabla.conectada && !tabla.filas.some((f) => f.gf || f.gc) && <p className="aviso-captura">{SIN_GOLES}</p>}
                   <p className="ayuda abajo">
-                    {tabla.actualizadaEn ? `Actualizada el ${fechaCorta(tabla.actualizadaEn.slice(0, 10))}.` : ''}
+
                     {tabla.conectada ? ' Se actualiza sola desde la liga.' : ''}
                     {tabla.fuente && <> <a className="enlace" href={tabla.fuente} target="_blank" rel="noopener noreferrer">Ver en la página de la liga</a></>}
                   </p>

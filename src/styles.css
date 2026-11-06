@@ -650,3 +650,5 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .aviso-captura { background: rgba(198, 161, 91, 0.12); border: 1px solid var(--gold-dim); color: var(--gold); font-size: 13px; padding: 8px 12px; border-radius: 10px; margin: 8px 0 0; }
 .btn.posiciones-borrar { color: var(--rose); }
 .posiciones-mas { display: block; background: none; border: none; padding: 10px 2px 0; font: inherit; font-size: 14px; cursor: pointer; text-align: left; }
+.posiciones-destino { margin: 12px 0 0; font-size: 14px; font-weight: 600; }
+.posiciones-cuando { margin: 0 2px 8px; font-size: 13px; color: var(--text-dim); }
