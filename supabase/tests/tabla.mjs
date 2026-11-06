@@ -226,5 +226,18 @@ ok('Cada pestaña se conecta y actualiza por su cuenta', !r.error && x[1].filas[
 r = await anon('select tabla_borrar($1, $2)', [JUNIOR, 'General']);
 ok('Sin cuenta no se borra', /permission denied/.test(r.error ?? ''), r.error);
 
+
+console.log('\nQuien anota partidos también carga la tabla (0037)');
+await db.query(`update personas set anota_partidos = true where id = $1`, [PER.jugador]);
+r = await como('jugador', 'select tabla_guardar($1, $2, $3::jsonb, null, $4)', [SENIOR, 'Liga Inventada', JSON.stringify([fila('Rival', 1)]), 'General']);
+x = (await tablas('jugador')).filter((t) => t.equipo_id === SENIOR);
+ok('Quien anota partidos guarda la tabla de cualquier plantel', !r.error && x.some((t) => t.grupo === 'General' && t.filas.length === 1), r.error);
+ok('Y la app le muestra el botón', x.every((t) => t.puedo_editar));
+await db.query(`update personas set anota_partidos = true where id = $1`, [PER.prueba]);
+r = await como('prueba', 'select tabla_guardar($1, $2, $3::jsonb, null, $4)', [SENIOR, 'Liga Inventada', JSON.stringify([fila('Rival', 1)]), 'General']);
+ok('La cuenta de prueba sigue solo mirando aunque anote', !!r.error, r.error);
+await db.query(`update personas set anota_partidos = false where id in ($1, $2)`, [PER.jugador, PER.prueba]);
+r = await como('jugador', 'select tabla_borrar($1, $2)', [SENIOR, 'General']);
+ok('Sin ese permiso, vuelve a no poder', /Solo el encargado/.test(r.error ?? ''), r.error);
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

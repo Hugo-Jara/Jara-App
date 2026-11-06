@@ -49,6 +49,7 @@ Las migraciones están en `supabase/migrations/` y se aplican en orden:
 | `0030_perfil_instagram.sql` | `perfiles.instagram` (solo el usuario, lo limpia `instagram_limpiar`), `perfil_instagram_guardar` (solo el propio jugador) y `perfil_ver` con Instagram |
 | `0032_tabla_desde_la_liga.sql` | La tabla de posiciones se trae sola desde Deporstar (extensión `http`): `tabla_conectar` guarda el número de la tabla del plantel, `tabla_refrescar` la actualiza (cualquier socio cada 3 horas al mirarla; el encargado en el acto) |
 | `0036_varias_tablas_por_plantel.sql` | Varias tablas por plantel con pestañas (ej. "Grupo A" y "General"): `tablas_posiciones` pasa a llave (plantel, pestaña); `tabla_guardar`, `tabla_conectar` y `tabla_refrescar` reciben la pestaña y hay `tabla_borrar`. La tabla también se puede llenar desde un pantallazo, que se lee en el teléfono |
+| `0037_tabla_la_carga_quien_anota.sql` | La tabla de posiciones la cargan también quienes anotan partidos (`puedo_anotar`), no solo el encargado del plantel |
 
 `npm run test:db` y `npm run test:pedidos` aplican las migraciones en un Postgres en memoria y prueban los permisos, el flujo de cotizaciones, el ingreso por nombre, los partidos, los entrenamientos y los pedidos por link.
 

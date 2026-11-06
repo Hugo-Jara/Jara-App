@@ -155,6 +155,11 @@ function EditarTabla({ tabla, pestanas, conocidos, archivoInicial, guardar, borr
           {avisos.map((a) => <p key={a} className="aviso-captura">{a}</p>)}
           <label htmlFor="tb-grupo">Se guarda en la pestaña</label>
           <input id="tb-grupo" value={destino} maxLength={30} onChange={(e) => setDestino(e.target.value)} />
+          <p className="ayuda abajo">
+            {pestanas.some((t) => t.grupo === g && t.filas.length)
+              ? `Reemplaza la pestaña "${g}". Si es otra tabla, cámbiale el nombre.`
+              : `Queda como pestaña nueva "${g}", junto a las que ya hay.`}
+          </p>
         </>
       )}
       {(leido || manual) && filas.length > 0 && !problemas.length && (

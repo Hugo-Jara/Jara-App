@@ -182,10 +182,13 @@ export async function leerPorColumnas({ leer, recortar, alto }, conocidos = []) 
 
   // Filas: líneas con letras a la izquierda de las columnas. "GRUPO B" abre otra sección.
   const filas = [];
-  let grupo = '';
+  // El "GRUPO A" del primer grupo está antes de la fila de títulos.
+  const esGrupo = (l) => l.text.trim().match(/\bgrupo\s+([a-z0-9]{1,2})\s*$/i);
+  const previo = lines.slice(0, iTitulo).map(esGrupo).filter(Boolean).at(-1);
+  let grupo = previo ? `Grupo ${previo[1].toUpperCase()}` : '';
   const tope = lines[iTitulo].bbox.y0;
   for (const l of lines.slice(iTitulo + 1)) {
-    const g = l.text.trim().match(/\bgrupo\s+([a-z0-9]{1,2})\s*$/i);
+    const g = esGrupo(l);
     if (g) { grupo = `Grupo ${g[1].toUpperCase()}`; continue; }
     const nombre = l.words.filter((w) => w.bbox.x1 < izquierda);
     if (!nombre.some((w) => /\p{L}{2,}/u.test(w.text)) || nombre.some((w) => /equip/i.test(w.text))) continue;
