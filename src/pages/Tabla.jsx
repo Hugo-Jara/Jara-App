@@ -12,6 +12,9 @@ import Icono from '../components/Icono.jsx';
 // todas las fechas del campeonato de una vez. Un plantel puede tener varias
 // tablas (ej. "Grupo A" y "General"), que se ven con pestañas (0036).
 
+// Pantallazo del celular sin goles: cómo sacar la tabla completa.
+const SIN_GOLES = 'Faltan los goles (GF, GC y diferencia). Para la tabla completa, achica la página de la liga al 50% en tu celular (menú del navegador > zoom) y saca el pantallazo de nuevo.';
+
 const conSigno = (n) => (n > 0 ? `+${n}` : String(n));
 
 // En el celular copafacil no muestra los goles: si ninguna fila los trae, no
@@ -158,6 +161,7 @@ function EditarTabla({ tabla, pestanas, conocidos, archivoInicial, guardar, borr
         <>
           <p className="ayuda abajo">Así va a quedar. Revísala: a veces se lee mal un número o un nombre.</p>
           <TablaPosiciones filas={filas} />
+          {!filas.some((f) => f.gf || f.gc) && <p className="aviso-captura">{SIN_GOLES}</p>}
         </>
       )}
 
@@ -374,6 +378,7 @@ export default function Tabla() {
                     </p>
                   )}
                   <TablaPosiciones filas={tabla.filas} />
+                  {tabla.puedoEditar && !tabla.conectada && !tabla.filas.some((f) => f.gf || f.gc) && <p className="aviso-captura">{SIN_GOLES}</p>}
                   <p className="ayuda abajo">
                     {tabla.actualizadaEn ? `Actualizada el ${fechaCorta(tabla.actualizadaEn.slice(0, 10))}.` : ''}
                     {tabla.conectada ? ' Se actualiza sola desde la liga.' : ''}

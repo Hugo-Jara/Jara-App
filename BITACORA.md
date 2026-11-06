@@ -10,7 +10,7 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 **Qué se hizo** (sin migración):
 - La lectura entiende la tabla del celular (sin goles). Si el pantallazo trae varios grupos, se queda con el del Jara. Si la tabla guardada tenía goles y el pantallazo no, avisa antes de guardar (mejor la página al 50% o el teléfono horizontal).
-- Si ninguna fila trae goles, la tabla no muestra GF, GC ni DG.
+- Si ninguna fila trae goles, la tabla no muestra GF, GC ni DG, y al encargado le aparece un aviso: para la tabla completa, achicar la página de la liga al 50% y sacar el pantallazo de nuevo.
 - Un solo botón, "Actualizar con un pantallazo": se elige la imagen, la app la lee, muestra cómo queda y en qué pestaña se guarda ("GRUPO A" → Grupo A; si no dice grupo, General). Ya no hace falta "Agregar otra tabla".
 - El cuadro para escribir a mano y las opciones de la liga (campeonato, link, número de Deporstar) quedan escondidos en "Corregir a mano" y "Más opciones".
 
