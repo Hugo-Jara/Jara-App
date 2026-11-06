@@ -123,6 +123,19 @@ export function tablaDesdeTexto(texto, conocidos = []) {
   return { filas: elegida.filas, grupo: elegida.grupo, avisos: elegida.avisos, conGoles };
 }
 
+// En qué pestaña va lo leído, sin que nadie escriba el nombre: si la imagen
+// dice "GRUPO A", va a Grupo A. Si no lo dice, es la general, salvo que ya
+// haya un grupo con la misma cantidad de equipos y la general tenga más (un
+// pantallazo del grupo donde no salió el título).
+export function pestanaDeCaptura(leida, pestanas = []) {
+  if (leida.grupo) return leida.grupo;
+  const n = leida.filas.length;
+  const general = pestanas.find((t) => t.grupo === 'General');
+  const grupo = pestanas.find((t) => /^Grupo /.test(t.grupo) && t.filas.length === n);
+  if (grupo && general && general.filas.length > n) return grupo.grupo;
+  return 'General';
+}
+
 // --- Lectura por columnas ---------------------------------------------------
 // Leer la línea entera confunde números chicos ("11" sale "1", "9" sale "e)").
 // Por eso, si se encuentra la fila de títulos (PTS J G E P GF GC DIF %), cada

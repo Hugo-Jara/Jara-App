@@ -4,6 +4,17 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-06 · Tabla: la app sabe sola si es el grupo o la general, y dice cuándo se actualizó
+
+**Qué se hizo** (sin migración):
+- Ya no se escribe el nombre de la pestaña. Si el pantallazo dice "GRUPO A", va a Grupo A; si no, es la general (salvo que ya haya un grupo con la misma cantidad de equipos y la general tenga más). Antes de guardar se muestra "Es la tabla del Grupo A (8 equipos): reemplaza la que había".
+- Las pestañas van primero los grupos y al final la general.
+- Arriba de la tabla: "Última actualización: hoy a las 18:05" (o ayer, o la fecha).
+
+**Comprobado:** `npm run build` y `npm run test:captura` (prueba nueva de la elección de pestaña) pasan. En el navegador, subir los dos pantallazos del jueves deja Grupo A y General.
+
+---
+
 ## 2026-11-06 · Las dos tablas del jueves y quién las carga
 
 **Para qué:** al subir los dos pantallazos (grupo y general) quedaba una sola tabla, y la tabla solo la podía cargar el encargado del plantel.
