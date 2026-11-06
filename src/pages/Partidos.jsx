@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import FechasLiga from '../components/FechasLiga.jsx';
+import { revisarLiga } from '../lib/liga.js';
 import Tabla from './Tabla.jsx';
 import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos, porEstado, sinResponder, tieneResultado, textoResultado, signo } from '../lib/partidos.js';
@@ -163,7 +164,12 @@ const PESTANAS = [
 ];
 
 export default function LaLiga() {
+  const { persona } = useSesion();
+  const { recargar } = usePartidos(persona);
   const [params, setParams] = useSearchParams();
+  // Al entrar se revisa la liga (la base decide si ya toca); si llegan
+  // partidos nuevos del Jara, aparecen en la pestaña Partidos.
+  useEffect(() => { revisarLiga(recargar); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const v = PESTANAS.some((p) => p.v === params.get('v')) ? params.get('v') : 'partidos';
   return (
     <>

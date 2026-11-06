@@ -4,6 +4,21 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-06 · La liga: fechas jugadas y por jugar, traídas desde Deporstar
+
+**Para qué:** la liga de los sábados publica todas sus fechas en Deporstar (la página nueva de la liga usa esos mismos datos). La idea es ver ahí los partidos jugados y los que vienen, y no tener que programar a mano los partidos del Jara.
+
+**Qué se hizo** (migración `0038_fechas_de_la_liga.sql`, se corre antes del merge):
+- "Partidos" pasa a llamarse **La liga**, con tres pestañas: Partidos (los del Jara, con voy / no voy), Fechas (todos los partidos del campeonato: lo que viene y los resultados) y Tabla. `/tabla` lleva a la pestaña Tabla.
+- La base trae la lista de fechas (JSON de Deporstar) y lee los partidos de cada fecha desde su página (día, hora, cancha, equipos y resultado), de a 3 páginas por vez, cada 3 horas al abrir la app. Quien anota partidos puede actualizar en el acto.
+- Un torneo de Deporstar mezcla 1ª y 2ª División: se muestra solo la división donde juega el Jara.
+- Los partidos del Jara que vienen quedan creados solos en la app (rival, día, hora, cancha y "Fecha N"). Si ya había uno ese día, se usa ese. Si la liga cambia la hora o la cancha, se actualiza mientras no tenga resultado.
+- Pruebas: `supabase/tests/liga.mjs` (26), con un pedazo real de la página de una fecha en `supabase/tests/fixtures/`.
+
+**Comprobado:** `npm run build` y `npm run test:db` pasan. En el navegador (modo demostración, ancho de celular) se ven las pestañas y las fechas.
+
+---
+
 ## 2026-11-06 · Tabla: la app sabe sola si es el grupo o la general, y dice cuándo se actualizó
 
 **Qué se hizo** (sin migración):

@@ -4,11 +4,11 @@ import { hoyIso, correrDias } from './fechas.js';
 
 // Las fechas de la liga de cada plantel: todos los partidos del campeonato
 // (no solo los del Jara), los que vienen y los ya jugados. Los sábados vienen
-// de Deporstar, igual que la tabla. Mientras la base no las tenga, la sección
-// dice que todavía no están conectadas.
+// de Deporstar, igual que la tabla (0038). Al traerlas, la base también deja
+// creados los partidos del Jara que vienen, para responder voy / no voy.
 
 const desdeFila = (p) => ({
-  id: p.id, equipoId: p.equipo_id, equipo: p.equipo, fecha: p.fecha ?? '', dia: p.dia, hora: p.hora ?? '',
+  id: String(p.id), equipoId: p.equipo_id, equipo: p.equipo, fecha: p.fecha ?? '', dia: p.dia, hora: p.hora ?? '',
   cancha: p.cancha ?? '', local: p.local, visita: p.visita,
   golesLocal: p.goles_local ?? null, golesVisita: p.goles_visita ?? null,
   esJara: !!p.es_jara,
@@ -16,13 +16,20 @@ const desdeFila = (p) => ({
 
 const base = {
   cargar: async () => {
-    try { return (await llamar('liga_fechas')).map(desdeFila); }
-    catch (e) {
-      // Antes de la migración la función no existe: la sección queda vacía, sin error.
-      if (/liga_fechas|does not exist|Could not find/i.test(e.message)) return null;
+    try {
+      const r = await llamar('liga_fechas');
+      return {
+        conectados: r.conectados.map((c) => ({ equipoId: c.equipo_id, equipo: c.equipo, revisadaEn: c.revisada_en, puedoActualizar: !!c.puedo_actualizar })),
+        partidos: r.partidos.map(desdeFila),
+      };
+    } catch (e) {
+      // Antes de correr la 0038 la función no existe: la sección queda vacía, sin error.
+      if (/liga_fechas|does not exist|Could not find/i.test(e.message)) return { conectados: [], partidos: [] };
       throw e;
     }
   },
+  // Devuelve cuántas fechas faltan por leer (la primera vez se traen de a 3).
+  refrescar: (equipoId, forzar = false) => llamar('liga_refrescar', { p_equipo: equipoId, p_forzar: forzar }),
 };
 
 // --- Modo demostración: equipos inventados --------------------------------
@@ -52,12 +59,44 @@ const demo = [
   p('e-junior', 'Fecha 8', 0, '14:00', 'Cancha 1', 'Rival Uno de Ejemplo', 'Rival Tres de Ejemplo'),
 ];
 
-const almacen = crearAlmacen(esDemo ? async () => demo : base.cargar);
+const demoDatos = {
+  conectados: [{ equipoId: 'e-sabado', equipo: 'Senior Sábado', revisadaEn: new Date().toISOString(), puedoActualizar: true },
+               { equipoId: 'e-junior', equipo: 'Junior Sábado', revisadaEn: new Date().toISOString(), puedoActualizar: true }],
+  partidos: demo,
+};
+const almacen = crearAlmacen(esDemo ? async () => demoDatos : base.cargar);
 
-// conectadas: false si la base todavía no tiene las fechas de la liga.
+// Revisa la liga de cada plantel conectado. La base decide si ya toca (cada 3
+// horas), así que se puede llamar al abrir la app. Si trajo algo, recarga las
+// fechas y los partidos del club (pueden haber partidos nuevos del Jara).
+let revisando = null;
+export function revisarLiga(alCambiar) {
+  if (esDemo) return Promise.resolve();
+  revisando ??= (async () => {
+    const { conectados } = await base.cargar();
+    for (const c of conectados) {
+      for (let i = 0; i < 6; i++) {
+        const faltan = await base.refrescar(c.equipoId);
+        if (!faltan) break;
+      }
+    }
+    await almacen.recargar();
+    alCambiar?.();
+  })().catch(() => {}).finally(() => { revisando = null; });
+  return revisando;
+}
+
+// Botón "Actualizar desde la liga" (quien anota partidos).
+export async function actualizarLiga(equipoId) {
+  if (esDemo) return;
+  await base.refrescar(equipoId, true);
+  for (let i = 0; i < 6 && await base.refrescar(equipoId); i++);
+  await almacen.recargar();
+}
+
 export function useFechasLiga() {
   const { cargando, error, datos } = almacen.usar();
-  return { cargando, error, conectadas: datos !== null, partidos: datos ?? [], recargar: almacen.recargar };
+  return { cargando, error, conectados: datos?.conectados ?? [], partidos: datos?.partidos ?? [], recargar: almacen.recargar };
 }
 
 export const jugado = (p) => p.golesLocal !== null && p.golesVisita !== null;

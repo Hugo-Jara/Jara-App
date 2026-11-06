@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSesion } from '../lib/sesion.jsx';
-import { useFechasLiga, separar, jugado } from '../lib/liga.js';
+import { useFechasLiga, separar, jugado, actualizarLiga } from '../lib/liga.js';
+import { usePartidos } from '../lib/partidos.js';
 import { fechaLarga } from '../lib/fechas.js';
 
 const DE_A_POCAS = 3;
@@ -34,20 +35,30 @@ function Fecha({ f }) {
 // primero la fecha que viene, después los resultados.
 export default function FechasLiga() {
   const { persona } = useSesion();
-  const { cargando, error, conectadas, partidos } = useFechasLiga();
+  const { cargando, error, conectados, partidos } = useFechasLiga();
+  const { recargar: recargarPartidos } = usePartidos(persona);
   const [elegido, setElegido] = useState(null);
   const [cuantas, setCuantas] = useState(DE_A_POCAS);
+  const [trayendo, setTrayendo] = useState(false);
+  const [aviso, setAviso] = useState('');
 
   if (error) return <p className="error" role="alert">{error}</p>;
-  if (cargando && !partidos.length) return <p className="vacio suelto">Cargando…</p>;
-  if (!conectadas || !partidos.length) {
+  if (cargando && !conectados.length) return <p className="vacio suelto">Cargando…</p>;
+  if (!conectados.length) {
     return <p className="vacio suelto">Todavía no están conectadas las fechas de la liga. Por ahora mira los partidos del Jara en la pestaña Partidos.</p>;
   }
 
-  const planteles = [...new Map(partidos.map((p) => [p.equipoId, p.equipo])).entries()];
+  const planteles = conectados.map((c) => [c.equipoId, c.equipo]);
   const propio = planteles.find(([id]) => persona.equipos?.some((e) => e.id === id))?.[0];
   const actual = elegido ?? propio ?? planteles[0][0];
+  const conexion = conectados.find((c) => c.equipoId === actual);
   const { proximas, jugadas } = separar(partidos.filter((p) => p.equipoId === actual));
+  const traerAhora = async () => {
+    setTrayendo(true); setAviso('');
+    try { await actualizarLiga(actual); await recargarPartidos(); setAviso('Listo: las fechas quedaron al día con la liga.'); }
+    catch (e) { setAviso(e.message); }
+    finally { setTrayendo(false); }
+  };
 
   return (
     <>
@@ -56,7 +67,7 @@ export default function FechasLiga() {
           {planteles.map(([id, nombre]) => (
             <button key={id} type="button" role="radio" aria-checked={id === actual}
                     className={`chip ${id === actual ? 'activo' : ''}`}
-                    onClick={() => { setElegido(id); setCuantas(DE_A_POCAS); }}>{nombre}</button>
+                    onClick={() => { setElegido(id); setCuantas(DE_A_POCAS); setAviso(''); }}>{nombre}</button>
           ))}
         </div>
       )}
@@ -69,6 +80,13 @@ export default function FechasLiga() {
       {jugadas.length > cuantas && (
         <button type="button" className="btn secundario" onClick={() => setCuantas(cuantas + DE_A_POCAS)}>
           Ver fechas anteriores ({jugadas.length - cuantas})
+        </button>
+      )}
+      <p className="ayuda abajo">Se actualizan solas desde la página de la liga. Los partidos del Jara quedan creados en la pestaña Partidos.</p>
+      {aviso && <p className="ayuda abajo" role="status">{aviso}</p>}
+      {conexion?.puedoActualizar && (
+        <button type="button" className="btn secundario" style={{ marginTop: 12 }} onClick={traerAhora} disabled={trayendo}>
+          {trayendo ? 'Trayendo las fechas…' : 'Actualizar desde la liga'}
         </button>
       )}
     </>
