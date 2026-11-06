@@ -652,3 +652,16 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .posiciones-mas { display: block; background: none; border: none; padding: 10px 2px 0; font: inherit; font-size: 14px; cursor: pointer; text-align: left; }
 .posiciones-destino { margin: 12px 0 0; font-size: 14px; font-weight: 600; }
 .posiciones-cuando { margin: 0 2px 8px; font-size: 13px; color: var(--text-dim); }
+
+/* La liga: fechas del campeonato (todos los partidos de la liga) */
+.liga-pestanas { margin-bottom: 14px; }
+.liga-fecha { margin-bottom: 14px; }
+.liga-fecha-titulo { font-size: 13px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 6px; }
+.liga-partidos { list-style: none; margin: 0; padding: 0; }
+.liga-partido { display: grid; grid-template-columns: 1fr auto; column-gap: 12px; row-gap: 2px; padding: 10px 14px; border-top: 1px solid var(--border); }
+.liga-partido:first-child { border-top: none; }
+.liga-partido.jara { background: color-mix(in srgb, var(--red) 8%, transparent); }
+.liga-partido-hora { grid-column: 1 / -1; font-size: 12px; color: var(--text-dim); }
+.liga-partido-equipo { font-size: 15px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.liga-partido-equipo.gana { font-weight: 700; }
+.liga-partido-goles { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; min-width: 1.5em; }

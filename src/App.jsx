@@ -7,7 +7,6 @@ import ElegirClave from './pages/ElegirClave.jsx';
 import SinConexion from './pages/SinConexion.jsx';
 import Inicio from './pages/Inicio.jsx';
 import Partidos from './pages/Partidos.jsx';
-import Tabla from './pages/Tabla.jsx';
 import Partido from './pages/Partido.jsx';
 import PartidoForm from './pages/PartidoForm.jsx';
 import Estadisticas from './pages/Estadisticas.jsx';
@@ -61,7 +60,7 @@ export default function App() {
         <Route path="/partidos/nuevo" element={<PartidoForm />} />
         <Route path="/partidos/:id" element={<Partido />} />
         <Route path="/partidos/:id/editar" element={<PartidoForm />} />
-        <Route path="/tabla" element={<Tabla />} />
+        <Route path="/tabla" element={<Navigate to="/partidos?v=tabla" replace />} />
         <Route path="/jugadores" element={<Estadisticas />} />
         <Route path="/estadisticas" element={<Navigate to="/jugadores" replace />} />
         <Route path="/entrenar" element={<Entrenar />} />

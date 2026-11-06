@@ -295,7 +295,7 @@ function CargarFixture({ equipoId, equipo, torneo, existentes, guardarUno, recar
   );
 }
 
-export default function Tabla() {
+export default function Tabla({ incrustada = false }) {
   const { persona } = useSesion();
   const { cargando, error, tablas, guardar, borrar, recargar, conectar, refrescar } = useTablas();
   const [trayendo, setTrayendo] = useState(false);
@@ -350,9 +350,13 @@ export default function Tabla() {
 
   return (
     <>
-      <Link to="/partidos" className="volver">‹ Partidos</Link>
-      <h1 className="titulo display">Tabla de posiciones</h1>
-      <p className="subtitulo">Cómo vamos en cada liga y las fechas que vienen.</p>
+      {!incrustada && (
+        <>
+          <Link to="/partidos" className="volver">‹ La liga</Link>
+          <h1 className="titulo display">Tabla de posiciones</h1>
+          <p className="subtitulo">Cómo vamos en cada liga y las fechas que vienen.</p>
+        </>
+      )}
       {error && <p className="error" role="alert">{error}</p>}
       {cargando && !tablas.length ? <p className="vacio suelto">Cargando…</p> : (
         <>

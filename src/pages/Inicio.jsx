@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { useInicio } from '../lib/inicio.js';
 import { usePartidos, porEstado, sinResponder, tieneResultado } from '../lib/partidos.js';
+import { revisarLiga } from '../lib/liga.js';
 import { useEntrenamiento, horario } from '../lib/entrenamiento.js';
 import { useSolicitudes } from '../lib/ingreso.js';
 import { useNoticias, TIPOS } from '../lib/noticias.js';
@@ -186,6 +187,9 @@ export default function Inicio() {
   const nombre = persona.nombre.split(' ')[0];
   const partidos = usePartidos(persona);
   const entreno = useEntrenamiento(persona);
+  // Los partidos del Jara se crean solos desde las fechas de la liga (0038):
+  // al abrir la app se revisa (la base decide si ya toca, cada 3 horas).
+  useEffect(() => { revisarLiga(partidos.recargar); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // El último partido con resultado anotado, de mis planteles primero; si no hay, el de ejemplo (demo).
   const real = partidos.jugados.filter(tieneResultado);
   const ultimo = real.find((p) => p.esMio) ?? real[0];

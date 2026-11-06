@@ -6,7 +6,7 @@ import { nombreRol } from '../lib/prueba.js';
 
 const NAV = [
   { a: '/', icono: 'inicio', texto: 'Inicio' },
-  { a: '/partidos', icono: 'partidos', texto: 'Partidos' },
+  { a: '/partidos', icono: 'partidos', texto: 'La liga' },
   { a: '/entrenar', icono: 'entrenar', texto: 'Entrenar' },
   { a: '/jugadores', icono: 'jugadores', texto: 'Jugadores' },
   { a: '/mas', icono: 'mas', texto: 'Más' },
