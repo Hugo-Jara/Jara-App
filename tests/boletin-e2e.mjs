@@ -130,6 +130,7 @@ try {
       await page.getByText('Leyendo fotografías…').waitFor();
       verificar(await page.getByRole('button', { name: '← Guardar y volver a borradores' }).isDisabled(), 'se puede salir del editor con fotos cargando');
       // Mientras cargan B y C: encuadre, zoom y pie de la foto A.
+      await page.locator('.noticias-foto-editor').first().locator('summary').click();
       await page.getByLabel('Ampliar fotografía 1').fill('2.5');
       await page.getByLabel('Desplazar horizontalmente 1').fill('15');
       await page.getByLabel('Pie de foto 1').fill('Pie escrito mientras cargaban otras');
@@ -153,6 +154,32 @@ try {
       await page.getByRole('button', { name: 'Continuar edición' }).first().click();
       const despues = await leer();
       verificar(JSON.stringify(despues) === JSON.stringify(antes), `tras recargar cambió: ${JSON.stringify(despues)}`);
+      await sinDesborde();
+    });
+
+    await paso(p('Formato, encuadre y vista previa se conservan en el borrador'), async () => {
+      await page.getByLabel('Titular').first().fill('Noticia de prueba');
+      const campo = page.getByRole('textbox', { name: 'Texto de la noticia' }).first();
+      await campo.fill('Texto importante para probar.');
+      await campo.evaluate(el => {
+        const seleccion = window.getSelection(), rango = document.createRange();
+        rango.setStart(el.firstChild, 6); rango.setEnd(el.firstChild, 16);
+        seleccion.removeAllRanges(); seleccion.addRange(rango);
+        document.dispatchEvent(new Event('selectionchange'));
+      });
+      await page.getByRole('button', { name: 'Negrita' }).first().click();
+      await page.getByLabel('Alinear titular').first().selectOption('centro');
+      await page.getByLabel('Tamaño del texto').first().selectOption('grande');
+      await page.getByLabel('Cómo mostrar la foto').first().selectOption('completa');
+      await page.getByText(/^Guardado local/).waitFor({ timeout: 10000 });
+      await page.locator('.noticias-vista-flotante').click();
+      await page.locator('.noticias-pagina canvas').waitFor({ timeout: 15000 });
+      await sinDesborde();
+      await page.locator('.noticias-vista-flotante').click();
+      verificar((await page.getByRole('textbox', { name: 'Texto de la noticia' }).first().textContent()).includes('importante'), 'se perdió el texto');
+      verificar(await page.getByLabel('Alinear titular').first().inputValue() === 'centro', 'se perdió la alineación');
+      verificar(await page.getByLabel('Cómo mostrar la foto').first().inputValue() === 'completa', 'se perdió el modo de fotografía');
+      verificar(await page.locator('.noticias-texto-editable strong, .noticias-texto-editable b, .noticias-texto-editable [style*="bold"]').count() > 0, 'se perdió la negrita');
       await sinDesborde();
     });
 

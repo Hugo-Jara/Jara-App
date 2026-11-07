@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { componerEdicion } from '../../lib/boletinComposicion.js';
 import { descargar } from '../../lib/boletinStorage.js';
 import { nombreEdicion } from '../../lib/boletinDatos.js';
+import { TextoFormateado } from './TextoEnriquecido.jsx';
+import { relacionFoto } from '../../lib/boletinEncuadre.js';
 
 export function useComposicion(edicion) {
   const [estado, setEstado] = useState({ paginas: [], error: '', cargando: true });
@@ -18,8 +20,8 @@ function Pagina({ canvas, numero }) {
   useEffect(() => { if (canvas) ref.current.replaceChildren(canvas); }, [canvas]);
   return <div className="noticias-pagina" ref={ref} role="img" aria-label={`Página ${numero} del periódico. El mismo contenido está disponible en Lectura móvil.`} />;
 }
-export function FotosNota({ fotos }) {
-  return <div className="noticias-fotos-lectura">{fotos.map(f => <figure key={f.id}><div className="noticias-foto-marco">{f.src ? <img src={f.src} alt={f.pie || 'Fotografía de la noticia'} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${f.x}% ${f.y}%`, transform: `scale(${f.zoom})`, transformOrigin: `${f.x}% ${f.y}%` }} /> : <div className="noticias-ilustracion">Cancha de ejemplo · Ilustración demo</div>}</div>{f.pie && <figcaption>{f.pie}</figcaption>}</figure>)}</div>;
+export function FotosNota({ fotos, tipo = 'breve', disposicion = 'abajo', indiceInicial = 0, cantidadTotal = fotos.length }) {
+  return <div className="noticias-fotos-lectura">{fotos.map((f, i) => <figure key={f.id}><div className="noticias-foto-marco" style={{ aspectRatio: relacionFoto(tipo, disposicion, i + indiceInicial, cantidadTotal) }}>{f.src ? <img src={f.src} alt={f.pie || 'Fotografía de la noticia'} style={{ width: '100%', height: '100%', objectFit: f.mostrarCompleta ? 'contain' : 'cover', objectPosition: `${f.x}% ${f.y}%`, transform: `scale(${f.mostrarCompleta ? 1 : f.zoom})`, transformOrigin: `${f.x}% ${f.y}%` }} /> : <div className="noticias-ilustracion">Cancha de ejemplo · Ilustración demo</div>}</div>{f.pie && <figcaption>{f.pie}</figcaption>}</figure>)}</div>;
 }
 export default function BoletinVista({ edicion, local = false, todas = false }) {
   const { paginas, error, cargando } = useComposicion(edicion);
@@ -44,8 +46,8 @@ export default function BoletinVista({ edicion, local = false, todas = false }) 
     {paginas.avisos?.map((aviso, i) => <p className="noticias-aviso-distribucion" role="status" key={i}>{aviso}</p>)}
     {error && <p role="alert" className="noticias-error">{error} La exportación está bloqueada hasta corregirlo.</p>}
     {cargando && <p role="status">Diagramando páginas…</p>}
-    {movil ? <div className="noticias-lectura"><h3>EL JARA INFORMA</h3>{edicion.bloques.map(b => <section key={b.id} className={`noticias-lectura-${b.tipo}`}>
-      {b.tipo === 'agenda' ? <><h3>Lo que viene</h3>{b.eventos.map(v => <p key={v.id}><strong>{v.fecha || 'Fecha por confirmar'}</strong><br />{v.descripcion}</p>)}</> : b.notas.map(n => <article key={n.id}><h3>{n.titulo || 'Noticia sin título'}</h3>{n.disposicion === 'arriba' && <FotosNota fotos={n.fotos.slice(0, 1)} />}<p>{n.texto}</p><FotosNota fotos={n.disposicion === 'arriba' ? n.fotos.slice(1) : n.fotos} /></article>)}
+    {movil ? <div className="noticias-lectura" style={{ fontFamily: edicion.fuente || 'Georgia' }}><h3>EL JARA INFORMA</h3>{edicion.bloques.map(b => <section key={b.id} className={`noticias-lectura-${b.tipo}`}>
+      {b.tipo === 'agenda' ? <><h3>Lo que viene</h3>{b.eventos.map(v => <p key={v.id}><strong>{v.fecha || 'Fecha por confirmar'}</strong><br />{v.titulo && <><strong>{v.titulo}</strong><br /></>}{v.descripcion}</p>)}</> : ['frase','cierre'].includes(b.tipo) ? <p className="noticias-frase-movil">{b.notas[0].texto}</p> : b.notas.map(n => <article key={n.id}>{n.categoria && <p className="noticias-lectura-categoria">{n.categoria}</p>}<h3 style={{ textAlign: n.alineacionTitulo === 'centro' ? 'center' : n.alineacionTitulo === 'derecha' ? 'right' : 'left' }}>{n.titulo || 'Noticia sin título'}</h3>{n.disposicion === 'arriba' && <FotosNota fotos={n.fotos.slice(0, 1)} tipo={b.tipo} disposicion={n.disposicion} cantidadTotal={n.fotos.length} />}<p style={{ textAlign: n.alineacionTexto === 'centro' ? 'center' : n.alineacionTexto === 'derecha' ? 'right' : n.alineacionTexto === 'justificado' ? 'justify' : 'left' }}><TextoFormateado texto={n.texto} formatos={n.formatos} /></p><FotosNota fotos={n.disposicion === 'arriba' ? n.fotos.slice(1) : n.fotos} tipo={b.tipo} disposicion={n.disposicion} indiceInicial={n.disposicion === 'arriba' ? 1 : 0} cantidadTotal={n.fotos.length} /></article>)}
     </section>)}</div> : !!paginas.length && <>
       <div className="noticias-herramientas"><button className="btn secundario" disabled={indice === 0} onClick={() => setActual(indice - 1)}>← Anterior</button><span aria-live="polite">Página {indice + 1} de {paginas.length}</span><button className="btn secundario" disabled={indice === paginas.length - 1} onClick={() => setActual(indice + 1)}>Siguiente →</button></div>
       <label className="noticias-campo">Ampliar página <input aria-label="Ampliar página" type="range" min="1" max="3" step="0.25" value={zoom} onChange={e => setZoom(Number(e.target.value))} /></label>

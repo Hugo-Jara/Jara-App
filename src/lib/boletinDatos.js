@@ -1,5 +1,6 @@
 // Modelo exclusivo del boletín: nunca consulta Supabase ni publica borradores.
-export const TIPOS_BLOQUE = { principal: 'Noticia principal', columnas: 'Noticias en dos columnas', breve: 'Noticia breve', destacada: 'Noticia destacada', agenda: 'Lo que viene' };
+export const TIPOS_BLOQUE = { principal: 'Noticia principal', columnas: 'Noticias en dos columnas', breve: 'Noticia breve', destacada: 'Noticia destacada', agenda: 'Lo que viene', frase: 'Frase destacada', cierre: 'Mensaje de cierre' };
+export const FUENTES_BOLETIN = { Georgia: 'Georgia', 'Times New Roman': 'Times New Roman', Arial: 'Arial' };
 export const DISPOSICIONES_FOTO = {
   abajo: 'Foto después del texto', arriba: 'Foto antes del texto',
   lado_izquierda: 'Foto a la izquierda', lado_derecha: 'Foto a la derecha',
@@ -7,7 +8,7 @@ export const DISPOSICIONES_FOTO = {
 };
 export const idNuevo = () => crypto.randomUUID();
 export const notaNueva = () => ({ id: idNuevo(), titulo: '', texto: '', fotos: [] });
-export const bloqueNuevo = (tipo) => ({ id: idNuevo(), tipo, notas: Array.from({ length: tipo === 'columnas' ? 2 : 1 }, notaNueva), eventos: tipo === 'agenda' ? [{ id: idNuevo(), fecha: '', descripcion: '' }] : [] });
+export const bloqueNuevo = (tipo) => ({ id: idNuevo(), tipo, notas: Array.from({ length: tipo === 'columnas' ? 2 : 1 }, notaNueva), eventos: tipo === 'agenda' ? [{ id: idNuevo(), fecha: '', titulo: '', descripcion: '' }] : [] });
 export const edicionNueva = (numero = 1) => ({ version: 1, id: idNuevo(), numero, nombre: '', periodo: '', resumen: '', bloques: [], modificada: new Date().toISOString() });
 export const nombreEdicion = (e) => e.nombre || `El Jara Informa N°${e.numero}`;
 const texto = 'Esta es una noticia inventada para probar el boletín. El equipo de ejemplo comparte una jornada de encuentro y prepara nuevas actividades.\n\nTodos pueden participar y aportar ideas. Las fechas, los resultados y las actividades de esta edición son ficticios; no corresponden a anuncios oficiales del club.';
@@ -40,14 +41,17 @@ export function moverFoto(fotos, id, delta) {
 export function validarEdicion(e) {
   if (!e || e.version !== 1 || typeof e.id !== 'string' || !Number.isInteger(e.numero) || e.numero < 1 || typeof e.nombre !== 'string' || typeof e.periodo !== 'string' || typeof e.resumen !== 'string' || !Array.isArray(e.bloques) || e.bloques.length > 200) throw new Error('El respaldo no contiene una edición compatible.');
   const cadena = v => typeof v === 'string' && v.length <= 200000;
+  if (e.fuente != null && !Object.hasOwn(FUENTES_BOLETIN, e.fuente)) throw new Error('Fuente del boletín inválida.');
   for (const b of e.bloques) {
     if (!TIPOS_BLOQUE[b.tipo] || typeof b.id !== 'string' || !Array.isArray(b.notas) || b.notas.length !== (b.tipo === 'columnas' ? 2 : 1) || !Array.isArray(b.eventos)) throw new Error('Bloques del respaldo inválidos.');
     for (const n of b.notas) {
       if (typeof n.id !== 'string' || !cadena(n.titulo) || !cadena(n.texto) || !Array.isArray(n.fotos)) throw new Error('Noticias del respaldo inválidas.');
+      if (n.formatos != null && (!Array.isArray(n.formatos) || n.formatos.length > 10000 || !n.formatos.every(f => Number.isInteger(f.inicio) && Number.isInteger(f.fin) && f.inicio >= 0 && f.fin > f.inicio && f.fin <= n.texto.length && ['negrita', 'cursiva', 'subrayado'].every(k => f[k] == null || typeof f[k] === 'boolean')))) throw new Error('Formato de texto inválido.');
+      if ((n.alineacionTitulo != null && !['izquierda','centro','derecha'].includes(n.alineacionTitulo)) || (n.alineacionTexto != null && !['izquierda','centro','derecha','justificado'].includes(n.alineacionTexto)) || (n.tamanoTitulo != null && !['auto','pequeno','mediano','grande'].includes(n.tamanoTitulo)) || (n.tamanoTexto != null && !['auto','pequeno','mediano','grande'].includes(n.tamanoTexto)) || (n.categoria != null && (!cadena(n.categoria) || n.categoria.length > 70))) throw new Error('Estilo de noticia inválido.');
       if ((n.disposicion != null && !Object.hasOwn(DISPOSICIONES_FOTO, n.disposicion)) || (n.mantenerJunta != null && typeof n.mantenerJunta !== 'boolean')) throw new Error('Distribución de noticia inválida.');
-      for (const f of n.fotos) if (typeof f.id !== 'string' || (!f.demo && (typeof f.src !== 'string' || !/^data:image\/(png|jpeg|webp|gif);base64,/.test(f.src))) || ![f.x, f.y, f.zoom].every(Number.isFinite) || f.x < 0 || f.x > 100 || f.y < 0 || f.y > 100 || f.zoom < 1 || f.zoom > 3 || !cadena(f.pie || '')) throw new Error('Fotografía o encuadre del respaldo inválido.');
+      for (const f of n.fotos) if ((f.mostrarCompleta != null && typeof f.mostrarCompleta !== 'boolean') || typeof f.id !== 'string' || (!f.demo && (typeof f.src !== 'string' || !/^data:image\/(png|jpeg|webp|gif);base64,/.test(f.src))) || ![f.x, f.y, f.zoom].every(Number.isFinite) || f.x < 0 || f.x > 100 || f.y < 0 || f.y > 100 || f.zoom < 1 || f.zoom > 3 || !cadena(f.pie || '')) throw new Error('Fotografía o encuadre del respaldo inválido.');
     }
-    if (!b.eventos.every(v => typeof v.id === 'string' && cadena(v.fecha) && cadena(v.descripcion))) throw new Error('Agenda del respaldo inválida.');
+    if (!b.eventos.every(v => typeof v.id === 'string' && cadena(v.fecha) && cadena(v.descripcion) && (v.titulo == null || cadena(v.titulo)))) throw new Error('Agenda del respaldo inválida.');
   }
   return e;
 }

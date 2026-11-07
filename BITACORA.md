@@ -5,6 +5,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 ---
 
 
+## 2026-11-07 · Comunicaciones — Encuadre y presentación del boletín
+
+- Encuadre táctil sobre la foto completa, alternativa de mostrarla completa y controles precisos; se conserva el encuadre en la lectura móvil y el PNG.
+- Encabezado inspirado en las ediciones previas; fuente de edición, tamaños y alineación de noticias, categoría y negrita/cursiva/subrayado de texto seleccionado. La revisión ortográfica depende del navegador y su diccionario.
+- Bloques de frase destacada, cierre y agenda con actividades. Los borradores anteriores se conservan compatibles.
+- Comprobado: compilación y 16 pruebas del boletín, incluidas geometría de recorte, formato, continuidad y respaldo. Pendiente validar gestos, formato y distribución en navegador real y dispositivos físicos: Chromium no pudo iniciar por la política de sockets del entorno. Las fuentes del sistema pueden variar entre dispositivos.
+
+---
+
+
 ## 2026-11-07 · Comunicaciones — Mejoras del editor de El Jara Informa
 
 - Vista previa accesible desde un botón flotante; el regreso conserva la posición del editor. Se espera la carga de fotografías antes de cambiar de vista.

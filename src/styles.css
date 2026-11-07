@@ -468,7 +468,7 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .noticias-miniaturas button { padding: 0; background: transparent; border: 2px solid #685448; }
 .noticias-miniaturas img { width: 100%; height: auto; display: block; }
 .noticias-lectura { background: #f7efdd; color: #17130f; padding: 22px; border-radius: 4px; line-height: 1.7; }
-.noticias-lectura h3 { font-family: Georgia, serif; font-size: 26px; line-height: 1.18; }
+.noticias-lectura h3 { font-family: inherit; font-size: 26px; line-height: 1.18; }
 .noticias-lectura p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .noticias-lectura article, .noticias-lectura section { margin-bottom: 28px; }
 .noticias-lectura-destacada { border: 2px solid #a92520; padding: 14px; }
@@ -704,3 +704,25 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .liga-cabeza .titulo { margin-bottom: 0; }
 .btn.liga-actualizar { width: auto; padding: 8px 14px; font-size: 14px; margin: 0; }
 .liga-aviso { margin: 6px 0 0; width: 100%; }
+
+/* Encuadre de la fotografía completa con marco táctil. */
+.noticias-encuadre-imagen { position: relative; overflow: hidden; line-height: 0; background: #201a16; }
+.noticias-encuadre-imagen img { display: block; width: 100%; height: auto; user-select: none; pointer-events: none; }
+.noticias-encuadre-marco { position: absolute; box-sizing: border-box; border: 2px solid white; box-shadow: 0 0 0 9999px #0009; cursor: move; touch-action: none; }
+.noticias-foto-editor details { margin: 12px 0; }
+.noticias-foto-editor summary { cursor: pointer; padding: 8px 0; }
+
+.noticias-ajustes-texto { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; }
+.noticias-campo select { width: 100%; max-width: 100%; }
+.noticias-texto-editor { margin: 14px 0; }
+.noticias-campo-etiqueta { font-size: 14px; font-weight: 600; color: #bfa99d; }
+.noticias-formato { display: flex; align-items: center; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
+.noticias-formato button { min-width: 42px; min-height: 42px; border: 1px solid #685448; border-radius: 8px; background: #1b1514; color: #fff; font-size: 17px; font-weight: 700; }
+.noticias-formato button[aria-label="Cursiva"] { font-style: italic; }
+.noticias-formato button[aria-label="Subrayado"] { text-decoration: underline; }
+.noticias-formato small { font-size: 12px; color: #c1ada3; }
+.noticias-texto-editable { min-height: 150px; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid #682922; border-radius: 10px; padding: 12px; outline-offset: 2px; }
+
+.noticias-frase-movil { text-align: center; font-family: inherit; font-size: 1.25em; font-weight: 700; border-block: 1px solid #a92520; padding: 16px 0; }
+
+.noticias-lectura-categoria { color: #a92520; font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase; font-size: .85em; }
