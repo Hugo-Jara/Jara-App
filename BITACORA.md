@@ -4,6 +4,17 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-07 · "Actualizar la liga" para todos
+
+**Qué se hizo** (migración `0040_actualizar_la_liga_para_todos.sql`, se corre antes del merge):
+- Cualquiera del club puede apretar "Actualizar la liga", no solo quien anota partidos.
+- Para no saturar a Deporstar ni a copafacil, quien no anota partidos solo sale a la liga si pasaron 5 minutos desde la última revisión de ese plantel. Si no han pasado, la función vuelve sin hacer nada.
+- `liga_refrescar` y `tabla_refrescar` cambian el error "Solo el encargado…" por esa regla. `liga_fechas` devuelve `puedo_actualizar` en true para todos.
+
+**Comprobado:** `npm run test:db` y `npm run build` pasan. Hay pruebas nuevas para un jugador que aprieta recién actualizado (no sale a la liga) y pasados 5 minutos (sí sale).
+
+---
+
 ## 2026-11-07 · La liga: "Última actualización" y sin cargar fechas a mano
 
 **Qué se hizo** (sin migración):
