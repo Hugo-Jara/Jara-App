@@ -468,11 +468,50 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .noticias-miniaturas button { padding: 0; background: transparent; border: 2px solid #685448; }
 .noticias-miniaturas img { width: 100%; height: auto; display: block; }
 .noticias-lectura { background: #f7efdd; color: #17130f; padding: 22px; border-radius: 4px; line-height: 1.7; }
-.noticias-lectura h3 { font-family: Georgia, serif; font-size: 26px; line-height: 1.18; }
+.noticias-lectura h3 { font-family: inherit; font-size: 26px; line-height: 1.18; }
 .noticias-lectura p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .noticias-lectura article, .noticias-lectura section { margin-bottom: 28px; }
 .noticias-lectura-destacada { border: 2px solid #a92520; padding: 14px; }
 .noticias-agregar { border-top: 2px solid #a92520; padding-top: 14px; }
+/* Opciones táctiles del boletín; no afectan el resto de la aplicación. */
+.noticias-editor { padding-bottom: 64px; }
+.noticias-vista-flotante { position: fixed; z-index: 20; right: max(14px, env(safe-area-inset-right)); bottom: calc(82px + env(safe-area-inset-bottom)); width: auto; margin: 0; min-height: 48px; box-shadow: 0 4px 16px #0009; }
+.noticias-vista-flotante:disabled { opacity: .6; }
+.noticias-tipos, .noticias-disposiciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.noticias-tipo, .noticias-opcion-disposicion { background: #1b1514; color: #f7efdd; border: 1px solid #685448; border-radius: 10px; font: inherit; text-align: left; cursor: pointer; min-width: 0; }
+.noticias-tipo { display: flex; align-items: center; gap: 10px; padding: 11px; min-height: 98px; }
+.noticias-tipo strong, .noticias-tipo small { display: block; }
+.noticias-tipo strong { font-size: 14px; line-height: 1.25; }
+.noticias-tipo small { font-size: 12px; line-height: 1.35; color: #c1ada3; margin-top: 5px; }
+.noticias-distribucion { min-width: 0; margin: 18px 0; border: 1px solid #685448; border-radius: 10px; padding: 12px; }
+.noticias-distribucion legend { font-weight: 700; }
+.noticias-opcion-disposicion { display: flex; flex-direction: column; gap: 7px; padding: 10px; font-size: 12px; font-weight: 600; line-height: 1.25; min-height: 92px; }
+.noticias-opcion-disposicion[aria-pressed=true] { border: 2px solid #d74b40; background: #39211e; }
+.noticias-mantener { display: flex; gap: 9px; align-items: flex-start; margin: 16px 0 4px; font-size: 14px; }
+.noticias-mantener input { width: 20px; height: 20px; flex: none; margin: 0; accent-color: #c74438; }
+.noticias-esquema { position: relative; display: block; flex: none; width: 48px; height: 60px; background: #f7efdd; border-radius: 3px; overflow: hidden; }
+.noticias-esquema i { position: absolute; display: block; background: #806e63; border-radius: 1px; }
+.noticias-esquema .esquema-titulo { top: 7px; left: 5px; width: 37px; height: 5px; background: #a92520; }
+.noticias-esquema .esquema-foto { left: 5px; top: 29px; width: 37px; height: 15px; background: #63806f; }
+.noticias-esquema .esquema-texto { left: 5px; top: 16px; width: 37px; height: 10px; background: repeating-linear-gradient(to bottom, #806e63 0 2px, transparent 2px 4px); }
+.noticias-esquema .esquema-texto2 { left: 5px; top: 47px; width: 37px; height: 8px; background: repeating-linear-gradient(to bottom, #806e63 0 2px, transparent 2px 4px); }
+.noticias-esquema-arriba .esquema-foto { top: 16px; }
+.noticias-esquema-arriba .esquema-texto { top: 34px; }
+.noticias-esquema-lado_izquierda .esquema-foto, .noticias-esquema-rodear_izquierda .esquema-foto { top: 16px; left: 5px; width: 16px; height: 20px; }
+.noticias-esquema-lado_izquierda .esquema-texto, .noticias-esquema-rodear_izquierda .esquema-texto { left: 24px; top: 16px; width: 18px; height: 20px; }
+.noticias-esquema-lado_derecha .esquema-foto, .noticias-esquema-rodear_derecha .esquema-foto { top: 16px; left: 26px; width: 16px; height: 20px; }
+.noticias-esquema-lado_derecha .esquema-texto, .noticias-esquema-rodear_derecha .esquema-texto { left: 5px; top: 16px; width: 18px; height: 20px; }
+.noticias-esquema-lado_izquierda .esquema-texto2 { left: 24px; width: 18px; top: 39px; }
+.noticias-esquema-lado_derecha .esquema-texto2 { left: 5px; width: 18px; top: 39px; }
+.noticias-esquema-rodear_izquierda .esquema-texto2, .noticias-esquema-rodear_derecha .esquema-texto2 { top: 39px; }
+.noticias-esquema-columnas .esquema-foto { width: 17px; left: 5px; }
+.noticias-esquema-columnas .esquema-texto { width: 17px; }
+.noticias-esquema-columnas .esquema-texto2 { left: 26px; width: 17px; top: 16px; height: 28px; }
+.noticias-esquema-destacada .esquema-titulo { height: 8px; }
+.noticias-esquema-agenda .esquema-foto { display: none; }
+.noticias-esquema-agenda .esquema-texto { height: 28px; }
+.noticias-aviso-distribucion { border: 1px solid #c6943d; border-radius: 8px; padding: 12px; color: #ffd790; font-size: 14px; }
+@media (max-width: 380px) { .noticias-tipos { grid-template-columns: 1fr; } }
 @media (max-width: 480px) {
   .noticias-edicion-card { grid-template-columns: minmax(80px, 32%) minmax(0, 1fr); padding: 12px; gap: 12px; }
   .noticias-edicion-card h3 { font-size: 20px; }
@@ -665,3 +704,25 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .liga-cabeza .titulo { margin-bottom: 0; }
 .btn.liga-actualizar { width: auto; padding: 8px 14px; font-size: 14px; margin: 0; }
 .liga-aviso { margin: 6px 0 0; width: 100%; }
+
+/* Encuadre de la fotografía completa con marco táctil. */
+.noticias-encuadre-imagen { position: relative; overflow: hidden; line-height: 0; background: #201a16; }
+.noticias-encuadre-imagen img { display: block; width: 100%; height: auto; user-select: none; pointer-events: none; }
+.noticias-encuadre-marco { position: absolute; box-sizing: border-box; border: 2px solid white; box-shadow: 0 0 0 9999px #0009; cursor: move; touch-action: none; }
+.noticias-foto-editor details { margin: 12px 0; }
+.noticias-foto-editor summary { cursor: pointer; padding: 8px 0; }
+
+.noticias-ajustes-texto { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 10px; }
+.noticias-campo select { width: 100%; max-width: 100%; }
+.noticias-texto-editor { margin: 14px 0; }
+.noticias-campo-etiqueta { font-size: 14px; font-weight: 600; color: #bfa99d; }
+.noticias-formato { display: flex; align-items: center; gap: 6px; margin: 8px 0; flex-wrap: wrap; }
+.noticias-formato button { min-width: 42px; min-height: 42px; border: 1px solid #685448; border-radius: 8px; background: #1b1514; color: #fff; font-size: 17px; font-weight: 700; }
+.noticias-formato button[aria-label="Cursiva"] { font-style: italic; }
+.noticias-formato button[aria-label="Subrayado"] { text-decoration: underline; }
+.noticias-formato small { font-size: 12px; color: #c1ada3; }
+.noticias-texto-editable { min-height: 150px; white-space: pre-wrap; overflow-wrap: anywhere; border: 1px solid #682922; border-radius: 10px; padding: 12px; outline-offset: 2px; }
+
+.noticias-frase-movil { text-align: center; font-family: inherit; font-size: 1.25em; font-weight: 700; border-block: 1px solid #a92520; padding: 16px 0; }
+
+.noticias-lectura-categoria { color: #a92520; font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase; font-size: .85em; }

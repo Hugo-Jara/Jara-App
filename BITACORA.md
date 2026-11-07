@@ -4,6 +4,26 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+
+## 2026-11-07 · Comunicaciones — Encuadre y presentación del boletín
+
+- Encuadre táctil sobre la foto completa, alternativa de mostrarla completa y controles precisos; se conserva el encuadre en la lectura móvil y el PNG.
+- Encabezado inspirado en las ediciones previas; fuente de edición, tamaños y alineación de noticias, categoría y negrita/cursiva/subrayado de texto seleccionado. La revisión ortográfica depende del navegador y su diccionario.
+- Bloques de frase destacada, cierre y agenda con actividades. Los borradores anteriores se conservan compatibles.
+- Comprobado: compilación y 16 pruebas del boletín, incluidas geometría de recorte, formato, continuidad y respaldo. Pendiente validar gestos, formato y distribución en navegador real y dispositivos físicos: Chromium no pudo iniciar por la política de sockets del entorno. Las fuentes del sistema pueden variar entre dispositivos.
+
+---
+
+
+## 2026-11-07 · Comunicaciones — Mejoras del editor de El Jara Informa
+
+- Vista previa accesible desde un botón flotante; el regreso conserva la posición del editor. Se espera la carga de fotografías antes de cambiar de vista.
+- Selección visual de bloques y de seis formas de ubicar la primera foto junto al texto; las fotos adicionales quedan al final. Opción para intentar mantener la noticia y sus fotos juntas, con aviso si deben continuar.
+- Compatibilidad con borradores anteriores y el mismo diseño en la vista de periódico y sus PNG. La lectura móvil mantiene el contenido legible en una columna.
+- Comprobado: compilación y pruebas automáticas del boletín, incluidas posición, agrupación, continuidad, dos columnas y respaldos anteriores. Pendiente recorrido visual en navegador y celulares físicos: el entorno de pruebas no permite iniciar Chromium.
+
+---
+
 ## 2026-11-07 · "Actualizar la liga" para todos
 
 **Qué se hizo** (migración `0040_actualizar_la_liga_para_todos.sql`, se corre antes del merge):
