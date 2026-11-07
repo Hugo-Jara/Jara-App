@@ -63,8 +63,9 @@ $$;
 -- Las tablas desde los equipos de copafacil. Cada equipo trae su línea en
 -- dt.<fase>.dt como "1=7#2=3#...": 0 puntos, 1 jugados, 2 ganados, 3
 -- empatados, 4 perdidos, 5 goles a favor, 6 goles en contra; col es el
--- puesto general y colg el puesto en su grupo (g). Se usa la última fase.
--- Devuelve {grupo: 'A', del_grupo: [...], general: [...]}.
+-- puesto general y colg el puesto en su grupo (g). Se usa la última fase y
+-- se deja fuera "Cupo Libre". Devuelve {general: [...], grupos: {A: [...]},
+-- grupo: 'A'} (grupo es el del Jara).
 create or replace function public.tabla_desde_copafacil(p_teams jsonb)
 returns jsonb language plpgsql immutable set search_path = public as $$
 declare
@@ -83,7 +84,7 @@ begin
            (select jsonb_object_agg(split_part(x, '=', 1), split_part(x, '=', 2))
               from unnest(string_to_array(t->'dt'->v_fase->>'dt', '#')) x where x like '%=%') as n
       from jsonb_each(p_teams) e(k, t)
-     where t->'dt'->v_fase is not null and coalesce(trim(t->>'name'), '') <> ''
+     where t->'dt'->v_fase is not null and coalesce(trim(t->>'name'), '') <> '' and t->>'name' !~* 'cupo libre'
   ), filas as (
     select nombre, g, col, colg, jsonb_build_object(
              'equipo', left(nombre, 60), 'es_jara', nombre ilike '%jara%',

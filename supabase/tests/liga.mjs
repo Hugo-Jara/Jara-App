@@ -211,7 +211,7 @@ ok('El nombre del Jara viene sin espacios de más', x.some((p) => p.visita === '
 x = (await db.query('select tabla_desde_copafacil($1) as t', [JSON.stringify(CF.teams)])).rows[0].t;
 const mota = x.general.find((f) => f.equipo === 'Mota Classic');
 ok('La tabla trae la línea de cada equipo', mota && mota.pts === 11 && mota.pj === 7 && mota.pg === 3 && mota.pe === 2 && mota.pp === 2 && mota.gf === 9 && mota.gc === 11, JSON.stringify(mota));
-ok('General con los 16 y el grupo del Jara', x.general.length === 16 && x.grupo === 'A' && x.grupos.A.length >= 2 && x.grupos.A.some((f) => f.es_jara), JSON.stringify(Object.keys(x.grupos)));
+ok('General con los 15 equipos (sin Cupo Libre) y el grupo del Jara', x.general.length === 15 && !x.general.some((f) => /cupo/i.test(f.equipo)) && x.grupo === 'A' && x.grupos.A.length >= 2 && x.grupos.A.some((f) => f.es_jara), JSON.stringify(Object.keys(x.grupos)));
 ok('Ordenada por puesto', x.grupos.A.every((f, i, a) => i === 0 || a[i - 1].pts >= f.pts), x.grupos.A.map((f) => f.pts).join());
 
 await db.query(`insert into liga_torneos (equipo_id, club_id, fuente, copafacil_torneo) values ($1, $2, 'copafacil', '-68fm5@riynh')`, [JUEVES, CLUB]);
