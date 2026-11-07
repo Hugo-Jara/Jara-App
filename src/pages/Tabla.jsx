@@ -335,8 +335,9 @@ export default function Tabla({ incrustada = false }) {
   };
 
   // Si está conectada a la liga, al mirarla se revisa sola (la base decide si
-  // ya pasaron 3 horas). Sin ruido si la liga no responde.
-  const conectada = !!tabla?.conectada;
+  // ya pasaron 3 horas). Sin ruido si la liga no responde. Las de copafacil
+  // (jueves) se revisan junto con las fechas de la liga.
+  const conectada = !!tabla?.deporstarTabla;
   useEffect(() => {
     if (actualId && conectada) refrescar(actualId, false, grupo).catch(() => {});
   }, [actualId, grupo, conectada]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -405,7 +406,7 @@ export default function Tabla({ incrustada = false }) {
                 </p>
               )}
               {aviso && <p className="ayuda abajo" role="status">{aviso}</p>}
-              {!incrustada && tabla.puedoEditar && tabla.conectada && (
+              {!incrustada && tabla.puedoEditar && tabla.deporstarTabla && (
                 <button type="button" className="btn secundario" style={{ marginTop: 12 }} onClick={traerAhora} disabled={trayendo}>
                   {trayendo ? 'Trayendo la tabla…' : 'Actualizar desde la liga'}
                 </button>

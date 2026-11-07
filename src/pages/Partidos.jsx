@@ -165,14 +165,15 @@ const PESTANAS = [
 ];
 
 // Un solo botón trae todo de la liga: las fechas y las tablas conectadas de
-// los planteles que la persona puede actualizar.
+// los planteles que la persona puede actualizar. Las tablas de copafacil
+// (jueves) llegan junto con las fechas; las de Deporstar se piden aparte.
 function ActualizarLiga({ alTerminar }) {
   const { conectados } = useFechasLiga();
-  const { tablas, refrescar } = useTablas();
+  const { tablas, refrescar, recargar: recargarTablas } = useTablas();
   const [trayendo, setTrayendo] = useState(false);
   const [aviso, setAviso] = useState('');
   const fechas = conectados.filter((c) => c.puedoActualizar);
-  const tablasConectadas = tablas.filter((t) => t.conectada && t.puedoEditar);
+  const tablasConectadas = tablas.filter((t) => t.deporstarTabla && t.puedoEditar);
   if (!fechas.length && !tablasConectadas.length) return null;
   const traer = async () => {
     setTrayendo(true); setAviso('');
@@ -183,7 +184,7 @@ function ActualizarLiga({ alTerminar }) {
     for (const t of tablasConectadas) {
       try { await refrescar(t.equipoId, true, t.grupo); } catch (e) { fallas.push(e.message); }
     }
-    await alTerminar?.();
+    await Promise.all([alTerminar?.(), recargarTablas()]);
     setAviso(fallas.length ? fallas[0] : 'Listo: fechas y tablas al día con la liga.');
     setTrayendo(false);
   };
@@ -200,10 +201,12 @@ function ActualizarLiga({ alTerminar }) {
 export default function LaLiga() {
   const { persona } = useSesion();
   const { recargar } = usePartidos(persona);
+  const { recargar: recargarTablas } = useTablas();
   const [params, setParams] = useSearchParams();
   // Al entrar se revisa la liga (la base decide si ya toca); si llegan
-  // partidos nuevos del Jara, aparecen en la pestaña Partidos.
-  useEffect(() => { revisarLiga(recargar); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // partidos nuevos del Jara, aparecen en la pestaña Partidos (y las tablas
+// del jueves, que vienen de copafacil junto con las fechas).
+  useEffect(() => { revisarLiga(() => { recargar(); recargarTablas(); }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const v = PESTANAS.some((p) => p.v === params.get('v')) ? params.get('v') : 'partidos';
   return (
     <>
