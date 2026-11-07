@@ -183,5 +183,58 @@ ok('Las tablas no se leen directo', !!r.error, r.error);
 r = await anon('select liga_fechas()');
 ok('Sin cuenta no se ve nada', !!r.error, r.error);
 
+console.log('\nEl jueves, desde copafacil');
+const CF = JSON.parse(readFileSync(join(here, 'fixtures', 'copafacil-jueves.json'), 'utf8'));
+const JUEVES = '40000000-0000-0000-0000-0000000000e3';
+const idJara = Object.entries(CF.teams).find(([, t]) => /jara/i.test(t.name))[0];
+const idRival = Object.entries(CF.teams).find(([, t]) => t.name === 'Monarcas')[0];
+const ultimaFecha = Object.keys(CF.m_set).sort().at(-1);
+const futuro = Date.UTC(...(() => { const d = enDias(6); return [d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 0]; })());
+const matchs = { ...CF.matchs, 1799999999001: { d_i: futuro, evt: '-68fm5@riynh', l: '3830477', m_set: ultimaFecha, st: 0, team1: idRival, team2: idJara },
+                 1799999999002: { d_i: futuro, evt: '-68fm5@otro', m_set: ultimaFecha, team1: idRival, team2: idJara } };
+await db.exec(`insert into equipos (id, club_id, nombre, orden) values ('${JUEVES}', '${CLUB}', 'Jueves Inventado', 3)`);
+await db.query('insert into tablas_posiciones (equipo_id, club_id, grupo, filas) values ($1, $2, $3, $4)',
+               [JUEVES, CLUB, 'Grupo A', JSON.stringify([{ equipo: 'Del pantallazo', pts: 1 }])]);
+await pagina('%copafacil-web.firebaseio.com/events/-68fm5/matchs.json', JSON.stringify(matchs));
+await pagina('%copafacil-web.firebaseio.com/events/-68fm5@riynh/teams.json', JSON.stringify(CF.teams));
+await pagina('%copafacil-web.firebaseio.com/events/-68fm5@riynh/m_set.json', JSON.stringify(CF.m_set));
+await pagina('%copafacil-web.firebaseio.com/events/-68fm5/places.json', JSON.stringify(CF.places));
+
+x = (await db.query('select liga_desde_copafacil($1, $2, $3, $4) as p', [JSON.stringify(CF.matchs), JSON.stringify(CF.teams), JSON.stringify(CF.places), '-68fm5@riynh'])).rows[0].p;
+ok('Lee los partidos del torneo, sin los de Cupo Libre', x.length === 49 && !x.some((p) => /cupo libre/i.test(p.local + p.visita)), x.length);
+const mj = x.find((p) => p.local === 'Monarcas' && /jara/i.test(p.visita) && p.jornada === Number(ultimaFecha) - 0);
+ok('Monarcas 1 - 1 Hugo Jara, con hora de Santiago y cancha', mj && mj.goles_local === 1 && mj.goles_visita === 1 && /^\d\d:\d\d$/.test(mj.hora) && /^Cancha \d$/.test(mj.cancha ?? ''), JSON.stringify(mj));
+ok('Los goles en cero cuentan (copafacil no los manda)', x.some((p) => p.local === 'Hugo Jara' && p.visita === 'Sagrados' && p.goles_local === 2 && p.goles_visita === 0)
+   && x.some((p) => p.local === 'Hugo Jara' && p.visita === 'Peselaco' && p.goles_local === 0 && p.goles_visita === 2));
+ok('Jueves en la noche, en hora de Chile', x.some((p) => p.visita === 'Sagrados' && p.dia === '2026-08-27' && p.hora === '21:30'));
+ok('El nombre del Jara viene sin espacios de más', x.some((p) => p.visita === 'Hugo Jara' || p.local === 'Hugo Jara'));
+x = (await db.query('select tabla_desde_copafacil($1) as t', [JSON.stringify(CF.teams)])).rows[0].t;
+const mota = x.general.find((f) => f.equipo === 'Mota Classic');
+ok('La tabla trae la línea de cada equipo', mota && mota.pts === 11 && mota.pj === 7 && mota.pg === 3 && mota.pe === 2 && mota.pp === 2 && mota.gf === 9 && mota.gc === 11, JSON.stringify(mota));
+ok('General con los 15 equipos (sin Cupo Libre) y el grupo del Jara', x.general.length === 15 && !x.general.some((f) => /cupo/i.test(f.equipo)) && x.grupo === 'A' && x.grupos.A.length >= 2 && x.grupos.A.some((f) => f.es_jara), JSON.stringify(Object.keys(x.grupos)));
+ok('Ordenada por puesto', x.grupos.A.every((f, i, a) => i === 0 || a[i - 1].pts >= f.pts), x.grupos.A.map((f) => f.pts).join());
+
+await db.query(`insert into liga_torneos (equipo_id, club_id, fuente, copafacil_torneo) values ($1, $2, 'copafacil', '-68fm5@riynh')`, [JUEVES, CLUB]);
+r = await db.query(`insert into liga_torneos (equipo_id, club_id, fuente) values ($1, $2, 'copafacil')`, [JUNIOR, CLUB]).catch((e) => ({ error: e.message }));
+ok('copafacil sin torneo no se acepta', !!r.error, JSON.stringify(r));
+antes = await pedidas();
+r = await como('jugador', 'select liga_refrescar($1) as n', [JUEVES]);
+ok('Se trae de una vez (4 archivos)', !r.error && r.rows[0].n === 0 && (await pedidas()) - antes === 4, r.error ?? (await pedidas()) - antes);
+x = await fechas('jugador');
+const jue = x.partidos.filter((p) => p.equipo_id === JUEVES);
+ok('El jueves aparece conectado con sus partidos', x.conectados.some((c) => c.equipo_id === JUEVES) && jue.length === 50, jue.length);
+ok('Cada partido con su fecha de la liga', jue.every((p) => /Fecha/.test(p.fecha)), [...new Set(jue.map((p) => p.fecha))].join());
+x = (await db.query(`select rival, torneo, fecha::text, to_char(hora_inicio, 'HH24:MI') as hora, cancha from partidos where equipo_id = $1`, [JUEVES])).rows;
+ok('El partido del Jara que viene queda creado', x.length === 1 && x[0].rival === 'Monarcas' && x[0].cancha === 'Cancha 1' && /Fecha/.test(x[0].torneo), JSON.stringify(x));
+x = (await como('jugador', 'select tablas_posiciones() as t')).rows[0].t.filter((t) => t.equipo_id === JUEVES);
+ok('Quedan las dos tablas (Grupo A y General), conectadas', x.length === 2 && x.map((t) => t.grupo).sort().join() === 'General,Grupo A' && x.every((t) => t.conectada && t.filas.length > 1), JSON.stringify(x.map((t) => [t.grupo, t.conectada, t.filas.length])));
+ok('La del pantallazo se reemplaza por la de la liga', !x.find((t) => t.grupo === 'Grupo A').filas.some((f) => f.equipo === 'Del pantallazo'));
+antes = await pedidas();
+r = await como('jugador', 'select liga_refrescar($1) as n', [JUEVES]);
+ok('Después espera 3 horas', !r.error && (await pedidas()) === antes, r.error);
+await db.query(`update extensions.paginas set status = 500 where patron like '%-68fm5/matchs.json'`);
+r = await como('admin', 'select liga_refrescar($1, true) as n', [JUEVES]);
+ok('Si copafacil no responde, se avisa', /no respondió/.test(r.error ?? ''), r.error);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

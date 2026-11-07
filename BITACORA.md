@@ -4,6 +4,23 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-07 · La liga del jueves, automática desde copafacil
+
+**Para qué:** el Senior Jueves juega en una liga que publica en copafacil. Hasta ahora su tabla se cargaba con pantallazo y no tenía fechas. Los datos de copafacil son públicos (una base Firebase), así que el jueves puede quedar igual que el sábado.
+
+**Qué se hizo** (migración `0039_liga_desde_copafacil.sql`, se corre antes del merge):
+- `liga_torneos` acepta una segunda fuente: `fuente = 'copafacil'` con `copafacil_torneo` (evento@torneo). `deporstar_torneo` deja de ser obligatorio. Las fechas de copafacil tienen números largos, así que `jornada_id` pasa a `bigint`.
+- `liga_desde_copafacil` lee los partidos y `tabla_desde_copafacil` la tabla, a partir de la línea que copafacil guarda en cada equipo.
+- `liga_refrescar` trae de una vez cuatro archivos: partidos, equipos, fechas y canchas. Con ellos guarda fechas y resultados, crea los partidos del Jara que vienen y deja al día dos tablas, la del grupo del Jara y la general. Esas dos tablas reemplazan a las del pantallazo. Igual que en el sábado, espera 3 horas entre una revisión y la siguiente.
+- `tablas_posiciones()` marca como conectadas las tablas de un plantel que viene de copafacil.
+- Partidos contra "Cupo Libre" (la fecha libre) no se muestran. copafacil omite los goles en cero, así que un partido terminado sin un dato de goles cuenta 0.
+- App: el botón "Actualizar la liga" pide aparte solo las tablas de Deporstar, porque las del jueves llegan junto con las fechas. Al entrar a La liga también se recargan las tablas.
+- Para conectar el plantel se usa un `insert` en `liga_torneos` con el torneo del jueves. Lo corre el administrador de la app.
+
+**Comprobado:** `npm run test:db` pasa (17 pruebas nuevas en `liga.mjs`, con datos reales del jueves en `supabase/tests/fixtures/copafacil-jueves.json`) y `npm run build` pasa.
+
+---
+
 ## 2026-11-06 · La liga: un solo botón y en Inicio solo el partido que viene
 
 **Qué se hizo** (sin migración):
