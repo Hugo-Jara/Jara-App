@@ -171,10 +171,14 @@ ok('…y queda en orden, con el Jara marcado y los números', x.filas.map((f) =>
 await responder(200, liga([['Otro', 1, 1, 0, 0, 1, 0, 3]]));
 r = await como('jugador', 'select tabla_refrescar($1) as cambio', [JUNIOR]);
 ok('Antes de 3 horas no vuelve a preguntar', !r.error && r.rows[0]?.cambio === false && (await tablas('jugador'))[0].filas.length === 3, r.error);
-r = await como('jugador', 'select tabla_refrescar($1, true)', [JUNIOR]);
-ok('El jugador no fuerza la actualización', /Solo el encargado/.test(r.error ?? ''), r.error);
+r = await como('jugador', 'select tabla_refrescar($1, true) as cambio', [JUNIOR]);
+ok('El jugador aprieta recién actualizada: no sale a la liga', !r.error && r.rows[0]?.cambio === false && (await tablas('jugador'))[0].filas.length === 3, r.error);
 r = await como('encargado', 'select tabla_refrescar($1, true) as cambio', [JUNIOR]);
 ok('El encargado la actualiza en el acto', !r.error && r.rows[0]?.cambio === true && (await tablas('jugador'))[0].filas[0].equipo === 'Otro', r.error);
+await db.query(`update tablas_posiciones set revisada_en = now() - interval '10 minutes' where equipo_id = $1`, [JUNIOR]);
+r = await como('jugador', 'select tabla_refrescar($1, true) as cambio', [JUNIOR]);
+x = (await db.query(`select revisada_en > now() - interval '1 minute' as recien from tablas_posiciones where equipo_id = $1`, [JUNIOR])).rows[0];
+ok('Pasados 5 minutos, el jugador sí sale a la liga', !r.error && r.rows[0]?.cambio === false && x.recien, r.error);
 
 await responder(500, 'error');
 r = await como('encargado', 'select tabla_refrescar($1, true)', [JUNIOR]);

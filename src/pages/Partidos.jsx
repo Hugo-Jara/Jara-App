@@ -164,8 +164,9 @@ const PESTANAS = [
   { v: 'tabla', texto: 'Tabla' },
 ];
 
-// Un solo botón trae todo de la liga: las fechas y las tablas conectadas de
-// los planteles que la persona puede actualizar. Las tablas de copafacil
+// Un solo botón trae todo de la liga: las fechas y las tablas conectadas.
+// Lo puede apretar cualquiera; quien no anota partidos solo sale a la liga si
+// pasaron 5 minutos desde la última revisión (0040). Las tablas de copafacil
 // (jueves) llegan junto con las fechas; las de Deporstar se piden aparte.
 function ActualizarLiga({ alTerminar }) {
   const { conectados } = useFechasLiga();
@@ -173,7 +174,7 @@ function ActualizarLiga({ alTerminar }) {
   const [trayendo, setTrayendo] = useState(false);
   const [error, setError] = useState('');
   const fechas = conectados.filter((c) => c.puedoActualizar);
-  const tablasConectadas = tablas.filter((t) => t.deporstarTabla && t.puedoEditar);
+  const tablasConectadas = tablas.filter((t) => t.deporstarTabla);
   // La última vez que alguien (o la app sola) revisó la liga, de cualquier
   // plantel: fechas o tablas.
   const ultima = [...conectados.map((c) => c.revisadaEn), ...tablas.filter((t) => t.conectada).map((t) => t.revisadaEn)]

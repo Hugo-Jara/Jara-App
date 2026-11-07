@@ -52,6 +52,7 @@ Las migraciones están en `supabase/migrations/` y se aplican en orden:
 | `0037_tabla_la_carga_quien_anota.sql` | La tabla de posiciones la cargan también quienes anotan partidos (`puedo_anotar`), no solo el encargado del plantel |
 | `0038_fechas_de_la_liga.sql` | Las fechas de la liga desde Deporstar: `liga_torneos` (qué torneo sigue cada plantel), `liga_jornadas`, `liga_partidos`, `partidos.liga_partido`; `liga_refrescar` trae fechas y resultados y crea los partidos del Jara que vienen; `liga_fechas` es lo que ve la app |
 | `0039_liga_desde_copafacil.sql` | La liga del jueves desde copafacil: `liga_torneos.fuente` y `copafacil_torneo`; `liga_refrescar` trae partidos, fechas y las tablas (grupo y general) de copafacil y crea los partidos del Jara que vienen; esas tablas quedan conectadas |
+| `0040_actualizar_la_liga_para_todos.sql` | "Actualizar la liga" para todo el club: `liga_refrescar` y `tabla_refrescar` dejan pedir la liga en el acto a cualquiera, con 5 minutos de espera entre revisiones para quien no anota partidos |
 
 `npm run test:db` y `npm run test:pedidos` aplican las migraciones en un Postgres en memoria y prueban los permisos, el flujo de cotizaciones, el ingreso por nombre, los partidos, los entrenamientos y los pedidos por link.
 

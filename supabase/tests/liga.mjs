@@ -150,7 +150,7 @@ r = await refrescar('jugador');
 ok('Después espera 3 horas sin salir a la liga', !r.error && (await pedidas()) === antes, r.error);
 
 x = await fechas('jugador');
-ok('El plantel aparece conectado', x.conectados.length === 1 && x.conectados[0].equipo === 'Senior Inventado' && !x.conectados[0].puedo_actualizar, JSON.stringify(x.conectados));
+ok('El plantel aparece conectado', x.conectados.length === 1 && x.conectados[0].equipo === 'Senior Inventado', JSON.stringify(x.conectados));
 ok('Solo la división del Jara (6 jugados + 2 por jugar)', x.partidos.length === 8 && x.partidos.every((p) => p.local !== 'AS Palma' && p.local !== 'Rukán FC'), x.partidos.map((p) => p.local).join());
 ok('Cada partido trae su fecha de la liga', x.partidos.find((p) => p.local === 'Cabaret FC' && p.goles_local === null).fecha === 'Fecha 7');
 ok('El Jara viene marcado', x.partidos.filter((p) => p.es_jara).length === 3);
@@ -161,8 +161,14 @@ ok('Los partidos del Jara que vienen quedan creados en la app', x.length === 2 &
 ok('Si ya había un partido ese día, se usa ese y se completa con lo de la liga', x[1].rival === 'Mantis' && x[1].hora === '12:15' && x[1].cancha === 'Cancha 2' && Number(x[1].liga_partido) === 900003, JSON.stringify(x[1]));
 ok('El partido jugado no se crea', !x.some((p) => p.rival === 'Henry FC'));
 
+antes = await pedidas();
 r = await refrescar('jugador', true);
-ok('Un jugador no fuerza la actualización', /Solo el encargado/.test(r.error ?? ''), r.error);
+ok('Un jugador aprieta el botón recién actualizado: no sale a la liga', !r.error && r.rows[0].n === 0 && (await pedidas()) === antes, r.error);
+await db.query(`update liga_torneos set revisada_en = now() - interval '10 minutes' where equipo_id = $1`, [SENIOR]);
+r = await refrescar('jugador', true);
+ok('Pasados 5 minutos, un jugador sí la actualiza', !r.error && (await pedidas()) > antes, r.error);
+x = await fechas('jugador');
+ok('Todos ven el botón', x.conectados.every((c) => c.puedo_actualizar), JSON.stringify(x.conectados));
 await db.query(`update extensions.paginas set content = $1 where patron = '%jornada=11'`, [`<html>${fecha7('12:15')}</html>`]);
 r = await refrescar('encargado', true);
 ok('El encargado la actualiza en el acto', !r.error, r.error);
