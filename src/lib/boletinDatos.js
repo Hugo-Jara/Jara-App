@@ -1,5 +1,10 @@
 // Modelo exclusivo del boletín: nunca consulta Supabase ni publica borradores.
 export const TIPOS_BLOQUE = { principal: 'Noticia principal', columnas: 'Noticias en dos columnas', breve: 'Noticia breve', destacada: 'Noticia destacada', agenda: 'Lo que viene' };
+export const DISPOSICIONES_FOTO = {
+  abajo: 'Foto después del texto', arriba: 'Foto antes del texto',
+  lado_izquierda: 'Foto a la izquierda', lado_derecha: 'Foto a la derecha',
+  rodear_izquierda: 'Rodear foto a la izquierda', rodear_derecha: 'Rodear foto a la derecha',
+};
 export const idNuevo = () => crypto.randomUUID();
 export const notaNueva = () => ({ id: idNuevo(), titulo: '', texto: '', fotos: [] });
 export const bloqueNuevo = (tipo) => ({ id: idNuevo(), tipo, notas: Array.from({ length: tipo === 'columnas' ? 2 : 1 }, notaNueva), eventos: tipo === 'agenda' ? [{ id: idNuevo(), fecha: '', descripcion: '' }] : [] });
@@ -39,6 +44,7 @@ export function validarEdicion(e) {
     if (!TIPOS_BLOQUE[b.tipo] || typeof b.id !== 'string' || !Array.isArray(b.notas) || b.notas.length !== (b.tipo === 'columnas' ? 2 : 1) || !Array.isArray(b.eventos)) throw new Error('Bloques del respaldo inválidos.');
     for (const n of b.notas) {
       if (typeof n.id !== 'string' || !cadena(n.titulo) || !cadena(n.texto) || !Array.isArray(n.fotos)) throw new Error('Noticias del respaldo inválidas.');
+      if ((n.disposicion != null && !Object.hasOwn(DISPOSICIONES_FOTO, n.disposicion)) || (n.mantenerJunta != null && typeof n.mantenerJunta !== 'boolean')) throw new Error('Distribución de noticia inválida.');
       for (const f of n.fotos) if (typeof f.id !== 'string' || (!f.demo && (typeof f.src !== 'string' || !/^data:image\/(png|jpeg|webp|gif);base64,/.test(f.src))) || ![f.x, f.y, f.zoom].every(Number.isFinite) || f.x < 0 || f.x > 100 || f.y < 0 || f.y > 100 || f.zoom < 1 || f.zoom > 3 || !cadena(f.pie || '')) throw new Error('Fotografía o encuadre del respaldo inválido.');
     }
     if (!b.eventos.every(v => typeof v.id === 'string' && cadena(v.fecha) && cadena(v.descripcion))) throw new Error('Agenda del respaldo inválida.');

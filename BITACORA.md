@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+
+## 2026-11-07 · Comunicaciones — Mejoras del editor de El Jara Informa
+
+- Vista previa accesible desde un botón flotante; el regreso conserva la posición del editor. Se espera la carga de fotografías antes de cambiar de vista.
+- Selección visual de bloques y de seis formas de ubicar la primera foto junto al texto; las fotos adicionales quedan al final. Opción para intentar mantener la noticia y sus fotos juntas, con aviso si deben continuar.
+- Compatibilidad con borradores anteriores y el mismo diseño en la vista de periódico y sus PNG. La lectura móvil mantiene el contenido legible en una columna.
+- Comprobado: compilación y pruebas automáticas del boletín, incluidas posición, agrupación, continuidad, dos columnas y respaldos anteriores. Pendiente recorrido visual en navegador y celulares físicos: el entorno de pruebas no permite iniciar Chromium.
+
+---
+
 ## 2026-11-07 · "Actualizar la liga" para todos
 
 **Qué se hizo** (migración `0040_actualizar_la_liga_para_todos.sql`, se corre antes del merge):

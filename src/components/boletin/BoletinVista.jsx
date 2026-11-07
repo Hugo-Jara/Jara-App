@@ -41,10 +41,11 @@ export default function BoletinVista({ edicion, local = false, todas = false }) 
     <p className="noticias-etiqueta">{local ? 'VISTA PREVIA LOCAL · NO PUBLICADA' : 'CATÁLOGO DEMO · CONTENIDO FICTICIO'}</p>
     <h2>{nombreEdicion(edicion)}</h2><p>{edicion.periodo}</p><p>{edicion.resumen}</p>
     <div className="noticias-herramientas"><button className="btn secundario" aria-pressed={!movil} onClick={() => setMovil(false)}>Vista periódico</button><button className="btn secundario" aria-pressed={movil} onClick={() => setMovil(true)}>Lectura móvil</button></div>
+    {paginas.avisos?.map((aviso, i) => <p className="noticias-aviso-distribucion" role="status" key={i}>{aviso}</p>)}
     {error && <p role="alert" className="noticias-error">{error} La exportación está bloqueada hasta corregirlo.</p>}
     {cargando && <p role="status">Diagramando páginas…</p>}
     {movil ? <div className="noticias-lectura"><h3>EL JARA INFORMA</h3>{edicion.bloques.map(b => <section key={b.id} className={`noticias-lectura-${b.tipo}`}>
-      {b.tipo === 'agenda' ? <><h3>Lo que viene</h3>{b.eventos.map(v => <p key={v.id}><strong>{v.fecha || 'Fecha por confirmar'}</strong><br />{v.descripcion}</p>)}</> : b.notas.map(n => <article key={n.id}><h3>{n.titulo || 'Noticia sin título'}</h3><p>{n.texto}</p><FotosNota fotos={n.fotos} /></article>)}
+      {b.tipo === 'agenda' ? <><h3>Lo que viene</h3>{b.eventos.map(v => <p key={v.id}><strong>{v.fecha || 'Fecha por confirmar'}</strong><br />{v.descripcion}</p>)}</> : b.notas.map(n => <article key={n.id}><h3>{n.titulo || 'Noticia sin título'}</h3>{n.disposicion === 'arriba' && <FotosNota fotos={n.fotos.slice(0, 1)} />}<p>{n.texto}</p><FotosNota fotos={n.disposicion === 'arriba' ? n.fotos.slice(1) : n.fotos} /></article>)}
     </section>)}</div> : !!paginas.length && <>
       <div className="noticias-herramientas"><button className="btn secundario" disabled={indice === 0} onClick={() => setActual(indice - 1)}>← Anterior</button><span aria-live="polite">Página {indice + 1} de {paginas.length}</span><button className="btn secundario" disabled={indice === paginas.length - 1} onClick={() => setActual(indice + 1)}>Siguiente →</button></div>
       <label className="noticias-campo">Ampliar página <input aria-label="Ampliar página" type="range" min="1" max="3" step="0.25" value={zoom} onChange={e => setZoom(Number(e.target.value))} /></label>

@@ -5,7 +5,7 @@ const INICIO = 270, FIN = 1460, MARGEN = 46;
 const cargar = async src => { const i = new Image(); i.src = src; await i.decode(); return i; };
 export async function componerEdicion(e) {
   const recursos = new Map();
-  const escudo = await cargar(`${import.meta.env.BASE_URL}escudo.jpg`);
+  const escudo = await cargar(`${import.meta.env?.BASE_URL || "/"}escudo.jpg`);
   for (const b of e.bloques) for (const n of b.notas) for (const f of n.fotos) if (f.src && !recursos.has(f.src)) recursos.set(f.src, await cargar(f.src));
   const medida = document.createElement('canvas').getContext('2d');
   const paginas = [[]];
@@ -74,6 +74,99 @@ export async function componerEdicion(e) {
     poner(p, { tipo: 'rect', x, y: y + 4, ancho, alto: 2, color: '#a92520' });
     return { p, y: y + 32 };
   }
+  // Las disposiciones nuevas se aplican a la primera foto; las demás siguen al final.
+  // La pasada de medición no dibuja y permite decidir si conviene iniciar en otra página.
+  function articuloConFoto(n, tipo, posicion, x, ancho, medir = false) {
+    let { p, y } = posicion;
+    const disposicion = n.disposicion || 'abajo';
+    const lateral = disposicion.startsWith('lado_') || disposicion.startsWith('rodear_');
+    const rodear = disposicion.startsWith('rodear_');
+    const izquierda = disposicion.endsWith('_izquierda');
+    const fuenteTitulo = tipo === 'principal' ? 'bold 55px Georgia' : 'bold 39px Georgia';
+    const saltoTitulo = tipo === 'principal' ? 60 : 45;
+    const titulo = lineas(n.titulo || 'Noticia sin título', ancho, fuenteTitulo);
+    const altoTitulo = titulo.length * saltoTitulo + 32;
+    if (altoTitulo > FIN - INICIO - 100) throw new Error('Un titular ocupa demasiado espacio. Acórtalo antes de exportar.');
+    const ponerOp = (pagina, op) => { if (!medir) poner(pagina, op); };
+    const dibujar = (pagina, px, py, ls, fuente, paso, color) => { if (!medir) texto(pagina, px, py, ls, fuente, paso, color); };
+    const cabecera = continuacion => {
+      if (continuacion) { dibujar(p, x, y, ['CONTINUACIÓN'], 'bold 19px Arial', 24, '#a92520'); y += 28; }
+      if (tipo === 'destacada') ponerOp(p, { tipo: 'rect', x: x - 8, y: y - 8, ancho: ancho + 16, alto: altoTitulo + 8, color: '#ebd9bc' });
+      dibujar(p, x, y, titulo, fuenteTitulo, saltoTitulo); y += altoTitulo;
+    };
+    const siguiente = () => { dibujar(p, x, FIN + 4, ['Sigue en la página ' + (p + 2)], 'italic 18px Georgia', 23, '#a92520'); p++; y = INICIO; cabecera(true); };
+    const foto = n.fotos[0];
+    const fotoAncho = lateral ? Math.floor(ancho * 0.4) : ancho;
+    const fotoAlto = Math.min(350, fotoAncho * 0.7);
+    const pie = lineas(foto.pie || '', fotoAncho, '18px Arial');
+    if (pie.length > 2) throw new Error('Un pie de foto es demasiado largo. Usa hasta dos líneas.');
+    const espacioFoto = fotoAlto + Math.max(0, pie.length * 22) + 22;
+    if (disposicion !== 'abajo' && altoTitulo + espacioFoto > FIN - INICIO) throw new Error('El titular y la foto no caben juntos. Acorta el titular o ubica la foto después del texto.');
+    if (y + altoTitulo + (disposicion === 'abajo' ? 60 : espacioFoto) > FIN) { p++; y = INICIO; }
+    cabecera(false);
+    let paginaFoto = -1, finFoto = 0;
+    const ponerFoto = (f, fx, fy, w, h, ls) => {
+      ponerOp(p, { tipo: 'foto', foto: f, x: fx, y: fy, ancho: w, alto: h });
+      dibujar(p, fx, fy + h + 8, ls, '18px Arial', 22);
+    };
+    if (disposicion !== 'abajo') {
+      const fx = lateral && !izquierda ? x + ancho - fotoAncho : x;
+      ponerFoto(foto, fx, y, fotoAncho, fotoAlto, pie);
+      paginaFoto = p; finFoto = y + espacioFoto;
+      if (!lateral) y = finFoto;
+    }
+    const parrafos = (n.texto || '').split(/\n+/).filter(t => t.trim());
+    for (const parrafo of parrafos) {
+      const palabras = parrafo.trim().split(/\s+/); let indice = 0;
+      while (indice < palabras.length) {
+        if (y + 36 > FIN) siguiente();
+        const alLado = lateral && p === paginaFoto && (!rodear || y < finFoto);
+        const tx = alLado && izquierda ? x + fotoAncho + 20 : x;
+        const tw = alLado ? ancho - fotoAncho - 20 : ancho;
+        medida.font = '27px Georgia'; let linea = '';
+        while (indice < palabras.length) {
+          const candidata = linea ? `${linea} ${palabras[indice]}` : palabras[indice];
+          if (medida.measureText(candidata).width > tw) {
+            if (!linea) throw new Error('Hay una palabra o enlace demasiado largo para la columna. Acórtalo antes de exportar.');
+            break;
+          }
+          linea = candidata; indice++;
+        }
+        dibujar(p, tx, y, [linea], '27px Georgia', 36); y += 36;
+      }
+      y += 18;
+    }
+    if (lateral && p === paginaFoto) y = Math.max(y, finFoto);
+    const pendientes = disposicion === 'abajo' ? n.fotos : n.fotos.slice(1);
+    for (let i = 0; i < pendientes.length; i += 2) {
+      const grupo = pendientes.slice(i, i + 2), w = (ancho - (grupo.length - 1) * 14) / grupo.length;
+      const h = Math.min(350, w * 0.7);
+      const pies = grupo.map(f => lineas(f.pie || '', w, '18px Arial'));
+      if (pies.some(ls => ls.length > 2)) throw new Error('Un pie de foto es demasiado largo. Usa hasta dos líneas.');
+      if (altoTitulo + 28 + h + 65 > FIN - INICIO) throw new Error('El titular y la foto no caben en una continuación. Acorta el titular.');
+      if (y + h + 65 > FIN) siguiente();
+      grupo.forEach((f, j) => ponerFoto(f, x + j * (w + 14), y, w, h, pies[j]));
+      y += h + 65;
+    }
+    ponerOp(p, { tipo: 'rect', x, y: Math.min(y + 4, FIN), ancho, alto: 2, color: '#a92520' });
+    return { p, y: y + 32 };
+  }
+  const avisos = [];
+  function componerArticulo(n, tipo, posicion, x, ancho) {
+    if (!n.fotos.length || (!n.disposicion && !n.mantenerJunta)) return articulo(n, tipo, posicion, x, ancho);
+    let inicio = posicion;
+    if (n.mantenerJunta) {
+      const aqui = articuloConFoto(n, tipo, posicion, x, ancho, true);
+      if (aqui.p > posicion.p) {
+        const nueva = { p: posicion.p + 1, y: INICIO };
+        const resultado = articuloConFoto(n, tipo, nueva, x, ancho, true);
+        if (resultado.p === nueva.p) inicio = nueva;
+        else avisos.push(`«${n.titulo || 'Noticia sin título'}» no cabe completa en una página y continúa en la siguiente.`);
+      }
+    }
+    return articuloConFoto(n, tipo, inicio, x, ancho);
+  }
+
   let posicion = { p: 0, y: INICIO };
   for (const b of e.bloques) {
     if (b.tipo === 'agenda') {
@@ -81,11 +174,11 @@ export async function componerEdicion(e) {
       posicion = articulo(n, 'destacada', posicion, MARGEN, ANCHO - MARGEN * 2);
     } else if (b.tipo === 'columnas') {
       const w = (ANCHO - 2 * MARGEN - 40) / 2;
-      const a = articulo(b.notas[0], b.tipo, posicion, MARGEN, w);
-      const d = articulo(b.notas[1], b.tipo, posicion, MARGEN + w + 40, w);
+      const a = componerArticulo(b.notas[0], b.tipo, posicion, MARGEN, w);
+      const d = componerArticulo(b.notas[1], b.tipo, posicion, MARGEN + w + 40, w);
       for (let p = posicion.p; p <= Math.max(a.p, d.p); p++) poner(p, { tipo: 'rect', x: ANCHO / 2, y: p === posicion.p ? posicion.y : INICIO, ancho: 1, alto: Math.max(0, (p === Math.max(a.p, d.p) ? Math.max(a.p === p ? a.y : INICIO, d.p === p ? d.y : INICIO) : FIN) - (p === posicion.p ? posicion.y : INICIO)), color: '#756a5a' });
       posicion = a.p > d.p ? a : d.p > a.p ? d : { p: a.p, y: Math.max(a.y, d.y) };
-    } else posicion = articulo(b.notas[0], b.tipo, posicion, MARGEN, ANCHO - MARGEN * 2);
+    } else posicion = componerArticulo(b.notas[0], b.tipo, posicion, MARGEN, ANCHO - MARGEN * 2);
   }
   if (!e.bloques.length) poner(0, { tipo: 'texto', x: 46, y: INICIO, texto: 'Agrega bloques para comenzar tu edición.', fuente: '30px Georgia', color: '#17130f' });
   const canvases = paginas.map((ops, indice) => {
@@ -124,5 +217,6 @@ export async function componerEdicion(e) {
     dibujarTexto(`${indice + 1} / ${paginas.length}`, 1140, 1545, '26px Georgia', '#fff7e6');
     return canvas;
   });
+  canvases.avisos = avisos;
   return canvases;
 }
