@@ -2,29 +2,18 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos } from '../lib/partidos.js';
-import { useTablas, diferencia, leerTabla, textoDeTabla, leerFixture, crearPartidoSuelto } from '../lib/tabla.js';
+import { useTablas, diferencia, leerTabla, textoDeTabla } from '../lib/tabla.js';
 import { leerCaptura, pestanaDeCaptura } from '../lib/captura.js';
-import { fechaLarga, fechaCorta, hoyIso, correrDias } from '../lib/fechas.js';
+import { fechaLarga, cuando } from '../lib/fechas.js';
 import Icono from '../components/Icono.jsx';
 
 // "Cómo vamos": la tabla de cada plantel y sus próximas fechas. El encargado
-// copia la tabla de la página de la liga (o sube un pantallazo) y puede cargar
-// todas las fechas del campeonato de una vez. Un plantel puede tener varias
+// sube un pantallazo de la tabla (o queda conectada a la liga). Las fechas
+// llegan solas desde la liga (0038, 0039). Un plantel puede tener varias
 // tablas (ej. "Grupo A" y "General"), que se ven con pestañas (0036).
 
 // Pantallazo del celular sin goles: cómo sacar la tabla completa.
 const SIN_GOLES = 'Faltan los goles (GF, GC y diferencia). Para la tabla completa, achica la página de la liga al 50% en tu celular (menú del navegador > zoom) y saca el pantallazo de nuevo.';
-
-// "hoy a las 18:05", "ayer a las 9:30", "el 3 de noviembre a las 18:05".
-function cuando(iso) {
-  const d = new Date(iso);
-  const dia = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  const hora = d.toLocaleTimeString('es-CL', { hour: 'numeric', minute: '2-digit' });
-  const hoy = hoyIso();
-  if (dia === hoy) return `hoy a las ${hora}`;
-  if (dia === correrDias(hoy, -1)) return `ayer a las ${hora}`;
-  return `el ${fechaCorta(dia)} a las ${hora}`;
-}
 
 const conSigno = (n) => (n > 0 ? `+${n}` : String(n));
 
@@ -217,84 +206,6 @@ function EditarTabla({ tabla, pestanas, conocidos, archivoInicial, guardar, borr
   );
 }
 
-function CargarFixture({ equipoId, equipo, torneo, existentes, guardarUno, recargar, cerrar }) {
-  const [texto, setTexto] = useState('');
-  const [comun, setComun] = useState({ torneo: torneo || '', citacion: '', cancha: '' });
-  const [ocupado, setOcupado] = useState(false);
-  const [listo, setListo] = useState(null);
-  const [error, setError] = useState('');
-  const { partidos, problemas } = leerFixture(texto, hoyIso());
-  // Si ya hay un partido de este plantel ese día, no se repite.
-  const repetido = (p) => existentes.some((x) => x.fecha === p.fecha);
-  const nuevos = partidos.filter((p) => !repetido(p));
-  const set = (k) => (e) => setComun((c) => ({ ...c, [k]: e.target.value }));
-
-  const enviar = async (e) => {
-    e.preventDefault();
-    if (problemas.length || !nuevos.length) return;
-    setOcupado(true); setError('');
-    let hechos = 0;
-    try {
-      for (const p of nuevos) {
-        const d = { equipoId, ...p, torneo: comun.torneo.trim(), citacion: comun.citacion, cancha: comun.cancha.trim() };
-        await (crearPartidoSuelto ? crearPartidoSuelto(d) : guardarUno(d));
-        hechos += 1;
-      }
-      setListo(hechos);
-      setTexto('');
-    } catch (err) {
-      setError(`${hechos ? `Se cargaron ${hechos} y ` : ''}falló una: ${err.message}`);
-    } finally {
-      await recargar();
-      setOcupado(false);
-    }
-  };
-
-  if (listo != null) {
-    return (
-      <div className="card">
-        <p className="exito" style={{ marginTop: 0 }}>Listo: se cargaron {listo} {listo === 1 ? 'partido' : 'partidos'} de {equipo}.</p>
-        <p className="ayuda abajo">Si una fecha cambia de día o se suspende, se corrige desde el partido.</p>
-        <div className="botones"><button type="button" className="btn secundario" onClick={cerrar}>Cerrar</button></div>
-      </div>
-    );
-  }
-
-  return (
-    <form className="card" onSubmit={enviar}>
-      <h2 className="posiciones-form-titulo">Cargar fechas · {equipo}</h2>
-      <label htmlFor="fx-texto">Una línea por partido</label>
-      <p className="ayuda">Día/mes, hora de inicio si se sabe, y el rival. Ej.: <em>14/11 Rival FC</em> o <em>21/11 09:00 Otro Rival</em>.</p>
-      <textarea id="fx-texto" rows={8} value={texto} onChange={(e) => setTexto(e.target.value)} spellCheck={false}
-                placeholder={'14/11 Rival FC\n21/11 09:00 Otro Rival\n…'} />
-      {problemas.map((p) => <p key={p} className="error">{p}</p>)}
-      {partidos.length > 0 && (
-        <ul className="posiciones-fixture">
-          {partidos.map((p) => (
-            <li key={`${p.fecha}-${p.rival}`} className={repetido(p) ? 'repetido' : ''}>
-              <span>{fechaLarga(p.fecha)}{p.horaInicio ? ` · ${p.horaInicio}` : ''}</span>
-              <span>vs {p.rival}{repetido(p) ? ' · ya hay partido ese día' : ''}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-      <label htmlFor="fx-torneo">Campeonato (opcional, para todas)</label>
-      <input id="fx-torneo" value={comun.torneo} onChange={set('torneo')} placeholder="Ej.: Clausura 2026" />
-      <label htmlFor="fx-citacion">Hora de citación (opcional, para todas)</label>
-      <input id="fx-citacion" type="time" value={comun.citacion} onChange={set('citacion')} />
-      <label htmlFor="fx-cancha">Cancha (opcional, para todas)</label>
-      <input id="fx-cancha" value={comun.cancha} onChange={set('cancha')} placeholder="Ej.: Cancha 1, Complejo…" />
-      {error && <p className="error" role="alert">{error}</p>}
-      <div className="botones">
-        <button className="btn" disabled={ocupado || !nuevos.length || problemas.length > 0}>
-          {ocupado ? 'Cargando…' : `Cargar ${nuevos.length || ''} ${nuevos.length === 1 ? 'partido' : 'partidos'}`}
-        </button>
-        <button type="button" className="btn secundario" onClick={cerrar} disabled={ocupado}>Cancelar</button>
-      </div>
-    </form>
-  );
-}
-
 export default function Tabla({ incrustada = false }) {
   const { persona } = useSesion();
   const { cargando, error, tablas, guardar, borrar, recargar, conectar, refrescar } = useTablas();
@@ -303,7 +214,7 @@ export default function Tabla({ incrustada = false }) {
   const partidos = usePartidos(persona);
   const [elegido, setElegido] = useState(null);
   const [pestana, setPestana] = useState(null);
-  const [editando, setEditando] = useState(null); // 'tabla' | 'fixture'
+  const [editando, setEditando] = useState(null); // 'tabla'
   const [archivoInicial, setArchivoInicial] = useState(null);
   const subir = useRef(null);
 
@@ -322,7 +233,6 @@ export default function Tabla({ incrustada = false }) {
   const grupo = tabla?.grupo ?? '';
   const conocidos = [...new Set(pestanas.flatMap((t) => t.filas.map((f) => f.equipo)))];
   const proximos = partidos.partidos.filter((p) => p.equipoId === actualId).sort((a, b) => a.fecha.localeCompare(b.fecha));
-  const delPlantel = partidos.todos.filter((p) => p.equipoId === actualId);
   const jara = tabla?.filas.findIndex((f) => f.esJara) ?? -1;
   const elegir = (id) => { setElegido(id); setPestana(null); setEditando(null); setAviso(''); };
   const elegirPestana = (g) => { setPestana(g); setEditando(null); setAviso(''); };
@@ -430,12 +340,7 @@ export default function Tabla({ incrustada = false }) {
           {tabla && (
             <>
               <h2 className="seccion">Próximas fechas</h2>
-              {editando === 'fixture' ? (
-                <CargarFixture equipoId={tabla.equipoId} equipo={tabla.equipo} torneo={tabla.torneo} existentes={delPlantel}
-                               guardarUno={partidos.guardar} recargar={partidos.recargar} cerrar={() => setEditando(null)} />
-              ) : (
-                <>
-                  {proximos.length ? (
+              {proximos.length ? (
                     <ul className="card posiciones-proximos">
                       {proximos.map((p) => (
                         <li key={p.id}>
@@ -450,13 +355,6 @@ export default function Tabla({ incrustada = false }) {
                   ) : (
                     <p className="vacio suelto">{partidos.cargando ? 'Cargando…' : `No hay partidos programados para ${tabla.equipo}.`}</p>
                   )}
-                  {tabla.puedoEditar && (
-                    <button type="button" className="btn secundario" style={{ marginTop: 12 }} onClick={() => setEditando('fixture')}>
-                      Cargar varias fechas de una vez
-                    </button>
-                  )}
-                </>
-              )}
             </>
           )}
         </>

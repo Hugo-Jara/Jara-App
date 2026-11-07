@@ -6,7 +6,7 @@ import { useTablas } from '../lib/tabla.js';
 import Tabla from './Tabla.jsx';
 import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos, porEstado, sinResponder, tieneResultado, textoResultado, signo } from '../lib/partidos.js';
-import { fechaLarga } from '../lib/fechas.js';
+import { fechaLarga, cuando } from '../lib/fechas.js';
 import Icono from '../components/Icono.jsx';
 import Racha from '../components/Racha.jsx';
 
@@ -171,12 +171,17 @@ function ActualizarLiga({ alTerminar }) {
   const { conectados } = useFechasLiga();
   const { tablas, refrescar, recargar: recargarTablas } = useTablas();
   const [trayendo, setTrayendo] = useState(false);
-  const [aviso, setAviso] = useState('');
+  const [error, setError] = useState('');
   const fechas = conectados.filter((c) => c.puedoActualizar);
   const tablasConectadas = tablas.filter((t) => t.deporstarTabla && t.puedoEditar);
-  if (!fechas.length && !tablasConectadas.length) return null;
+  // La última vez que alguien (o la app sola) revisó la liga, de cualquier
+  // plantel: fechas o tablas.
+  const ultima = [...conectados.map((c) => c.revisadaEn), ...tablas.filter((t) => t.conectada).map((t) => t.revisadaEn)]
+    .filter(Boolean).sort().at(-1);
+  const puede = fechas.length > 0 || tablasConectadas.length > 0;
+  if (!puede && !ultima) return null;
   const traer = async () => {
-    setTrayendo(true); setAviso('');
+    setTrayendo(true); setError('');
     const fallas = [];
     for (const c of fechas) {
       try { await actualizarLiga(c.equipoId); } catch (e) { fallas.push(e.message); }
@@ -185,15 +190,19 @@ function ActualizarLiga({ alTerminar }) {
       try { await refrescar(t.equipoId, true, t.grupo); } catch (e) { fallas.push(e.message); }
     }
     await Promise.all([alTerminar?.(), recargarTablas()]);
-    setAviso(fallas.length ? fallas[0] : 'Listo: fechas y tablas al día con la liga.');
+    setError(fallas[0] ?? '');
     setTrayendo(false);
   };
   return (
     <>
-      <button type="button" className="btn secundario liga-actualizar" onClick={traer} disabled={trayendo}>
-        {trayendo ? 'Actualizando…' : 'Actualizar la liga'}
-      </button>
-      {aviso && <p className="ayuda liga-aviso" role="status">{aviso}</p>}
+      {puede && (
+        <button type="button" className="btn secundario liga-actualizar" onClick={traer} disabled={trayendo}>
+          {trayendo ? 'Actualizando…' : 'Actualizar la liga'}
+        </button>
+      )}
+      {(error || ultima) && (
+        <p className="ayuda liga-aviso" role="status">{error || `Última actualización: ${cuando(ultima)}`}</p>
+      )}
     </>
   );
 }
