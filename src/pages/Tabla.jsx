@@ -405,7 +405,7 @@ export default function Tabla({ incrustada = false }) {
                 </p>
               )}
               {aviso && <p className="ayuda abajo" role="status">{aviso}</p>}
-              {tabla.puedoEditar && tabla.conectada && (
+              {!incrustada && tabla.puedoEditar && tabla.conectada && (
                 <button type="button" className="btn secundario" style={{ marginTop: 12 }} onClick={traerAhora} disabled={trayendo}>
                   {trayendo ? 'Trayendo la tabla…' : 'Actualizar desde la liga'}
                 </button>

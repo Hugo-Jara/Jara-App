@@ -176,9 +176,18 @@ export function usePartidos(yo) {
   const partidos = (datos ?? []).map((p) => ({ ...p, miRespuesta: p.respuestas.find((r) => r.personaId === yo.id) ?? null }));
   const y = (accion) => async (...a) => { await accion(...a); await almacen.recargar(); };
   const hoy = hoyIso();
-  // Un partido sigue "próximo" hasta que termina su día, salvo que ya tenga el
-  // resultado anotado: ahí pasa a "jugados" en el acto, sin esperar la medianoche.
-  const yaJugado = (p) => p.fecha < hoy || (p.fecha === hoy && tieneResultado(p));
+  // Un partido sigue "próximo" hasta dos horas después de su hora de inicio (o
+  // hasta que termina su día, si no tiene hora). Con el resultado anotado pasa
+  // a "jugados" en el acto.
+  const ahora = new Date();
+  const ahoraHora = `${String(ahora.getHours()).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')}`;
+  const terminado = (p) => {
+    if (!p.horaInicio) return false;
+    const [h, m] = p.horaInicio.split(':').map(Number);
+    const fin = h * 60 + m + 120;
+    return fin < 24 * 60 && ahoraHora >= `${String(Math.floor(fin / 60)).padStart(2, '0')}:${String(fin % 60).padStart(2, '0')}`;
+  };
+  const yaJugado = (p) => p.fecha < hoy || (p.fecha === hoy && (tieneResultado(p) || terminado(p)));
   const proximos = partidos.filter((p) => !yaJugado(p));
   const jugados = partidos.filter(yaJugado).sort((a, b) => b.fecha.localeCompare(a.fecha));
   return {

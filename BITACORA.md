@@ -4,6 +4,17 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-06 · La liga: un solo botón y en Inicio solo el partido que viene
+
+**Qué se hizo** (sin migración):
+- Inicio muestra solo el partido que viene de cada plantel propio. El de la fecha siguiente aparece cuando pasa este.
+- Un partido deja de ser "próximo" dos horas después de su hora de inicio (antes era al terminar el día), o en el acto si ya tiene resultado.
+- Un solo botón "Actualizar la liga", al lado del título, trae las fechas y las tablas conectadas. Se sacan los botones sueltos de Fechas y de Tabla.
+
+**Comprobado:** `npm run build` pasa. En el navegador (modo demostración) se ven el botón junto al título y un solo partido en Inicio.
+
+---
+
 ## 2026-11-06 · La liga: fechas jugadas y por jugar, traídas desde Deporstar
 
 **Para qué:** la liga de los sábados publica todas sus fechas en Deporstar (la página nueva de la liga usa esos mismos datos). La idea es ver ahí los partidos jugados y los que vienen, y no tener que programar a mano los partidos del Jara.

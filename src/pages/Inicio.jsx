@@ -180,6 +180,14 @@ function Noticias({ noticias }) {
   );
 }
 
+// Solo el partido que viene de cada plantel propio (el de la fecha siguiente
+// aparece cuando pasa este). Los demás están en La liga.
+const siguientes = (mios) => {
+  const vistos = new Set();
+  return [...mios].sort((a, b) => a.fecha.localeCompare(b.fecha) || (a.horaInicio ?? '').localeCompare(b.horaInicio ?? ''))
+    .filter((p) => !vistos.has(p.equipoId) && vistos.add(p.equipoId));
+};
+
 export default function Inicio() {
   const { persona } = useSesion();
   const { ultimoPartido: ejemplo } = useInicio();
@@ -205,7 +213,7 @@ export default function Inicio() {
       {partidos.cargando
         ? <section className="card accion"><p className="vacio">Cargando tus partidos…</p></section>
         : partidos.mios.length
-          ? partidos.mios.map((p, i) => <ProximoPartido key={p.id} partido={p} destacado={i === 0} responder={partidos.responder} />)
+          ? siguientes(partidos.mios).map((p, i) => <ProximoPartido key={p.id} partido={p} destacado={i === 0} responder={partidos.responder} />)
           : partidos.error
             ? <ErrorCarga titulo="Tu próximo partido" error={partidos.error} recargar={partidos.recargar} />
             : <SinPartido equipos={persona.equipos} />}
