@@ -32,3 +32,14 @@ export const correrDias = (iso, n) => {
   d.setDate(d.getDate() + n);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
+
+// "hoy a las 18:05", "ayer a las 9:30", "el 3 de noviembre a las 18:05".
+export function cuando(iso) {
+  const d = new Date(iso);
+  const dia = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const hora = d.toLocaleTimeString('es-CL', { hour: 'numeric', minute: '2-digit' });
+  const hoy = hoyIso();
+  if (dia === hoy) return `hoy a las ${hora}`;
+  if (dia === correrDias(hoy, -1)) return `ayer a las ${hora}`;
+  return `el ${fechaCorta(dia)} a las ${hora}`;
+}

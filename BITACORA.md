@@ -4,6 +4,18 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-07 · La liga: "Última actualización" y sin cargar fechas a mano
+
+**Qué se hizo** (sin migración):
+- Debajo de "Actualizar la liga" ahora se lee "Última actualización: hoy a las…". Es la última vez que se revisó la liga, de cualquier plantel, ya sea porque alguien apretó el botón o porque la app la revisó sola. Lo ve todo el club, no solo quien puede actualizar.
+- Se saca "Cargar varias fechas de una vez" de la tabla: las fechas llegan solas desde la liga. También se borran el lector de fixture pegado (`leerFixture`) y `crearPartidoSuelto`.
+- `cuando()` pasa a `src/lib/fechas.js` para usarlo en La liga y en la tabla.
+- Para borrar la pestaña vieja de la tabla del jueves (la del pantallazo) basta un `delete` en `tablas_posiciones`. Lo corre el administrador de la app.
+
+**Comprobado:** `npm run build` pasa. En modo demostración se ve la línea de última actualización bajo el botón.
+
+---
+
 ## 2026-11-07 · La liga del jueves, automática desde copafacil
 
 **Para qué:** el Senior Jueves juega en una liga que publica en copafacil. Hasta ahora su tabla se cargaba con pantallazo y no tenía fechas. Los datos de copafacil son públicos (una base Firebase), así que el jueves puede quedar igual que el sábado.
