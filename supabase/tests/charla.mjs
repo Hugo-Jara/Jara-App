@@ -247,18 +247,5 @@ ok('No se reacciona a un comentario borrado', /fue borrado/.test(r.error ?? ''),
 r = await como('a', 'select * from partido_reacciones');
 ok('Las reacciones no se leen desde el navegador', !!r.error);
 
-// Goles recibidos del arquero (0046). A jugó 6 partidos con resultado: 2-1, 0-0, 3-0 y tres 1-0.
-r = await como('d', 'select arquero_cifras($1) as x', [PER.a]);
-x = r.rows[0]?.x;
-ok('Arquero: suma los goles recibidos en los partidos que jugó', !r.error && x.pj === 6 && x.recibidos === 1 && x.invictas === 5, r.error ?? JSON.stringify(x));
-r = await como('a', 'select arquero_cifras($1) as x', [PER.d]);
-ok('Arquero: sin partidos jugados, todo en cero', !r.error && r.rows[0].x.pj === 0 && r.rows[0].x.recibidos === 0, r.error ?? JSON.stringify(r.rows[0]?.x));
-r = await como('a', 'select arquero_cifras($1, 1999) as x', [PER.a]);
-ok('Arquero: filtra por año', !r.error && r.rows[0].x.pj === 0, r.error);
-await db.exec('set role anon');
-r = await db.query('select arquero_cifras($1)', [PER.a]).then(() => null, (e) => e.message);
-await db.exec('reset role');
-ok('Arquero: sin sesión no se puede', !!r);
-
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

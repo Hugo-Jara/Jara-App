@@ -8,11 +8,10 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 - El perfil de cada jugador (el propio y el de otros) muestra una tarjeta "Estadísticas": partidos jugados, goles, asistencias, veces jugador del partido y tarjetas, con "Este año" e "Histórico".
 - Si la cifra lo deja entre los 10 primeros del club, dice el puesto ("3º del club"); si no, los goles muestran el promedio por partido.
 - Si juega en más de un plantel, desglosa sus números por plantel. Abajo, sus últimos 5 partidos con resultado, con su aporte (goles y asistencias) y enlace al partido.
-- Sale de las mismas funciones que la tabla de Jugadores (`estadisticas` y `mvp_conteo`).
-- Si su posición es Arquero, suma goles recibidos (con promedio por partido) y vallas invictas, y en sus últimos partidos dice "recibió N" o "valla invicta". Migración `0046_arquero_goles_recibidos.sql` (solo una función de lectura, `arquero_cifras`; se corre antes del merge). Como la app no anota quién estuvo al arco, cuenta los goles del equipo en todos los partidos que jugó. Sin la 0046 corrida, la tarjeta funciona igual pero sin esas dos cifras.
+- Sale de las mismas funciones que la tabla de Jugadores (`estadisticas` y `mvp_conteo`): **sin migración**.
 - Componente nuevo `src/components/EstadisticasJugador.jsx`; en `Perfil.jsx` solo se agrega la tarjeta.
 
-**Comprobado:** `npm run test:db` pasa (4 pruebas nuevas en `charla.mjs`), `npm run build` pasa y se revisó en modo demostración (iPhone 13).
+**Comprobado:** `npm run build` pasa y se revisó en modo demostración (iPhone 13).
 
 ---
 
