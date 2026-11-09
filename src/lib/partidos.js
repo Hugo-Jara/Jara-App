@@ -134,8 +134,10 @@ const enDemo = {
   },
   guardar: async (d) => {
     const equipo = EQUIPOS_DEMO.find((e) => e.id === d.equipoId).nombre;
-    if (d.id) demo = demo.map((p) => (p.id === d.id ? { ...p, ...d, equipo } : p));
-    else demo = [...demo, { ...d, id: `p${Date.now()}`, equipo, esMio: false, puedoEditar: true, puedoAnotar: true, estadisticas: [], plantel: [], respuestas: [] }];
+    if (d.id) { demo = demo.map((p) => (p.id === d.id ? { ...p, ...d, equipo } : p)); return d.id; }
+    const id = `p${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    demo = [...demo, { ...d, id, equipo, esMio: false, puedoEditar: true, puedoAnotar: true, estadisticas: [], plantel: [], respuestas: [] }];
+    return id;
   },
   eliminar: async (id) => { demo = demo.filter((p) => p.id !== id); },
   resultado: async (id, favor, contra, jugadores = [], jugaron = null) => {
@@ -201,6 +203,8 @@ export function usePartidos(yo) {
 }
 
 export const equiposDelClub = () => origen.equipos();
+// Crea un partido ya jugado (por ejemplo, desde una carpeta de fotos) y devuelve su id.
+export const crearPartidoJugado = async (d) => { const id = await origen.guardar(d); await almacen.recargar(); return id; };
 export const tablaEstadisticas = (equipoIds, anio) => origen.estadisticas(equipoIds, anio);
 
 export const tieneResultado = (p) => p.golesFavor != null && p.golesContra != null;

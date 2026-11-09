@@ -37,6 +37,7 @@ jobs:
       - run: npm ci
       - run: npm run test:db
       - run: npm run test:pedidos
+      - run: npm run test:fotos-drive
       - run: npm run build
       # GitHub Pages no conoce las rutas internas (/pedido/..., /partidos):
       # con esta copia, cualquier dirección abre la app y ella decide qué mostrar.
