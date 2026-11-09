@@ -14,6 +14,14 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-09 · Buscar caras: bajar las fotos por la miniatura
+
+La primera vuelta real de "Buscar caras" sacó la huella pero no pudo bajar 376 de las 452 fotos por la API del Drive. Ahora la tarea baja primero la misma miniatura pública que muestra la app (2000 px, sin gastar cuota) y usa la API solo si eso falla. El registro anota el parecido más alto visto y por qué falló cada descarga (solo códigos, sin datos de personas). Las fotos que no se pudieron bajar quedan pendientes y se revisan en la vuelta siguiente. Sin migración.
+
+**Comprobado:** el script contra un servidor de mentira (una foto por miniatura, otra por la API, una que falla en ambas).
+
+---
+
 ## 2026-11-09 · La liga del sábado, desde cof.cl
 
 **Para qué:** la tabla del Senior Sábado seguía con 4 partidos jugados. La liga cambió su página a cof.cl y Deporstar dejó de estar al día: no tenía el resultado del 7 de noviembre, mientras cof.cl ya mostraba 5 jugados.

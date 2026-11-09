@@ -11,6 +11,7 @@ ningún dato de personas, solo cantidades.
 
 Variables de entorno: SUPABASE_URL, SUPABASE_SECRET (clave secreta de Supabase).
 """
+import collections
 import json
 import os
 import sys
@@ -27,6 +28,9 @@ LOTE = 20              # fotos por guardado
 URL = os.environ['SUPABASE_URL'].rstrip('/')
 SECRETA = os.environ['SUPABASE_SECRET']
 DRIVE = os.environ.get('DRIVE_URL', 'https://www.googleapis.com/drive/v3')  # se cambia solo para probar
+# La misma miniatura pública que muestra la app: no gasta la cuota de la API.
+MINIATURA = os.environ.get('MINIATURA_URL', 'https://drive.google.com/thumbnail')
+FALLAS = collections.Counter()   # por qué no se pudo bajar una foto (solo códigos, para el registro)
 
 
 def cabeceras():
@@ -52,15 +56,26 @@ def rpc(nombre, datos=None):
 def bajar(url, cab=None, intentos=3):
     for i in range(intentos):
         try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=cab or {}), timeout=120) as r:
-                return r.read()
-        except urllib.error.HTTPError as e:
-            if e.code in (403, 404):
+            with urllib.request.urlopen(urllib.request.Request(url, headers=cab or {}), timeout=60) as r:
+                datos = r.read()
+                if r.headers.get_content_type().startswith('image/'):
+                    return datos
+                FALLAS['no es imagen'] += 1
                 return None
-            time.sleep(2 ** i)
-        except Exception:
-            time.sleep(2 ** i)
+        except urllib.error.HTTPError as e:
+            FALLAS[f'HTTP {e.code}'] += 1
+            if e.code in (400, 401, 403, 404):
+                return None
+        except Exception as e:
+            FALLAS[type(e).__name__] += 1
+        time.sleep(2 ** i)
     return None
+
+
+def foto_de_la_liga(archivo_id, llave):
+    # Primero la miniatura grande (la que ve la app); si falla, el archivo original por la API.
+    return (bajar(f'{MINIATURA}?id={archivo_id}&sz=w2000', intentos=2)
+            or bajar(f'{DRIVE}/files/{archivo_id}?alt=media&key={llave}', intentos=2))
 
 
 def imagen(datos):
@@ -128,9 +143,9 @@ def main():
         return
 
     app.prepare(ctx_id=-1, det_size=(1280, 1280), det_thresh=0.4)
-    lote, encontradas, fallidas, t0 = [], 0, 0, time.time()
+    lote, encontradas, fallidas, t0, mejor = [], 0, 0, time.time(), -1.0
     for i, (a, contra) in enumerate(trabajo, 1):
-        im = imagen(bajar(f"{DRIVE}/files/{a['archivo_id']}?alt=media&key={llaves[a['club_id']]}"))
+        im = imagen(foto_de_la_liga(a['archivo_id'], llaves[a['club_id']]))
         if im is None:
             fallidas += 1
             continue
@@ -145,6 +160,7 @@ def main():
             m = np.stack([c.normed_embedding for c in caras])
             for p in contra:
                 s = float(np.max(m @ p['vec']))
+                mejor = max(mejor, s)
                 if s >= UMBRAL:
                     hallazgos.append({'persona_id': p['persona_id'], 'parecido': round(s, 3)})
         encontradas += len(hallazgos)
@@ -157,6 +173,9 @@ def main():
         rpc('caras_guardar', {'p_lote': lote})
     rpc('caras_terminar', {'p_personas': [p['persona_id'] for p in listas if not p['completa']]})
     print(f'Listo: {len(trabajo)} fotos, {encontradas} encontradas, {fallidas} no se pudieron bajar, {time.time() - t0:.0f} s')
+    print(f'Parecido más alto visto: {mejor:.2f} (se guarda desde {UMBRAL:.2f})')
+    if FALLAS:
+        print('Fallas al bajar:', ', '.join(f'{k}: {v}' for k, v in FALLAS.most_common()))
 
 
 if __name__ == '__main__':
