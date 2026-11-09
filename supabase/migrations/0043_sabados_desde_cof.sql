@@ -1,4 +1,4 @@
--- Jara App · 0042 · Los sábados desde cof.cl
+-- Jara App · 0043 · Los sábados desde cof.cl
 --
 -- La liga de los sábados cambió su página a cof.cl. Deporstar (de donde la
 -- app sacaba fechas, resultados y tabla desde la 0032 y la 0038) dejó de

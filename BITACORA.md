@@ -8,7 +8,7 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 **Para qué:** la tabla del Senior Sábado seguía con 4 partidos jugados. La liga cambió su página a cof.cl y Deporstar dejó de estar al día: no tenía el resultado del 7 de noviembre, mientras cof.cl ya mostraba 5 jugados.
 
-**Qué se hizo** (migración `0042_sabados_desde_cof.sql`, se corre antes del merge):
+**Qué se hizo** (migración `0043_sabados_desde_cof.sql`, se corre antes del merge):
 - `liga_torneos` acepta una tercera fuente: `fuente = 'cof'` con `cof_torneo` (por ejemplo `senior-segunda-clausura`).
 - cof.cl es una página Next.js que trae sus datos dentro del mismo HTML. `liga_desde_cof` junta esos pedazos y saca la lista de torneos; `partidos_desde_cof` y `tabla_desde_cof` dejan los partidos y la tabla de un torneo en la misma forma que las otras fuentes. El número de fecha sale del nombre ("Fecha 7"), porque la página se salta las fechas suspendidas.
 - `liga_refrescar` trae en un solo pedido las fechas, los resultados y la tabla. Borra las fechas y partidos que ya no están (los de Deporstar, al cambiar). La tabla queda en la pestaña que ya tenía el plantel, marcada como conectada.
