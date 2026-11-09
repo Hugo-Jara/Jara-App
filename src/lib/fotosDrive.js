@@ -75,13 +75,14 @@ export function puntaje(carpeta, partido) {
     if (d === 0) p += 60;
     else if (d === 1) p += 40;
     else if (d <= 3) p += 15;
-    else if (rival < 1) return 0;
+    // Mismo rival en otra fecha (Apertura y Clausura): no es este partido.
+    else return 0;
   } else if (carpeta.creada) {
     // Sin fotos con fecha: la carpeta aparece unos días después del partido.
     const d = dias(carpeta.creada.slice(0, 10), partido.fecha);
     if (d >= 0 && d <= 14) p += 20;
-    else if (rival < 1) return 0;
-  }
+    else return 0;
+  } else return 0; // Sin ninguna fecha no se adivina: el capitán elige.
   return Math.round(p);
 }
 
