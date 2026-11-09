@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
-import { usePartidos, tablaEstadisticas, tieneResultado, signo } from '../lib/partidos.js';
+import { usePartidos, tablaEstadisticas, cifrasArquero, tieneResultado, signo } from '../lib/partidos.js';
 import { conteoMvp } from '../lib/charla.js';
 import { fechaCorta, hoyIso } from '../lib/fechas.js';
 
 // La ficha de números del jugador en su perfil: partidos jugados, goles,
 // asistencias, veces jugador del partido y tarjetas, este año o en total. Sale
 // de lo mismo que la tabla de Jugadores (lo que se anota en cada partido), así
-// que no necesita nada nuevo en la base.
+// así que sirve con lo que ya se anota. Si es arquero, suma además los goles
+// recibidos y las vallas invictas de los partidos que jugó (0046).
 const VACIA = { pj: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0 };
 const MARCA = { G: '✓', E: '=', P: '✗' };
 const ULTIMOS = 5;
@@ -30,6 +31,7 @@ export default function EstadisticasJugador({ perfil }) {
   const [error, setError] = useState('');
   const planteles = perfil.planteles ?? [];
   const id = perfil.id;
+  const esArquero = perfil.posicion === 'arquero';
 
   useEffect(() => {
     let vigente = true;
@@ -42,17 +44,20 @@ export default function EstadisticasJugador({ perfil }) {
       planteles.length > 1
         ? Promise.all(planteles.map((e) => tablaEstadisticas([e.id], a).then((l) => l.find((g) => g.personaId === id) ?? null)))
         : Promise.resolve([]),
-    ]).then(([club, mvps, porPlantel]) => {
+      // Si la base todavía no tiene la 0046, simplemente no se muestra.
+      esArquero ? cifrasArquero(id, a).catch(() => null) : Promise.resolve(null),
+    ]).then(([club, mvps, porPlantel, arco]) => {
       if (!vigente) return;
       setDatos({
         club,
         yo: { ...VACIA, ...club.find((g) => g.personaId === id), mvp: mvps?.[id] ?? 0 },
         mvpPuesto: mvps?.[id] ? Object.values(mvps).filter((n) => n > mvps[id]).length + 1 : null,
         porPlantel: porPlantel.map((g, i) => ({ ...planteles[i], ...VACIA, ...g })).filter((g) => g.pj > 0),
+        arco: arco?.pj ? arco : null,
       });
     }, (e) => vigente && setError(e.message));
     return () => { vigente = false; };
-  }, [id, anio]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id, anio, esArquero]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sus últimos partidos con resultado (de los que la app tiene a mano).
   const ultimos = jugados
@@ -71,6 +76,10 @@ export default function EstadisticasJugador({ perfil }) {
     { etiqueta: 'Goles', valor: yo.goles, nota: notaPuesto('goles') ?? (yo.pj ? `${promedio(yo.goles, yo.pj)} por partido` : null) },
     { etiqueta: 'Asistencias', valor: yo.asistencias, nota: notaPuesto('asistencias') },
     { etiqueta: 'Jugador del partido', valor: yo.mvp ? `★ ${yo.mvp}` : 0, nota: datos.mvpPuesto && datos.mvpPuesto <= 10 ? `${ordinal(datos.mvpPuesto)} del club` : null },
+    ...(datos.arco ? [
+      { etiqueta: 'Goles recibidos', valor: datos.arco.recibidos, nota: `${promedio(datos.arco.recibidos, datos.arco.pj)} por partido` },
+      { etiqueta: 'Vallas invictas', valor: datos.arco.invictas, nota: `en ${datos.arco.pj} ${datos.arco.pj === 1 ? 'partido' : 'partidos'}` },
+    ] : []),
   ] : [];
 
   return (
@@ -108,6 +117,7 @@ export default function EstadisticasJugador({ perfil }) {
             <span><span className="tarjeta amarilla mini" /> {yo.amarillas} {yo.amarillas === 1 ? 'amarilla' : 'amarillas'}</span>
             <span><span className="tarjeta roja mini" /> {yo.rojas} {yo.rojas === 1 ? 'roja' : 'rojas'}</span>
           </div>
+          {datos.arco && <p className="item-meta jugador-nota">Goles recibidos: los del equipo en los partidos que jugó, porque la app no anota quién estuvo al arco.</p>}
 
           {datos.porPlantel.length > 1 && (
             <>
@@ -131,9 +141,11 @@ export default function EstadisticasJugador({ perfil }) {
               <ul className="jugador-ultimos">
                 {ultimos.map((p) => {
                   const g = p.estadisticas.find((x) => x.personaId === id);
-                  const aporte = g && [
-                    g.goles && `${g.goles} ${g.goles === 1 ? 'gol' : 'goles'}`,
-                    g.asistencias && `${g.asistencias} asist.`,
+                  const aporte = [
+                    g?.goles && `${g.goles} ${g.goles === 1 ? 'gol' : 'goles'}`,
+                    g?.asistencias && `${g.asistencias} asist.`,
+                    // Al arquero, lo que recibió en cada partido.
+                    esArquero && (p.golesContra === 0 ? 'valla invicta' : `recibió ${p.golesContra}`),
                   ].filter(Boolean).join(' · ');
                   return (
                     <li key={p.id}>

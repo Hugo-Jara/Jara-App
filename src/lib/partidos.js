@@ -52,6 +52,7 @@ const base = {
   }),
   eliminar: (id) => llamar('partido_eliminar', { p_id: id }),
   equipos: () => llamar('equipos_del_club'),
+  arquero: (personaId, anio) => llamar('arquero_cifras', { p_persona: personaId, p_anio: anio ?? null }),
 };
 
 // --- Modo demostración: lo mismo, en memoria ------------------------------
@@ -167,6 +168,10 @@ const enDemo = {
     return [...suma.values()];
   },
   equipos: async () => EQUIPOS_DEMO,
+  arquero: async (personaId) => {
+    const ps = demo.filter((p) => tieneResultado(p) && ((p.jugaron ?? []).includes(personaId) || p.estadisticas.some((g) => g.personaId === personaId)));
+    return { pj: ps.length, recibidos: ps.reduce((t, p) => t + p.golesContra, 0), invictas: ps.filter((p) => p.golesContra === 0).length };
+  },
 };
 
 const origen = esDemo ? enDemo : base;
@@ -206,6 +211,8 @@ export const equiposDelClub = () => origen.equipos();
 // Crea un partido ya jugado (por ejemplo, desde una carpeta de fotos) y devuelve su id.
 export const crearPartidoJugado = async (d) => { const id = await origen.guardar(d); await almacen.recargar(); return id; };
 export const tablaEstadisticas = (equipoIds, anio) => origen.estadisticas(equipoIds, anio);
+// Goles recibidos y vallas invictas de un arquero en los partidos que jugó (0046).
+export const cifrasArquero = (personaId, anio) => origen.arquero(personaId, anio);
 
 export const tieneResultado = (p) => p.golesFavor != null && p.golesContra != null;
 

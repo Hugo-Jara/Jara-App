@@ -765,3 +765,4 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .jugador-partido { flex: 1; min-width: 0; display: grid; gap: 2px; font-size: 14.5px; }
 .jugador-aporte { font-size: 13px; font-weight: 700; color: var(--gold); white-space: nowrap; }
 .jugador-ver-tabla { display: inline-block; margin-top: 14px; font-size: 13px; text-decoration: none; }
+.jugador-nota { margin: 6px 0 0; font-size: 12px; }
