@@ -8,6 +8,7 @@ import {
 import FotoJugador from '../components/FotoJugador.jsx';
 import MisFotos from '../components/MisFotos.jsx';
 import FotosDelJugador from '../components/FotosDelJugador.jsx';
+import EstadisticasJugador from '../components/EstadisticasJugador.jsx';
 
 // /perfil es el mío; /perfil/:id el de otro. Cada uno edita su foto, apodo,
 // dorsal, posición, pie, fecha de nacimiento, estatura y peso. El tesorero y el
@@ -113,6 +114,9 @@ export default function Perfil() {
           )}
         </div>
       )}
+
+      {/* Sus números del club: partidos, goles, asistencias, jugador del partido. */}
+      {!editando && <EstadisticasJugador perfil={perfil} />}
 
       {editando && (
         <Editor perfil={perfil} onListo={async () => { setEditando(false); await cargar(); }} onCancelar={() => setEditando(false)} />

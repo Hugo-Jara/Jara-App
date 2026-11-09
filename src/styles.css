@@ -748,3 +748,20 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .caras-lista li + li { margin-top: 4px; }
 .caras-botones { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
 .caras-visor-dato { flex: 1; text-align: center; align-self: center; font-size: 13px; color: var(--text-dim); }
+
+/* Estadísticas en el perfil del jugador */
+.jugador-stats-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.jugador-stats-cabeza .item-que { margin: 0; }
+.segmentos.chicos { gap: 6px; }
+.segmentos.chicos .segmento { padding: 6px 10px; font-size: 13px; min-height: 0; }
+.jugador-kpis { margin-bottom: 10px; }
+.jugador-kpis .kpi { padding: 12px; }
+.jugador-kpis .kpi-valor { font-size: 26px; font-variant-numeric: tabular-nums; }
+.jugador-tarjetas { display: flex; gap: 18px; font-size: 14px; color: var(--text-dim); margin-bottom: 4px; }
+.jugador-sub { margin: 16px 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); }
+.jugador-ultimos { list-style: none; margin: 0; padding: 0; }
+.jugador-ultimos li + li { border-top: 1px solid var(--border); }
+.jugador-ultimos a { display: flex; align-items: center; gap: 12px; padding: 10px 0; color: var(--text); text-decoration: none; }
+.jugador-partido { flex: 1; min-width: 0; display: grid; gap: 2px; font-size: 14.5px; }
+.jugador-aporte { font-size: 13px; font-weight: 700; color: var(--gold); white-space: nowrap; }
+.jugador-ver-tabla { display: inline-block; margin-top: 14px; font-size: 13px; text-decoration: none; }

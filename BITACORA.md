@@ -4,6 +4,15 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-09 · Estadísticas en el perfil del jugador
+- El perfil de cada jugador (el propio y el de otros) muestra una tarjeta "Estadísticas": partidos jugados, goles, asistencias, veces jugador del partido y tarjetas, con "Este año" e "Histórico".
+- Si la cifra lo deja entre los 10 primeros del club, dice el puesto ("3º del club"); si no, los goles muestran el promedio por partido.
+- Si juega en más de un plantel, desglosa sus números por plantel. Abajo, sus últimos 5 partidos con resultado, con su aporte (goles y asistencias) y enlace al partido.
+- Sale de las mismas funciones que la tabla de Jugadores (`estadisticas` y `mvp_conteo`): **sin migración**.
+- Componente nuevo `src/components/EstadisticasJugador.jsx`; en `Perfil.jsx` solo se agrega la tarjeta.
+
+---
+
 ## 2026-11-09 · Las fotos encontradas, también en el perfil del jugador
 
 **Para qué:** al entrar al perfil de otro jugador solo se veían sus datos. Ahora se ven también las fotos de la liga donde sale, si él lo eligió.
