@@ -1,0 +1,48 @@
+# Buscarme en las fotos (migración 0042): compara la cara de quienes lo
+# activaron con las fotos de la liga y guarda dónde aparece cada uno.
+# Corre sola cada 3 horas y también a mano (Actions > Buscar caras > Run workflow).
+# Necesita el secreto SUPABASE_SECRET (Settings > Secrets and variables > Actions).
+# El repo es público: el script no imprime datos de personas.
+name: Buscar caras
+
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: caras
+  cancel-in-progress: false
+
+jobs:
+  buscar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      SUPABASE_URL: https://pzzkrbnzguqtjrlwgtiy.supabase.co
+      SUPABASE_SECRET: ${{ secrets.SUPABASE_SECRET }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: ¿Hay algo que hacer?
+        id: hay
+        run: |
+          if [ -z "$SUPABASE_SECRET" ]; then echo "Falta el secreto SUPABASE_SECRET"; echo "seguir=no" >> "$GITHUB_OUTPUT"; exit 0; fi
+          python3 scripts/caras/hay_trabajo.py >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        if: steps.hay.outputs.seguir == 'si'
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: scripts/caras/requirements.txt
+      - uses: actions/cache@v4
+        if: steps.hay.outputs.seguir == 'si'
+        with:
+          path: ~/.insightface
+          key: insightface-buffalo_l
+      - if: steps.hay.outputs.seguir == 'si'
+        run: pip install -r scripts/caras/requirements.txt
+      - if: steps.hay.outputs.seguir == 'si'
+        run: python scripts/caras/buscar_caras.py

@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-09 · Buscarme en las fotos (reconocimiento facial con permiso)
+
+En Perfil > Mis fotos, cada uno puede activar "Buscarme en las fotos": declara tener 18 o más, y una tarea de GitHub (`.github/workflows/caras.yml`, cada 3 horas, gratis) saca una huella de su cara desde la foto de perfil y la compara con las fotos de la liga ya enlazadas (0041). Motor: InsightFace/ArcFace (código abierto, CPU). Solo se guarda "esta foto tiene a esta persona"; de las demás caras no se guarda nada. Apagarlo borra la huella y lo encontrado; "No soy yo" esconde una foto. Migración `0042_buscarme_en_fotos.sql`; la tarea entra con la clave secreta de Supabase (secreto `SUPABASE_SECRET` en GitHub) y no imprime datos de personas (los registros del repo son públicos).
+
+**Prueba previa** (con permiso del jugador, fotos borradas después): en 11 fotos de un partido lo encontró solo donde aparece, con 0,62 de parecido contra menos de 0,10 de los demás. Un motor más liviano para el navegador (Human) no distinguía, por eso corre en GitHub.
+
+**Comprobado:** `npm run test:caras` (25 pruebas: permisos, menores, apagar borra todo, releer el Drive no pierde lo encontrado), `npm run test:db`, `npm run build`, el script contra un servidor de mentira con fotos de ejemplo de InsightFace, y el recorrido en modo demostración.
+
+---
+
 ## 2026-11-09 · Fotos: crear los partidos antiguos desde sus carpetas
 
 La primera búsqueda real encontró muchas carpetas de partidos anteriores a la app (Apertura y principios del Clausura), que no tenían partido donde enlazarse. En Más > Fotos de los partidos, cada carpeta sin partido ofrece "Crear el partido" (jugado, con el rival, el día de las fotos y el torneo de la ruta; Jr → Junior, Sr → el Senior que juega ese día de la semana) y un botón para crear todos de una vez. Usa `partido_guardar`, así que lo puede hacer el capitán de ese plantel o un administrador. Sin migración.

@@ -713,7 +713,7 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .fotos-grilla { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 10px; border-radius: 10px; overflow: hidden; }
 .fotos-miniatura { padding: 0; border: 0; background: var(--bg-card-alt); aspect-ratio: 1; cursor: pointer; overflow: hidden; }
 .fotos-miniatura img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.visor { position: fixed; inset: 0; z-index: 100; background: rgba(0, 0, 0, 0.94); display: flex; flex-direction: column; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+.visor { position: fixed; inset: 0; z-index: 1000; background: #000; display: flex; flex-direction: column; padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
 .visor-barra { display: flex; align-items: center; gap: 14px; color: var(--text-dim); font-size: 14px; min-height: 44px; }
 .visor-barra span { flex: 1; }
 .visor-cerrar { background: none; border: 1px solid var(--border); color: var(--text); width: 44px; height: 44px; border-radius: 100px; font-size: 18px; cursor: pointer; }
@@ -741,3 +741,10 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .noticias-frase-movil { text-align: center; font-family: inherit; font-size: 1.25em; font-weight: 700; border-block: 1px solid #a92520; padding: 16px 0; }
 
 .noticias-lectura-categoria { color: #a92520; font-family: Arial, sans-serif; font-weight: 700; text-transform: uppercase; font-size: .85em; }
+
+/* Buscarme en las fotos (0042) */
+.caras-permiso { margin-top: 14px; }
+.caras-lista { margin: 8px 0 0; padding-left: 20px; font-size: 13.5px; color: var(--text-dim); line-height: 1.45; }
+.caras-lista li + li { margin-top: 4px; }
+.caras-botones { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
+.caras-visor-dato { flex: 1; text-align: center; align-self: center; font-size: 13px; color: var(--text-dim); }
