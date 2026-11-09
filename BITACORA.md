@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-09 · Tabla del jueves: la fase con partidos jugados
+
+**Para qué:** el 9 de noviembre la liga del jueves abrió en copafacil una fase nueva (14 equipos, sin partidos). La app tomaba siempre la fase más nueva, así que la tabla del Senior Jueves quedó con todos en 0 puntos.
+
+**Qué se hizo** (migración `0044_tabla_jueves_fase_jugada.sql`, se corre antes del merge): `tabla_desde_copafacil` usa la fase más nueva que ya tenga partidos jugados. Cuando la fase nueva tenga partidos, la tabla pasa sola a esa.
+
+**Comprobado:** `npm run test:db` pasa (2 pruebas nuevas en `liga.mjs`) y `npm run build` pasa.
+
+---
+
 ## 2026-11-09 · Buscar caras: bajar las fotos por la miniatura
 
 La primera vuelta real de "Buscar caras" sacó la huella pero no pudo bajar 376 de las 452 fotos por la API del Drive. Ahora la tarea baja primero la misma miniatura pública que muestra la app (2000 px, sin gastar cuota) y usa la API solo si eso falla. El registro anota el parecido más alto visto y por qué falló cada descarga (solo códigos, sin datos de personas). Las fotos que no se pudieron bajar quedan pendientes y se revisan en la vuelta siguiente. Sin migración.
