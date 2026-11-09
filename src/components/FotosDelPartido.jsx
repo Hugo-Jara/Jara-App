@@ -10,9 +10,9 @@ const demo = (id) => {
   const color = ['#5b2a26', '#3d4a2a', '#2a3d4a', '#4a3d2a', '#3a2a4a'][n % 5];
   return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="${color}"/><text x="300" y="215" font-size="44" fill="#d9c89a" text-anchor="middle" font-family="sans-serif">Foto ${n + 1}</text></svg>`)}`;
 };
-const fuente = (id, ancho) => (id.startsWith('demo-') ? demo(id) : miniatura(id, ancho));
+export const fuente = (id, ancho) => (id.startsWith('demo-') ? demo(id) : miniatura(id, ancho));
 // Si la miniatura del Drive falla, se prueba la otra dirección una vez.
-const otraVez = (id, ancho) => (e) => {
+export const otraVez = (id, ancho) => (e) => {
   if (id.startsWith('demo-') || e.currentTarget.dataset.otra) return;
   e.currentTarget.dataset.otra = '1';
   e.currentTarget.src = miniaturaOtra(id, ancho);
@@ -21,7 +21,7 @@ const otraVez = (id, ancho) => (e) => {
 const PRIMERAS = 9;
 
 // La foto grande, con anterior y siguiente.
-function Visor({ fotos, indice, cambiar, cerrar }) {
+export function Visor({ fotos, indice, cambiar, cerrar, extra }) {
   const foto = fotos[indice];
   useEffect(() => {
     const tecla = (e) => {
@@ -51,6 +51,7 @@ function Visor({ fotos, indice, cambiar, cerrar }) {
       <img key={foto.id} className="visor-foto" src={fuente(foto.id, 1600)} onError={otraVez(foto.id, 1600)} alt={foto.nombre ?? `Foto ${indice + 1}`} />
       <div className="visor-flechas">
         <button className="btn secundario chico" disabled={indice === 0} onClick={() => cambiar(indice - 1)}>‹ Anterior</button>
+        {extra?.(foto)}
         <button className="btn secundario chico" disabled={indice === fotos.length - 1} onClick={() => cambiar(indice + 1)}>Siguiente ›</button>
       </div>
     </div>
