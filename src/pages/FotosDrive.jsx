@@ -1,22 +1,47 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
-import { usePartidos } from '../lib/partidos.js';
+import { usePartidos, equiposDelClub, crearPartidoJugado } from '../lib/partidos.js';
 import { useEnlacesFotos, carpetasDelDrive, revisarDrive } from '../lib/fotos.js';
-import { RAIZ_FOTOS_LIGA, linkCarpeta, proponer } from '../lib/fotosDrive.js';
+import { RAIZ_FOTOS_LIGA, linkCarpeta, proponer, normalizar } from '../lib/fotosDrive.js';
 import { fechaLarga, hoyIso } from '../lib/fechas.js';
 import { plural } from '../lib/texto.js';
 
 const nombrePartido = (p) => `${p.equipo} vs ${p.rival} · ${fechaLarga(p.fecha)}`;
+// El plantel de una carpeta sin partido: Jr → Junior; Sr → el Senior que juega
+// ese día de la semana (jueves o sábado).
+export function plantelPara(carpeta, equipos) {
+  const n = (e) => normalizar(e.nombre);
+  const cat = equipos.filter((e) => (carpeta.categoria === 'jr' ? n(e).includes('junior')
+    : carpeta.categoria === 'sr' ? n(e).includes('senior') : false));
+  if (cat.length <= 1 || !carpeta.dia) return cat[0] ?? null;
+  const dia = new Date(`${carpeta.dia}T12:00:00Z`).getUTCDay();
+  return cat.find((e) => n(e).includes(dia === 4 ? 'jueves' : 'sabado')) ?? cat[0];
+}
+
+// Crea el partido que falta (ya jugado) con los datos de la carpeta y la enlaza.
+async function crearYEnlazar(carpeta, equipo, enlazar) {
+  const id = await crearPartidoJugado({
+    equipoId: equipo.id, rival: (carpeta.rival || 'Rival').slice(0, 80), fecha: carpeta.dia,
+    torneo: carpeta.ruta.join(' · ').slice(0, 80) || null,
+  });
+  await enlazar(id, carpeta.id, carpeta.nombre);
+}
+
 const hora = (iso) => new Date(iso).toLocaleString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
 // Una carpeta sin partido, con el partido propuesto (o para elegir uno).
-function Carpeta({ carpeta, propuesto, partidos, enlazar }) {
+function Carpeta({ carpeta, propuesto, partidos, enlazar, equipo }) {
   const [elegido, setElegido] = useState(propuesto?.id ?? '');
   const [estado, setEstado] = useState({ guardando: false, error: '' });
   const confirmar = async () => {
     setEstado({ guardando: true, error: '' });
     try { await enlazar(elegido, carpeta.id, carpeta.nombre); }
+    catch (x) { setEstado({ guardando: false, error: x.message }); }
+  };
+  const crear = async () => {
+    setEstado({ guardando: true, error: '' });
+    try { await crearYEnlazar(carpeta, equipo, enlazar); }
     catch (x) { setEstado({ guardando: false, error: x.message }); }
   };
   return (
@@ -34,9 +59,19 @@ function Carpeta({ carpeta, propuesto, partidos, enlazar }) {
         {partidos.map((p) => <option key={p.id} value={p.id}>{nombrePartido(p)}</option>)}
       </select>
       {estado.error && <p className="error" role="alert">{estado.error}</p>}
-      <button className="btn chico" style={{ marginTop: 10 }} disabled={!elegido || estado.guardando} onClick={confirmar}>
-        {estado.guardando ? 'Enlazando…' : 'Enlazar'}
-      </button>
+      <div className="fotos-carpeta-botones">
+        <button className="btn chico" disabled={!elegido || estado.guardando} onClick={confirmar}>
+          {estado.guardando ? 'Enlazando…' : 'Enlazar'}
+        </button>
+        {!propuesto && equipo && carpeta.dia && (
+          <button className="btn secundario chico" disabled={estado.guardando} onClick={crear}>Crear el partido</button>
+        )}
+      </div>
+      {!propuesto && equipo && carpeta.dia && (
+        <p className="nota" style={{ textAlign: 'left', marginTop: 8 }}>
+          "Crear el partido" lo agrega como jugado: {equipo.nombre} vs {carpeta.rival}, {fechaLarga(carpeta.dia)}.
+        </p>
+      )}
     </div>
   );
 }
@@ -50,6 +85,9 @@ export default function FotosDrive() {
   const [carpetas, setCarpetas] = useState(null);
   const [errorCarpetas, setErrorCarpetas] = useState('');
   const [busqueda, setBusqueda] = useState({ buscando: false, avance: null, resultado: null, error: '' });
+  const [equipos, setEquipos] = useState([]);
+  const [masivo, setMasivo] = useState({ creando: false, hechos: 0, error: '' });
+  useEffect(() => { equiposDelClub().then(setEquipos, () => setEquipos([])); }, []);
 
   const cargarCarpetas = () => carpetasDelDrive().then((c) => { setCarpetas(c); setErrorCarpetas(''); }, (e) => setErrorCarpetas(e.message));
   useEffect(() => { cargarCarpetas(); }, [enlaces]);
@@ -75,6 +113,17 @@ export default function FotosDrive() {
     .filter((e) => e.partido)
     .sort((a, b) => b.partido.fecha.localeCompare(a.partido.fecha));
   const r = busqueda.resultado;
+  // Carpetas sin partido en la app (partidos antiguos que nunca se cargaron).
+  const paraCrear = sinPropuesta.map((c) => ({ c, e: plantelPara(c, equipos) })).filter((x) => x.e && x.c.dia);
+  const crearTodos = async () => {
+    setMasivo({ creando: true, hechos: 0, error: '' });
+    let hechos = 0;
+    for (const { c, e } of paraCrear) {
+      try { await crearYEnlazar(c, e, enlazar); hechos++; setMasivo((m) => ({ ...m, hechos })); }
+      catch (x) { setMasivo({ creando: false, hechos, error: `${c.nombre}: ${x.message}` }); return; }
+    }
+    setMasivo({ creando: false, hechos, error: '' });
+  };
 
   return (
     <>
@@ -104,11 +153,23 @@ export default function FotosDrive() {
         <div className="sobretitulo">Falta confirmar</div>
         {errorCarpetas && <p className="error" role="alert">{errorCarpetas}</p>}
         {carpetas && !sinPartido.length && <p className="vacio">Todas las carpetas encontradas tienen su partido.</p>}
+        {paraCrear.length > 1 && (
+          <div className="card">
+            <p className="sin-margen">
+              {plural(paraCrear.length, 'carpeta es', 'carpetas son')} de partidos que no están en la app (anteriores a ella).
+              Puedes crearlos como jugados, con su rival y su día, y quedan con sus fotos.
+            </p>
+            {masivo.error && <p className="error" role="alert">{masivo.error}</p>}
+            <button className="btn secundario" style={{ marginTop: 12 }} disabled={masivo.creando} onClick={crearTodos}>
+              {masivo.creando ? `Creando… ${masivo.hechos} de ${paraCrear.length}` : `Crear los ${paraCrear.length} partidos y enlazar sus fotos`}
+            </button>
+          </div>
+        )}
         {propuestas.map(({ carpeta, partido }) => (
           <Carpeta key={carpeta.id} carpeta={carpeta} propuesto={partido} partidos={libres} enlazar={enlazar} />
         ))}
         {sinPropuesta.map((c) => (
-          <Carpeta key={c.id} carpeta={c} propuesto={null} partidos={libres} enlazar={enlazar} />
+          <Carpeta key={c.id} carpeta={c} propuesto={null} partidos={libres} enlazar={enlazar} equipo={plantelPara(c, equipos)} />
         ))}
       </section>
 
