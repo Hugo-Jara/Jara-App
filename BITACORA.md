@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-09 · Tabla del jueves: la fase con partidos jugados
+
+**Para qué:** el 9 de noviembre la liga del jueves abrió en copafacil una fase nueva (14 equipos, sin partidos). La app tomaba siempre la fase más nueva, así que la tabla del Senior Jueves quedó con todos en 0 puntos.
+
+**Qué se hizo** (migración `0044_tabla_jueves_fase_jugada.sql`, se corre antes del merge): `tabla_desde_copafacil` usa la fase más nueva que ya tenga partidos jugados. Cuando la fase nueva tenga partidos, la tabla pasa sola a esa.
+
+**Comprobado:** `npm run test:db` pasa (2 pruebas nuevas en `liga.mjs`) y `npm run build` pasa.
+
+---
+
 ## 2026-11-09 · La liga del sábado, desde cof.cl
 
 **Para qué:** la tabla del Senior Sábado seguía con 4 partidos jugados. La liga cambió su página a cof.cl y Deporstar dejó de estar al día: no tenía el resultado del 7 de noviembre, mientras cof.cl ya mostraba 5 jugados.

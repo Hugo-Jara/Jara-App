@@ -219,6 +219,12 @@ const mota = x.general.find((f) => f.equipo === 'Mota Classic');
 ok('La tabla trae la línea de cada equipo', mota && mota.pts === 11 && mota.pj === 7 && mota.pg === 3 && mota.pe === 2 && mota.pp === 2 && mota.gf === 9 && mota.gc === 11, JSON.stringify(mota));
 ok('General con los 15 equipos (sin Cupo Libre) y el grupo del Jara', x.general.length === 15 && !x.general.some((f) => /cupo/i.test(f.equipo)) && x.grupo === 'A' && x.grupos.A.length >= 2 && x.grupos.A.some((f) => f.es_jara), JSON.stringify(Object.keys(x.grupos)));
 ok('Ordenada por puesto', x.grupos.A.every((f, i, a) => i === 0 || a[i - 1].pts >= f.pts), x.grupos.A.map((f) => f.pts).join());
+const conFaseNueva = Object.fromEntries(Object.entries(CF.teams).map(([id, t]) => [id, { ...t, dt: { ...t.dt, 1799999999999: { col: 1, colg: 1, dt: '1=0#2=0#3=0#4=0#0=0#5=0#6=0#' } } }]));
+x = (await db.query('select tabla_desde_copafacil($1) as t', [JSON.stringify(conFaseNueva)])).rows[0].t;
+ok('Si la liga abre una fase nueva sin partidos, sigue la tabla con puntos', x.general.find((f) => f.equipo === 'Mota Classic')?.pts === 11, JSON.stringify(x.general.find((f) => f.equipo === 'Mota Classic')));
+const faseJugada = Object.fromEntries(Object.entries(conFaseNueva).map(([id, t]) => [id, { ...t, dt: { ...t.dt, 1799999999999: { col: 1, colg: 1, dt: t.name === 'Mota Classic' ? '1=1#2=1#0=3#5=2#6=0#' : '1=0#0=0#' } } }]));
+x = (await db.query('select tabla_desde_copafacil($1) as t', [JSON.stringify(faseJugada)])).rows[0].t;
+ok('Cuando la fase nueva ya tiene partidos, se usa esa', x.general.find((f) => f.equipo === 'Mota Classic')?.pts === 3, JSON.stringify(x.general.find((f) => f.equipo === 'Mota Classic')));
 
 await db.query(`insert into liga_torneos (equipo_id, club_id, fuente, copafacil_torneo) values ($1, $2, 'copafacil', '-68fm5@riynh')`, [JUEVES, CLUB]);
 r = await db.query(`insert into liga_torneos (equipo_id, club_id, fuente) values ($1, $2, 'copafacil')`, [JUNIOR, CLUB]).catch((e) => ({ error: e.message }));
