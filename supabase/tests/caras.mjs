@@ -205,6 +205,22 @@ r = await como('jugador', 'select caras_no_soy_yo($1)', [fotosCobs[1]]);
 x = await como('jugador', 'select * from caras_mis_fotos()');
 ok('"No soy yo" esconde la foto', !r.error && x.rows.length === 1, r.error ?? JSON.stringify(x.rows));
 
+// 0045: mostrar en el perfil.
+x = await como('capitan', 'select * from caras_fotos_de($1)', [PER.jugador]);
+ok('Por defecto el resto del club no ve sus fotos', !x.error && x.rows.length === 0, x.error ?? JSON.stringify(x.rows));
+x = await como('jugador', 'select * from caras_fotos_de($1)', [PER.jugador]);
+ok('Uno mismo sí ve las suyas en su perfil', x.rows.length === 1, JSON.stringify(x.rows));
+r = await como('jugador', 'select caras_mostrar(true)');
+x = await como('capitan', 'select * from caras_fotos_de($1)', [PER.jugador]);
+ok('Si elige mostrarlas, el club las ve (sin las escondidas)', !r.error && x.rows.length === 1 && x.rows[0].partido_id === P_JR, r.error ?? JSON.stringify(x.rows));
+ok('El estado dice que las muestra', (await estado('jugador')).muestra === true);
+r = await como('capitan', 'select caras_mostrar(true)');
+ok('Sin activar no se puede mostrar', /Primero activa/.test(r.error ?? ''), r.error);
+r = await como('jugador', 'select caras_mostrar(false)');
+x = await como('capitan', 'select * from caras_fotos_de($1)', [PER.jugador]);
+ok('Si deja de mostrarlas, el club ya no las ve', !r.error && x.rows.length === 0, r.error ?? JSON.stringify(x.rows));
+await como('jugador', 'select caras_mostrar(true)');
+
 // Al releer la carpeta (0041 borra y vuelve a anotar las fotos), no se pierde nada.
 await db.exec(`update fotos_carpetas set leida_en = null; update fotos_drive set revisada_en = now() - interval '7 hours'`);
 await vuelta('capitan', true);
@@ -228,6 +244,8 @@ r = await como('jugador', 'select caras_apagar()');
 const total = (await db.query('select (select count(*) from caras_personas)::int p, (select count(*) from caras_hallazgos)::int h')).rows[0];
 x = await estado('jugador');
 ok('Apagar borra la huella y todo lo encontrado', !r.error && total.p === 0 && total.h === 0 && x.activa === false, r.error ?? JSON.stringify(total));
+x = await como('capitan', 'select * from caras_fotos_de($1)', [PER.jugador]);
+ok('Después de apagar, nadie ve sus fotos', x.rows.length === 0, JSON.stringify(x.rows));
 
 r = await anon('select caras_mi_estado()');
 ok('Sin cuenta no hay nada', /permission denied|nómina/.test(r.error ?? '') || r.rows[0]?.caras_mi_estado == null, r.error ?? JSON.stringify(r.rows));

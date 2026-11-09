@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { esDemo } from '../lib/supabase.js';
-import { estadoCaras, activarCaras, apagarCaras, misFotos, noSoyYo } from '../lib/caras.js';
+import { estadoCaras, activarCaras, apagarCaras, misFotos, noSoyYo, mostrarEnPerfil } from '../lib/caras.js';
 import { fuente, otraVez, Visor } from './FotosDelPartido.jsx';
 import { fechaLarga } from '../lib/fechas.js';
 import { plural } from '../lib/texto.js';
@@ -17,6 +17,7 @@ export default function MisFotos({ tieneFoto }) {
   const [ocupado, setOcupado] = useState(false);
   const [abriendo, setAbriendo] = useState(false);
   const [mayor, setMayor] = useState(false);
+  const [mostrar, setMostrar] = useState(true);
   const [todas, setTodas] = useState(false);
   const [abierta, setAbierta] = useState(null);
 
@@ -85,7 +86,7 @@ export default function MisFotos({ tieneFoto }) {
             <ul className="caras-lista">
               <li>Se saca una huella de tu cara (una lista de números) desde tu foto de perfil y se compara con las fotos de la liga.</li>
               <li>Solo se guarda en qué fotos sales. De las demás caras no se guarda nada.</li>
-              <li>Solo tú ves tus fotos encontradas.</li>
+              <li>Tú eliges si tus fotos encontradas se ven en tu perfil para el resto del club o si solo las ves tú. Lo cambias cuando quieras.</li>
               <li>Lo apagas cuando quieras y se borra todo al tiro.</li>
             </ul>
             {!tieneFoto && <p className="error" role="alert">Primero pon una foto de perfil donde se te vea bien la cara.</p>}
@@ -93,9 +94,13 @@ export default function MisFotos({ tieneFoto }) {
               <input type="checkbox" checked={mayor} onChange={(e) => setMayor(e.target.checked)} />
               Tengo 18 años o más y acepto que me busquen en las fotos
             </label>
+            <label className="casilla">
+              <input type="checkbox" checked={mostrar} onChange={(e) => setMostrar(e.target.checked)} />
+              Mostrar en mi perfil las fotos donde salgo
+            </label>
             {error && <p className="error" role="alert">{error}</p>}
             <div className="caras-botones">
-              <button type="button" className="btn" disabled={!mayor || !tieneFoto || ocupado} onClick={hacer(() => activarCaras(mayor))}>
+              <button type="button" className="btn" disabled={!mayor || !tieneFoto || ocupado} onClick={hacer(async () => { await activarCaras(mayor); if (mostrar) await mostrarEnPerfil(true); })}>
                 {ocupado ? 'Activando…' : 'Activar'}
               </button>
               <button type="button" className="enlace" onClick={() => { setAbriendo(false); setMayor(false); setError(''); }}>Ahora no</button>
@@ -134,6 +139,12 @@ export default function MisFotos({ tieneFoto }) {
       {fotos?.length > PRIMERAS && !todas && (
         <button className="btn secundario" style={{ marginTop: 12 }} onClick={() => setTodas(true)}>Ver las {plural(fotos.length, 'foto', 'fotos')}</button>
       )}
+      <p className="nota" style={{ textAlign: 'left' }}>
+        {estado.muestra ? 'Se ven en tu perfil para el resto del club' : 'Solo tú ves tus fotos'}
+        {' · '}<button type="button" className="enlace" disabled={ocupado} onClick={hacer(() => mostrarEnPerfil(!estado.muestra))}>
+          {estado.muestra ? 'Ocultarlas' : 'Mostrarlas en mi perfil'}
+        </button>
+      </p>
       <p className="nota" style={{ textAlign: 'left' }}>
         Buscarme en las fotos está activado · <button type="button" className="enlace quitar" disabled={ocupado} onClick={apagar}>Apagar y borrar</button>
       </p>

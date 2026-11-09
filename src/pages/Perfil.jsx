@@ -7,6 +7,7 @@ import {
 } from '../lib/perfil.js';
 import FotoJugador from '../components/FotoJugador.jsx';
 import MisFotos from '../components/MisFotos.jsx';
+import FotosDelJugador from '../components/FotosDelJugador.jsx';
 
 // /perfil es el mío; /perfil/:id el de otro. Cada uno edita su foto, apodo,
 // dorsal, posición, pie, fecha de nacimiento, estatura y peso. El tesorero y el
@@ -117,8 +118,8 @@ export default function Perfil() {
         <Editor perfil={perfil} onListo={async () => { setEditando(false); await cargar(); }} onCancelar={() => setEditando(false)} />
       )}
 
-      {/* Buscarme en las fotos (0042): cada uno ve solo las suyas. */}
-      {perfil.propio && <MisFotos tieneFoto={!!foto} />}
+      {/* Buscarme en las fotos (0042, 0045): las de otro jugador, solo si él eligió mostrarlas. */}
+      {perfil.propio ? <MisFotos tieneFoto={!!foto} /> : <FotosDelJugador personaId={perfil.id} />}
 
       {perfil.propio && (
         <div className="card">
