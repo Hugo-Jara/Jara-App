@@ -1,7 +1,7 @@
 -- Jara App · 0042 · Buscarme en las fotos (reconocimiento facial con permiso)
 --
 -- Quien quiere, activa "Buscarme en las fotos" en su perfil. Una tarea de
--- GitHub (.github/workflows/caras.yml, todos los días) toma su foto de perfil,
+-- GitHub (.github/workflows/caras.yml, cada 3 horas) toma su foto de perfil,
 -- la convierte en una huella de la cara (512 números, motor ArcFace, código
 -- abierto y gratis) y la compara con las caras de las fotos de la liga (0041).
 -- Solo se guarda "esta foto tiene a esta persona".
