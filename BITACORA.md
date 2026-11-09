@@ -11,6 +11,8 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 - Sale de las mismas funciones que la tabla de Jugadores (`estadisticas` y `mvp_conteo`): **sin migración**.
 - Componente nuevo `src/components/EstadisticasJugador.jsx`; en `Perfil.jsx` solo se agrega la tarjeta.
 
+**Comprobado:** `npm run build` pasa y se revisó en modo demostración (iPhone 13).
+
 ---
 
 ## 2026-11-09 · Las fotos encontradas, también en el perfil del jugador
