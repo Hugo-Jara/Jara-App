@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { esDemo } from '../lib/supabase.js';
 import { estadoCaras, activarCaras, apagarCaras, misFotos, noSoyYo } from '../lib/caras.js';
 import { fuente, otraVez, Visor } from './FotosDelPartido.jsx';
 import { fechaLarga } from '../lib/fechas.js';
@@ -19,20 +20,23 @@ export default function MisFotos({ tieneFoto }) {
   const [todas, setTodas] = useState(false);
   const [abierta, setAbierta] = useState(null);
 
-  const cargar = async () => {
+  // silencioso: las revisiones de fondo no muestran error (el celular corta la
+  // red cuando la pantalla se apaga o la app queda atrás).
+  const cargar = async (silencioso = false) => {
     try {
       const e = await estadoCaras();
+      const f = e.activa ? await misFotos() : null;
       setEstado(e);
-      setFotos(e.activa ? await misFotos() : null);
+      setFotos(f);
       setError('');
-    } catch (x) { setError(x.message); }
+    } catch (x) { if (!silencioso) setError(x.message); }
   };
   useEffect(() => { cargar(); }, [tieneFoto]); // eslint-disable-line react-hooks/exhaustive-deps
-  // Mientras está pendiente, se vuelve a mirar de vez en cuando (en demo, a los segundos).
+  // Mientras está pendiente, se vuelve a mirar cada minuto, solo con la app a la vista.
   useEffect(() => {
     if (estado?.activa && estado.estado === 'pendiente') {
-      const t = setTimeout(cargar, 5000);
-      return () => clearTimeout(t);
+      const t = setInterval(() => { if (document.visibilityState === 'visible') cargar(true); }, esDemo ? 5000 : 60000);
+      return () => clearInterval(t);
     }
   }, [estado]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -104,7 +108,7 @@ export default function MisFotos({ tieneFoto }) {
 
   const visibles = fotos ? (todas ? fotos : fotos.slice(0, PRIMERAS)) : [];
   const aviso = {
-    pendiente: 'Te estamos buscando. La búsqueda corre cada 3 horas; la primera puede tardar un rato.',
+    pendiente: 'Te estamos buscando. La búsqueda corre sola cada 3 horas y la primera tarda unos 20 minutos: vuelve más tarde.',
     sin_cara: 'No encontramos una cara clara en tu foto de perfil. Cambia la foto por una de frente y con buena luz.',
     sin_foto: 'Quitaste tu foto de perfil: pon una para que te sigamos buscando.',
   }[estado.estado];

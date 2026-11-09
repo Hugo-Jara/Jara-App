@@ -87,6 +87,8 @@ def imagen(datos):
 def main():
     t = rpc('caras_trabajo')
     personas, archivos, llaves = t['personas'], t['archivos'], t['llaves']
+    for p in personas:
+        p['tenia_huella'] = bool(p.get('huella'))
     print(f'{len(personas)} personas activadas · {len(archivos)} fotos de la liga')
     if not personas:
         print('Nadie activó "Buscarme en las fotos": nada que hacer.')
@@ -123,6 +125,14 @@ def main():
             p['estado'] = 'sin_cara'
             rpc('caras_guardar_huella', {'p_persona': p['persona_id'], 'p_foto_ruta': p['foto_ruta'], 'p_huella': None, 'p_estado': 'sin_cara'})
     print(f'{nuevas} huellas sacadas de fotos de perfil')
+    # Por qué se sacaron (solo cantidades): sin huella guardada o foto de perfil distinta.
+    if nuevas:
+        sin = sum(1 for p in personas if p['sacar_huella'] and not p.get('tenia_huella'))
+        print(f'  {sin} no tenían huella guardada · {nuevas - sin} cambiaron su foto')
+        despues = {x['persona_id']: x for x in rpc('caras_trabajo')['personas']}
+        quedan = sum(1 for p in personas if despues.get(p['persona_id'], {}).get('sacar_huella'))
+        if quedan:
+            print(f'  OJO: {quedan} huellas no quedaron guardadas en la base')
 
     listas = [p for p in personas if p['estado'] == 'lista' and p['huella']]
     for p in listas:
