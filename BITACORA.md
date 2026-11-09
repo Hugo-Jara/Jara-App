@@ -4,6 +4,20 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-09 · Las fotos encontradas, también en el perfil del jugador
+
+**Para qué:** al entrar al perfil de otro jugador solo se veían sus datos. Ahora se ven también las fotos de la liga donde sale, si él lo eligió.
+
+**Qué se hizo** (migración `0045_fotos_en_el_perfil.sql`, se corre antes del merge):
+- `caras_personas.muestra` (apagado por defecto): quien ya había activado "Buscarme en las fotos" con el aviso "solo tú ves tus fotos" sigue privado hasta que lo cambie.
+- `caras_mostrar` lo prende o lo apaga; `caras_fotos_de` entrega las fotos de un jugador del club solo si él eligió mostrarlas. Nunca las escondidas con "No soy yo".
+- En Mis fotos: al activar, una casilla "Mostrar en mi perfil las fotos donde salgo" (marcada) y después un enlace para mostrarlas u ocultarlas.
+- En el perfil de otro jugador: tarjeta "En las fotos de la liga" con la grilla y el visor (con el link al partido, sin "No soy yo"). Si no muestra fotos, no aparece nada.
+
+**Comprobado:** `npm run test:db` pasa (pruebas nuevas en `caras.mjs`: privado por defecto, otro club no ve, las escondidas no salen) y en demostración con el navegador.
+
+---
+
 ## 2026-11-09 · Tabla del jueves: la fase con partidos jugados
 
 **Para qué:** el 9 de noviembre la liga del jueves abrió en copafacil una fase nueva (14 equipos, sin partidos). La app tomaba siempre la fase más nueva, así que la tabla del Senior Jueves quedó con todos en 0 puntos.
