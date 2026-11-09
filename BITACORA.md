@@ -4,6 +4,14 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-09 · Fotos: crear los partidos antiguos desde sus carpetas
+
+La primera búsqueda real encontró muchas carpetas de partidos anteriores a la app (Apertura y principios del Clausura), que no tenían partido donde enlazarse. En Más > Fotos de los partidos, cada carpeta sin partido ofrece "Crear el partido" (jugado, con el rival, el día de las fotos y el torneo de la ruta; Jr → Junior, Sr → el Senior que juega ese día de la semana) y un botón para crear todos de una vez. Usa `partido_guardar`, así que lo puede hacer el capitán de ese plantel o un administrador. Sin migración.
+
+**Comprobado:** `npm run build`, `npm run test:fotos-drive` y recorrido en modo demostración (crear todos y uno por uno) sin errores.
+
+---
+
 ## 2026-11-09 · Fotos de cada partido, desde el Drive del fotógrafo de la liga
 
 **Para qué:** las fotos de los partidos están en el Drive del fotógrafo de la liga (`Junior Clausura / Fecha 7 / Rival vs Hugo Jara Jr`) y llegan el martes o miércoles después del partido. Ahora aparecen solas en cada partido, sin copiarlas.

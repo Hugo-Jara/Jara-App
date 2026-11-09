@@ -31,6 +31,8 @@ let demoCarpetas = [
   { id: 'demoCarpetaSenior01', nombre: 'Otro Rival Jugado Sr vs Club Sr', ruta: ['Senior Clausura', 'Fecha 2'], rival: 'Otro Rival Jugado', categoria: 'sr', dia: hace(7), fotos: 14 },
   { id: 'demoCarpetaJunior01', nombre: 'Club Jr vs Rival Junior de Ejemplo', ruta: ['Junior Clausura', 'Fecha 2'], rival: 'Rival Junior de Ejemplo', categoria: 'jr', dia: hace(7), fotos: 9 },
   { id: 'demoCarpetaJunior00', nombre: 'Rival Antiguo vs Club Jr', ruta: ['Junior Clausura', 'Fecha 1'], rival: 'Rival Antiguo', categoria: 'jr', dia: hace(14), fotos: 6 },
+  { id: 'demoCarpetaApertura1', nombre: 'Rival de Abril vs Club Sr', ruta: ['APERTURA 2026', 'Fecha 4'], rival: 'Rival de Abril', categoria: 'sr', dia: '2026-04-25', fotos: 10 },
+  { id: 'demoCarpetaApertura2', nombre: 'Club Jr vs Rival de Mayo', ruta: ['APERTURA 2026', 'Fecha 6'], rival: 'Rival de Mayo', categoria: 'jr', dia: '2026-05-16', fotos: 12 },
 ];
 let demoEnlaces = [{ partidoId: 'p4', carpetaId: 'demoCarpetaSenior01', automatico: true }];
 let demoRevisada = new Date().toISOString();

@@ -56,3 +56,15 @@ test('sin fecha en las fotos usa cuándo se creó la carpeta', () => {
   const c = { id: 'x', rival: 'Pelícanos', categoria: 'jr', dia: null, creada: '2026-10-21T18:35:51Z' };
   assert.ok(puntaje(c, partidos[2]) >= 60);
 });
+
+test('el mismo rival en otro torneo no se propone', () => {
+  // Cabaret en la Apertura (abril) y en la Clausura (noviembre).
+  const cabaret = { id: 'n', equipo: 'Senior Sábado', rival: 'Cabaret', fecha: '2026-11-08' };
+  const vieja = { id: 'v', rival: 'Cabaret', categoria: 'sr', dia: '2026-04-18' };
+  assert.equal(puntaje(vieja, cabaret), 0);
+  assert.equal(puntaje({ ...vieja, dia: null, creada: '2026-04-21T10:00:00Z' }, cabaret), 0);
+  assert.equal(puntaje({ ...vieja, dia: null, creada: null }, cabaret), 0);
+  const { propuestas, sinPartido } = proponer([vieja], [cabaret]);
+  assert.equal(propuestas.length, 0);
+  assert.deepEqual(sinPartido.map((c) => c.id), ['v']);
+});
