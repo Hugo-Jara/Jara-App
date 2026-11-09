@@ -18,7 +18,7 @@
     "test:vercomo": "node supabase/tests/ver_como.mjs",
     "test:club": "node supabase/tests/club.mjs",
     "test:pedidos": "node supabase/tests/pedidos.mjs",
-    "test:boletin": "node --test tests/boletin.test.mjs",
+    "test:boletin": "node --test tests/boletin.test.mjs tests/boletin-distribucion.test.mjs",
     "test:captura": "node --test tests/captura.test.mjs",
     "test:boletin:e2e": "node tests/boletin-e2e.mjs"
   },
