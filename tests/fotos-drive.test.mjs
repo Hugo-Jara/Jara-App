@@ -2,7 +2,7 @@
 // nombres como los del Drive de la liga. npm run test:fotos-drive
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { idDeCarpeta, leerNombre, diaMasRepetido, parecido, puntaje, proponer } from '../src/lib/fotosDrive.js';
+import { idDeCarpeta, parecido, puntaje, proponer } from '../src/lib/fotosDrive.js';
 
 test('saca el id de los links del Drive', () => {
   assert.equal(idDeCarpeta('https://drive.google.com/drive/folders/1Fu9uCsiq145hzQZoZC-1-jCgVnEg0D8l?usp=sharing'), '1Fu9uCsiq145hzQZoZC-1-jCgVnEg0D8l');
@@ -11,21 +11,6 @@ test('saca el id de los links del Drive', () => {
   assert.equal(idDeCarpeta('  1Fu9uCsiq145hzQZoZC-1-jCgVnEg0D8l '), '1Fu9uCsiq145hzQZoZC-1-jCgVnEg0D8l');
   assert.equal(idDeCarpeta('hola'), null);
   assert.equal(idDeCarpeta(''), null);
-});
-
-test('lee rival y categoría del nombre de la carpeta', () => {
-  assert.deepEqual(leerNombre('COBS vs Hugo Jara Jr'), { rival: 'COBS', categoria: 'jr' });
-  assert.deepEqual(leerNombre('Hugo Jara Jr vs Pelícanos'), { rival: 'Pelícanos', categoria: 'jr' });
-  assert.deepEqual(leerNombre('Fasolita Sr vs Hugo Jara Sr'), { rival: 'Fasolita', categoria: 'sr' });
-  assert.deepEqual(leerNombre('Azote vs Hugo Jara', ['Junior Clausura', 'Fecha 1']), { rival: 'Azote', categoria: 'jr' });
-  assert.deepEqual(leerNombre('Azote vs Hugo Jara', ['APERTURA 2026', '1/4 Senior + Junior']), { rival: 'Azote', categoria: null });
-  assert.equal(leerNombre('Prestige vs Azote'), null);
-  assert.equal(leerNombre('Fecha 7'), null);
-});
-
-test('el día es el que más se repite entre las fotos', () => {
-  assert.equal(diaMasRepetido(['2026:11:01 10:00:00', '2026:11:01 10:30:00', '2025:01:01 00:00:00', undefined]), '2026-11-01');
-  assert.equal(diaMasRepetido([undefined, null]), null);
 });
 
 test('nombres de rivales parecidos', () => {

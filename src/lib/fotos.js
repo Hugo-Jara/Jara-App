@@ -1,55 +1,95 @@
 import { esDemo, llamar } from './supabase.js';
 import { crearAlmacen } from './almacen.js';
 import { correrDias, hoyIso } from './fechas.js';
-import { buscarCarpetasDelClub } from './fotosDrive.js';
 
-// Qué carpeta del Drive tiene las fotos de cada partido (migración 0031).
-// La base guarda solo el enlace; las fotos se ven desde el Drive.
+// Fotos de cada partido (migración 0041). La base revisa el Drive del
+// fotógrafo de la liga, guarda la lista de fotos de cada carpeta del club y
+// enlaza sola las seguras. Las fotos se ven desde el Drive: no se copian.
 
-// Llave de Google para leer carpetas públicas del Drive. Va en el navegador
-// (como la de Supabase): se limita en Google Cloud a esta página y a la Drive API.
-export const LLAVE_GOOGLE = import.meta.env.VITE_GOOGLE_API_KEY || '';
-
-const desdeFila = (f) => ({
-  partidoId: f.partido_id, carpetaId: f.carpeta_id, carpetaNombre: f.carpeta_nombre, puedoCambiar: !!f.puedo_cambiar,
+const enlaceDesdeFila = (f) => ({
+  partidoId: f.partido_id, carpetaId: f.carpeta_id, carpetaNombre: f.carpeta_nombre,
+  fotos: f.fotos ?? null, automatico: !!f.automatico, puedoCambiar: !!f.puedo_cambiar,
 });
+const carpetaDesdeFila = (f) => ({
+  id: f.carpeta_id, nombre: f.nombre, ruta: f.ruta ?? [], rival: f.rival, categoria: f.categoria,
+  dia: f.dia, creada: f.creada, fotos: f.fotos, partidoId: f.partido_id, automatico: !!f.automatico,
+});
+const fotoDesdeFila = (f) => ({ id: f.archivo_id, nombre: f.nombre, tomada: f.tomada, ancho: f.ancho, alto: f.alto });
 
 const base = {
-  cargar: async () => (await llamar('fotos_enlaces')).map(desdeFila),
+  cargar: async () => (await llamar('fotos_enlaces')).map(enlaceDesdeFila),
+  revisar: (forzar) => llamar('fotos_revisar', { p_forzar: !!forzar }),
+  carpetas: async () => (await llamar('fotos_carpetas_ver')).map(carpetaDesdeFila),
+  fotosDePartido: async (id) => (await llamar('fotos_de_partido', { p_partido: id })).map(fotoDesdeFila),
   enlazar: (partidoId, carpetaId, nombre) => llamar('fotos_enlazar', { p_partido: partidoId, p_carpeta: carpetaId, p_nombre: nombre ?? null }),
   desenlazar: (partidoId) => llamar('fotos_desenlazar', { p_partido: partidoId }),
-  buscar: (raiz, alAvanzar) => {
-    if (!LLAVE_GOOGLE) throw new Error('Falta la llave de Google para leer el Drive. Mientras, pega el link de la carpeta en cada partido.');
-    return buscarCarpetasDelClub(raiz, LLAVE_GOOGLE, { alAvanzar });
-  },
 };
 
 // --- Modo demostración: carpetas inventadas que calzan con los partidos de ejemplo.
-let demo = [];
+const hace = (n) => correrDias(hoyIso(), -n);
+let demoCarpetas = [
+  { id: 'demoCarpetaSenior01', nombre: 'Otro Rival Jugado Sr vs Club Sr', ruta: ['Senior Clausura', 'Fecha 2'], rival: 'Otro Rival Jugado', categoria: 'sr', dia: hace(7), fotos: 14 },
+  { id: 'demoCarpetaJunior01', nombre: 'Club Jr vs Rival Junior de Ejemplo', ruta: ['Junior Clausura', 'Fecha 2'], rival: 'Rival Junior de Ejemplo', categoria: 'jr', dia: hace(7), fotos: 9 },
+  { id: 'demoCarpetaJunior00', nombre: 'Rival Antiguo vs Club Jr', ruta: ['Junior Clausura', 'Fecha 1'], rival: 'Rival Antiguo', categoria: 'jr', dia: hace(14), fotos: 6 },
+];
+let demoEnlaces = [{ partidoId: 'p4', carpetaId: 'demoCarpetaSenior01', automatico: true }];
+let demoRevisada = new Date().toISOString();
+const demoEnlace = (e) => {
+  const c = demoCarpetas.find((k) => k.id === e.carpetaId);
+  return { ...e, carpetaNombre: c?.nombre ?? 'Carpeta del Drive', fotos: c?.fotos ?? null, puedoCambiar: true };
+};
 const enDemo = {
-  cargar: async () => demo,
+  cargar: async () => demoEnlaces.map(demoEnlace),
+  revisar: async () => {
+    await new Promise((r) => setTimeout(r, 300));
+    demoRevisada = new Date().toISOString();
+    return { pendientes: 0, enlazadas: 0, error: null, revisada_en: demoRevisada };
+  },
+  carpetas: async () => demoCarpetas.map((c) => {
+    const e = demoEnlaces.find((x) => x.carpetaId === c.id);
+    return { ...c, partidoId: e?.partidoId ?? null, automatico: !!e?.automatico };
+  }),
+  fotosDePartido: async (id) => {
+    const e = demoEnlaces.find((x) => x.partidoId === id);
+    const c = demoCarpetas.find((k) => k.id === e?.carpetaId);
+    return Array.from({ length: c?.fotos ?? 0 }, (_, i) => ({ id: `demo-${i}`, nombre: `Foto ${i + 1}`, ancho: 1600, alto: 1067 }));
+  },
   enlazar: async (partidoId, carpetaId, nombre) => {
-    if (demo.some((e) => e.carpetaId === carpetaId && e.partidoId !== partidoId)) throw new Error('Esa carpeta ya está enlazada a otro partido');
-    demo = [...demo.filter((e) => e.partidoId !== partidoId), { partidoId, carpetaId, carpetaNombre: nombre ?? null, puedoCambiar: true }];
+    if (demoEnlaces.some((e) => e.carpetaId === carpetaId && e.partidoId !== partidoId)) throw new Error('Esa carpeta ya está enlazada a otro partido');
+    if (!demoCarpetas.some((c) => c.id === carpetaId)) demoCarpetas = [...demoCarpetas, { id: carpetaId, nombre: nombre || 'Carpeta del Drive', ruta: [], fotos: 5 }];
+    demoEnlaces = [...demoEnlaces.filter((e) => e.partidoId !== partidoId), { partidoId, carpetaId, automatico: false }];
   },
-  desenlazar: async (partidoId) => { demo = demo.filter((e) => e.partidoId !== partidoId); },
-  buscar: async (_raiz, alAvanzar) => {
-    await new Promise((r) => setTimeout(r, 400));
-    alAvanzar?.({ revisadas: 6, encontradas: 3 });
-    const hace7 = correrDias(hoyIso(), -7);
-    return [
-      { id: 'demoCarpetaSenior01', nombre: 'Otro Rival Jugado Sr vs Club Sr', ruta: ['Senior Clausura', 'Fecha 2'], rival: 'Otro Rival Jugado', categoria: 'sr', dia: hace7, fotos: 84 },
-      { id: 'demoCarpetaJunior01', nombre: 'Club Jr vs Rival Junior de Ejemplo', ruta: ['Junior Clausura', 'Fecha 2'], rival: 'Rival Junior de Ejemplo', categoria: 'jr', dia: hace7, fotos: 120 },
-      { id: 'demoCarpetaJunior00', nombre: 'Rival Antiguo vs Club Jr', ruta: ['Junior Clausura', 'Fecha 1'], rival: 'Rival Antiguo', categoria: 'jr', dia: correrDias(hoyIso(), -14), fotos: 97 },
-    ];
-  },
+  desenlazar: async (partidoId) => { demoEnlaces = demoEnlaces.filter((e) => e.partidoId !== partidoId); },
 };
 
 const origen = esDemo ? enDemo : base;
 const almacen = crearAlmacen(origen.cargar);
-export const vaciarFotos = almacen.vaciar;
-// En demostración se puede recorrer la búsqueda sin llave.
-export const puedeBuscar = esDemo || !!LLAVE_GOOGLE;
+
+// Da la vuelta completa por el Drive: la base avanza de a pocas carpetas por
+// llamada, así que se repite mientras queden pendientes.
+export async function revisarDrive(forzar = false, alAvanzar) {
+  let r, veces = 0, enlazadas = 0;
+  do {
+    r = await origen.revisar(forzar && veces === 0);
+    veces++;
+    enlazadas += r?.enlazadas ?? 0;
+    alAvanzar?.({ ...r, veces });
+  } while (r?.pendientes > 0 && !r.error && veces < 25);
+  return { sinLlave: !!r?.sin_llave, error: r?.error ?? null, revisadaEn: r?.revisada_en ?? null, enlazadas, pendientes: r?.pendientes ?? 0 };
+}
+
+// Al abrir un partido o la pantalla de fotos se le pide a la base que mire si
+// hay fotos nuevas (ella decide si toca: cada 6 horas). Una vez por pestaña
+// cada 10 minutos, en silencio.
+let ultimaVuelta = 0;
+async function vueltaEnSilencio() {
+  if (Date.now() - ultimaVuelta < 10 * 60 * 1000) return;
+  ultimaVuelta = Date.now();
+  try {
+    const r = await revisarDrive(false);
+    if (r.enlazadas > 0) await almacen.recargar();
+  } catch { /* sin señal o sin permiso: no molesta, se intenta otra vez después */ }
+}
 
 export function useEnlacesFotos() {
   const { cargando, error, datos } = almacen.usar();
@@ -58,9 +98,11 @@ export function useEnlacesFotos() {
   return {
     cargando, error, enlaces, recargar: almacen.recargar,
     dePartido: (id) => enlaces.find((e) => e.partidoId === id) ?? null,
-    enlazar: y(origen.enlazar),
+    enlazar: y(async (...a) => { await origen.enlazar(...a); await revisarDrive(false).catch(() => {}); }),
     desenlazar: y(origen.desenlazar),
+    vueltaEnSilencio,
   };
 }
 
-export const buscarCarpetas = (raiz, alAvanzar) => origen.buscar(raiz, alAvanzar);
+export const carpetasDelDrive = () => origen.carpetas();
+export const fotosDePartido = (id) => origen.fotosDePartido(id);

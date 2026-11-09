@@ -28,10 +28,6 @@ jobs:
       # está hecha para ir en el navegador; los datos los protege la base.
       VITE_SUPABASE_URL: https://pzzkrbnzguqtjrlwgtiy.supabase.co
       VITE_SUPABASE_KEY: sb_publishable_Wy5oEjC-SXRUJdNkREM7Qw_b9xRl9zu
-      # Llave de Google para leer las carpetas públicas de fotos del Drive. Se
-      # guarda como variable del repositorio (Settings > Secrets and variables >
-      # Actions > Variables > GOOGLE_API_KEY) y está limitada a esta página.
-      VITE_GOOGLE_API_KEY: ${{ vars.GOOGLE_API_KEY }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

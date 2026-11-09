@@ -4,30 +4,20 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
-## 2026-11-04 · Fotos de cada partido, enlazadas a su carpeta del Drive
+## 2026-11-09 · Fotos de cada partido, desde el Drive del fotógrafo de la liga
 
-**Para qué:** las fotos de los partidos ya están en el Drive del fotógrafo de la liga, ordenadas como `Junior Clausura / Fecha 7 / Rival vs Hugo Jara Jr`. La app no las copia: guarda qué carpeta es de cada partido y las muestra desde el Drive.
+**Para qué:** las fotos de los partidos están en el Drive del fotógrafo de la liga (`Junior Clausura / Fecha 7 / Rival vs Hugo Jara Jr`) y llegan el martes o miércoles después del partido. Ahora aparecen solas en cada partido, sin copiarlas.
 
-**Qué se hizo** (migración `0031_fotos_de_partidos.sql`, se corre antes del merge):
-- **Base:** tabla `partido_fotos` (un partido, una carpeta; una carpeta, un partido), `fotos_enlaces()` para todo el club y `fotos_enlazar` / `fotos_desenlazar` para el encargado (capitán) del plantel o un administrador. No toca las funciones de partidos, así no choca con los PR de partidos abiertos.
-- **Detector** (`src/lib/fotosDrive.js`, sin React ni Supabase): recorre el Drive desde la carpeta raíz, junta las carpetas "X vs Hugo Jara", lee rival y categoría (Jr o Sr) del nombre y el día de la fecha de captura de las fotos. Propone un partido por carpeta (categoría + rival + día) y una persona confirma.
-- **Más > Fotos de los partidos** (`/fotos-partidos`, encargados y administradores): buscar, confirmar o elegir otro partido, y quitar enlaces.
-- **En cada partido jugado:** tarjeta "Fotos" con el enlace a la carpeta; el capitán también puede pegar el link de la carpeta a mano (sirve sin llave de Google).
-- **Galería:** queda para la Fase F (carril de Comunicaciones), que usa `fotosDeCarpeta()` con el id guardado.
+**Qué se hizo** (migración `0041_fotos_de_partidos.sql`, se corre antes del merge, y la llave de Google se carga por SQL):
+- **La base revisa el Drive** con la extensión `http` (como "Actualizar la liga"): `fotos_revisar` recorre el Drive de a 5 pedidos por llamada, guarda las carpetas del club (`fotos_carpetas`: rival y categoría del nombre, día de las fotos) y la lista de fotos (`fotos_archivos`). La app la llama al abrir un partido jugado; la base solo sale al Drive si pasaron 6 horas. "Buscar fotos nuevas" la fuerza (capitán cuando quiera, el resto cada 5 minutos).
+- **Se enlaza sola** la carpeta que calza con un solo partido jugado de su categoría a ±1 día de las fotos. Las demás quedan en Más > Fotos de los partidos para que el capitán confirme (la app propone el partido más parecido). Si el capitán quita una, no se vuelve a enlazar sola.
+- **La llave de Google** vive en `fotos_drive` y nunca sale de la base. Sin llave, el capitán puede pegar el link de la carpeta en el partido.
+- **Galería en cada partido:** grilla de miniaturas (9 y "Ver las N fotos") y visor con anterior/siguiente, deslizar y "Abrir en Drive". Las miniaturas salen del Drive público, sin llave. Se adelantó la galería de la Fase F por la presentación; se avisa al carril de Comunicaciones.
 
-**Necesita:** una llave de Google (Drive API) en la variable del repositorio `GOOGLE_API_KEY`, limitada a la página de la app. Sin llave, la búsqueda automática queda apagada y el enlace a mano funciona igual. Si el fotógrafo mueve o borra carpetas, el enlace se pierde.
-
-**Comprobado:** `npm run build`, `npm run test:db` (17 pruebas nuevas en `fotos.mjs`) y `npm run test:fotos-drive` (8 pruebas del detector con nombres reales del Drive). Recorrido en modo demostración a 390 px: buscar, enlazar y ver el enlace en el partido, sin errores de JavaScript. No se probó contra el Drive real (falta la llave).
-## 2026-11-07 · "Actualizar la liga" para todos
-
-**Qué se hizo** (migración `0040_actualizar_la_liga_para_todos.sql`, se corre antes del merge):
-- Cualquiera del club puede apretar "Actualizar la liga", no solo quien anota partidos.
-- Para no saturar a Deporstar ni a copafacil, quien no anota partidos solo sale a la liga si pasaron 5 minutos desde la última revisión de ese plantel. Si no han pasado, la función vuelve sin hacer nada.
-- `liga_refrescar` y `tabla_refrescar` cambian el error "Solo el encargado…" por esa regla. `liga_fechas` devuelve `puedo_actualizar` en true para todos.
-
-**Comprobado:** `npm run test:db` y `npm run build` pasan. Hay pruebas nuevas para un jugador que aprieta recién actualizado (no sale a la liga) y pasados 5 minutos (sí sale).
+**Comprobado:** `npm run build`, `npm run test:db` (30 pruebas nuevas en `fotos.mjs`, con un Drive de mentira), `npm run test:fotos-drive` (6 del detector) y recorrido en modo demostración a 390 px sin errores. No se probó contra el Drive real (falta la llave): las miniaturas del Drive se ven recién en producción.
 
 ---
+
 
 ## 2026-11-07 · La liga: "Última actualización" y sin cargar fechas a mano
 
