@@ -242,5 +242,75 @@ await db.query(`update extensions.paginas set status = 500 where patron like '%-
 r = await como('admin', 'select liga_refrescar($1, true) as n', [JUEVES]);
 ok('Si copafacil no responde, se avisa', /no respondió/.test(r.error ?? ''), r.error);
 
+console.log('\nLos sábados, desde cof.cl');
+// La página de cof.cl trae los datos dentro del HTML, en pedazos
+// self.__next_f.push([1,"..."]). Se arma igual, con el torneo real del Senior
+// (sin escudos) y la Fecha 8 movida al mismo día que la Fecha 7 de Deporstar.
+const COF = JSON.parse(readFileSync(join(here, 'fixtures', 'cof-senior.json'), 'utf8'));
+const f8 = COF.rounds.find((rr) => rr.label === 'Fecha 8');
+f8.iso = iso(D7); f8.matches.forEach((m) => { m.date = iso(D7); });
+const otroTorneo = { id: 'senior-primera-clausura', rounds: [], standings: [] };
+const datos = '0:["$","html",null,{}]\n8:["$","$L14",null,' + JSON.stringify({ torneos: [otroTorneo, COF], generatedAt: '2026-11-08T23:08:46.000Z' }) + ']\n9:"fin"\n';
+const corte = Math.floor(datos.length / 2);
+const empuje = (txt) => `<script>self.__next_f.push([1,${JSON.stringify(txt)}])</script>`;
+const COF_HTML = `<!DOCTYPE html><html><body><table><tr><td>tabla</td></tr></table><script>self.__next_f.push([0])</script>${empuje(datos.slice(0, corte))}${empuje(datos.slice(corte))}</body></html>`;
+
+x = (await db.query('select liga_desde_cof($1) as t', [COF_HTML])).rows[0].t;
+ok('Encuentra los torneos de la página', Array.isArray(x) && x.length === 2 && x[1].id === 'senior-segunda-clausura', JSON.stringify(x?.map((t) => t.id)));
+x = (await db.query(`select liga_desde_cof('<html>otra cosa</html>') as t`)).rows[0].t;
+ok('Una página sin datos no rompe nada', x === null);
+x = (await db.query('select partidos_desde_cof($1) as p', [JSON.stringify(COF)])).rows[0].p;
+ok('Lee los 36 partidos del torneo', x.length === 36, x.length);
+const cab = x.find((p) => p.local === 'Cabaret FC' && p.visita === 'Hugo Jara Sr');
+ok('Cabaret 2 - 2 Hugo Jara Sr, Fecha 7, 10:30 en Cancha 5', cab && cab.goles_local === 2 && cab.goles_visita === 2 && cab.jornada === 7
+   && cab.dia === '2026-11-07' && cab.hora === '10:30' && cab.cancha === 'Cancha 5', JSON.stringify(cab));
+const soc = x.find((p) => p.local === 'Sócrates FC' && p.visita === 'Hugo Jara Sr');
+ok('Fecha 8 por jugar: sin resultado, con hora y cancha', soc && soc.goles_local === null && soc.jornada === 8 && soc.hora === '08:45' && soc.cancha === 'Cancha 2', JSON.stringify(soc));
+ok('El número de fecha sale del nombre (la página se salta la 3 y la 5)', [...new Set(x.map((p) => p.jornada))].join() === '1,2,4,6,7,8');
+x = (await db.query('select tabla_desde_cof($1) as t', [JSON.stringify(COF)])).rows[0].t;
+const jara = x.find((f) => f.es_jara);
+ok('La tabla: Hugo Jara Sr con 5 jugados y 5 puntos', jara && jara.equipo === 'Hugo Jara Sr' && jara.pj === 5 && jara.pg === 1 && jara.pe === 2 && jara.pp === 2 && jara.gf === 7 && jara.gc === 12 && jara.pts === 5, JSON.stringify(jara));
+ok('Los 13 equipos, en orden, con Mantis primero', x.length === 13 && x[0].equipo === 'Mantis' && x[0].pts === 15, x.length);
+
+// El Senior venía de Deporstar: se cambia a cof.cl como lo hará el administrador.
+await db.query('insert into tablas_posiciones (equipo_id, club_id, grupo, filas, deporstar_tabla) values ($1, $2, $3, $4, 71290)',
+               [SENIOR, CLUB, '', JSON.stringify([{ equipo: 'Hugo Jara Sr', pj: 4, pts: 4 }])]);
+r = await db.query(`update liga_torneos set fuente = 'cof' where equipo_id = $1`, [SENIOR]).catch((e) => ({ error: e.message }));
+ok('cof sin torneo no se acepta', !!r.error, JSON.stringify(r));
+// El mismo cambio que corre el administrador de la app (conectar-cof-sabados.sql).
+await db.exec(`update liga_torneos l set fuente = 'cof', cof_torneo = x.cof, desde_jornada = 0, revisada_en = null
+                 from (values (20738, 'senior-segunda-clausura'), (20705, 'junior-segunda-clausura')) as x(deporstar, cof)
+                where l.deporstar_torneo = x.deporstar;
+               update tablas_posiciones set deporstar_tabla = null where equipo_id in (select equipo_id from liga_torneos where fuente = 'cof');`);
+await pagina('%cof.cl/resultados?t=senior-segunda-clausura&v=tabla', COF_HTML);
+const enApp = (await partidosSenior()).length;
+antes = await pedidas();
+r = await refrescar('admin', true);
+ok('Se trae todo en un solo pedido', !r.error && r.rows[0].n === 0 && (await pedidas()) - antes === 1, r.error ?? (await pedidas()) - antes);
+x = await fechas('jugador');
+const sen = x.partidos.filter((p) => p.equipo_id === SENIOR);
+ok('Quedan solo los partidos de cof.cl (los de Deporstar se borran)', sen.length === 36 && !sen.some((p) => p.local === 'AS Palma' || p.local === 'Rukán FC'), sen.length);
+ok('Con el resultado del 7 de noviembre', sen.some((p) => p.local === 'Cabaret FC' && p.goles_local === 2 && p.goles_visita === 2 && p.fecha === 'Fecha 7'), JSON.stringify(sen.find((p) => p.local === 'Cabaret FC')));
+x = (await db.query('select jornada_id from liga_jornadas where equipo_id = $1 order by 1', [SENIOR])).rows.map((j) => Number(j.jornada_id));
+ok('Las fechas de Deporstar se reemplazan por las de cof.cl', x.join() === '1,2,4,6,7,8', x.join());
+x = await partidosSenior();
+const delDia = x.filter((p) => p.fecha === iso(D7));
+ok('El partido de la app de ese día se vuelve a enlazar, sin duplicarse', x.length === enApp && delDia.length === 1 && delDia[0].rival === 'Sócrates FC' && delDia[0].liga_partido !== 900001n && delDia[0].liga_partido != null
+   && delDia[0].hora === '08:45' && delDia[0].cancha === 'Cancha 2', JSON.stringify(x.map(({ liga_partido, ...p }) => p)));
+x = (await como('jugador', 'select tablas_posiciones() as t')).rows[0].t.filter((t) => t.equipo_id === SENIOR);
+ok('La tabla queda al día y conectada', x.length === 1 && x[0].conectada && x[0].deporstar_tabla === null && /cof\.cl/.test(x[0].fuente)
+   && x[0].filas.find((f) => f.es_jara)?.pj === 5 && x[0].filas.length === 13, JSON.stringify(x.map((t) => [t.grupo, t.conectada, t.deporstar_tabla, t.filas.length])));
+r = await refrescar('admin', true);
+x = await partidosSenior();
+ok('Actualizar de nuevo no duplica nada', !r.error && x.length === enApp, r.error ?? x.length);
+await db.query(`update extensions.paginas set content = '<html>cambió</html>' where patron like '%cof.cl%'`);
+r = await refrescar('admin', true);
+ok('Si la página cambia, se avisa', /cambió/.test(r.error ?? ''), r.error);
+await db.query(`update extensions.paginas set status = 503 where patron like '%cof.cl%'`);
+r = await refrescar('admin', true);
+ok('Si cof.cl no responde, se avisa', /no respondió/.test(r.error ?? ''), r.error);
+x = await fechas('jugador');
+ok('Y lo que ya había sigue ahí', x.partidos.filter((p) => p.equipo_id === SENIOR).length === 36);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

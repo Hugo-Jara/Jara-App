@@ -4,6 +4,21 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-09 · La liga del sábado, desde cof.cl
+
+**Para qué:** la tabla del Senior Sábado seguía con 4 partidos jugados. La liga cambió su página a cof.cl y Deporstar dejó de estar al día: no tenía el resultado del 7 de noviembre, mientras cof.cl ya mostraba 5 jugados.
+
+**Qué se hizo** (migración `0043_sabados_desde_cof.sql`, se corre antes del merge):
+- `liga_torneos` acepta una tercera fuente: `fuente = 'cof'` con `cof_torneo` (por ejemplo `senior-segunda-clausura`).
+- cof.cl es una página Next.js que trae sus datos dentro del mismo HTML. `liga_desde_cof` junta esos pedazos y saca la lista de torneos; `partidos_desde_cof` y `tabla_desde_cof` dejan los partidos y la tabla de un torneo en la misma forma que las otras fuentes. El número de fecha sale del nombre ("Fecha 7"), porque la página se salta las fechas suspendidas.
+- `liga_refrescar` trae en un solo pedido las fechas, los resultados y la tabla. Borra las fechas y partidos que ya no están (los de Deporstar, al cambiar). La tabla queda en la pestaña que ya tenía el plantel, marcada como conectada.
+- Un partido de la app enlazado a un partido de la liga que ya no existe se vuelve a enlazar en vez de crear otro.
+- Para conectar los planteles del sábado, el administrador de la app corre un `update` en `liga_torneos` (fuera del repo).
+
+**Comprobado:** `npm run test:db` pasa (21 pruebas nuevas en `liga.mjs`, con el torneo real del Senior en `supabase/tests/fixtures/cof-senior.json`, sin escudos) y `npm run build` pasa. La lectura se probó también con la página completa de cof.cl.
+
+---
+
 ## 2026-11-09 · Buscarme en las fotos (reconocimiento facial con permiso)
 
 En Perfil > Mis fotos, cada uno puede activar "Buscarme en las fotos": declara tener 18 o más, y una tarea de GitHub (`.github/workflows/caras.yml`, cada 3 horas, gratis) saca una huella de su cara desde la foto de perfil y la compara con las fotos de la liga ya enlazadas (0041). Motor: InsightFace/ArcFace (código abierto, CPU). Solo se guarda "esta foto tiene a esta persona"; de las demás caras no se guarda nada. Apagarlo borra la huella y lo encontrado; "No soy yo" esconde una foto. Migración `0042_buscarme_en_fotos.sql`; la tarea entra con la clave secreta de Supabase (secreto `SUPABASE_SECRET` en GitHub) y no imprime datos de personas (los registros del repo son públicos).

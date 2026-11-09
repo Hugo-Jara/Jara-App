@@ -54,6 +54,7 @@ Las migraciones están en `supabase/migrations/` y se aplican en orden:
 | `0039_liga_desde_copafacil.sql` | La liga del jueves desde copafacil: `liga_torneos.fuente` y `copafacil_torneo`; `liga_refrescar` trae partidos, fechas y las tablas (grupo y general) de copafacil y crea los partidos del Jara que vienen; esas tablas quedan conectadas |
 | `0040_actualizar_la_liga_para_todos.sql` | "Actualizar la liga" para todo el club: `liga_refrescar` y `tabla_refrescar` dejan pedir la liga en el acto a cualquiera, con 5 minutos de espera entre revisiones para quien no anota partidos |
 | `0041_fotos_de_partidos.sql` | Fotos de cada partido desde el Drive de la liga (extensión `http`): `fotos_drive` (llave y raíz, solo SQL), `fotos_carpetas`, `fotos_archivos`, `partido_fotos`; `fotos_revisar` (cada 6 horas o con el botón; enlaza sola las seguras), `fotos_enlaces`, `fotos_de_partido`, `fotos_carpetas_ver`, `fotos_enlazar`/`fotos_desenlazar` (capitán o administrador) |
+| `0043_sabados_desde_cof.sql` | Los sábados desde cof.cl, la página nueva de la liga: `liga_torneos.fuente = 'cof'` con `cof_torneo`; `liga_refrescar` trae en un solo pedido fechas, resultados y tabla; al cambiar de fuente vuelve a enlazar los partidos de la app sin duplicarlos |
 
 `npm run test:db` y `npm run test:pedidos` aplican las migraciones en un Postgres en memoria y prueban los permisos, el flujo de cotizaciones, el ingreso por nombre, los partidos, los entrenamientos y los pedidos por link.
 
