@@ -4,16 +4,20 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
-## 2026-11-07 · "Actualizar la liga" para todos
+## 2026-11-09 · Fotos de cada partido, desde el Drive del fotógrafo de la liga
 
-**Qué se hizo** (migración `0040_actualizar_la_liga_para_todos.sql`, se corre antes del merge):
-- Cualquiera del club puede apretar "Actualizar la liga", no solo quien anota partidos.
-- Para no saturar a Deporstar ni a copafacil, quien no anota partidos solo sale a la liga si pasaron 5 minutos desde la última revisión de ese plantel. Si no han pasado, la función vuelve sin hacer nada.
-- `liga_refrescar` y `tabla_refrescar` cambian el error "Solo el encargado…" por esa regla. `liga_fechas` devuelve `puedo_actualizar` en true para todos.
+**Para qué:** las fotos de los partidos están en el Drive del fotógrafo de la liga (`Junior Clausura / Fecha 7 / Rival vs Hugo Jara Jr`) y llegan el martes o miércoles después del partido. Ahora aparecen solas en cada partido, sin copiarlas.
 
-**Comprobado:** `npm run test:db` y `npm run build` pasan. Hay pruebas nuevas para un jugador que aprieta recién actualizado (no sale a la liga) y pasados 5 minutos (sí sale).
+**Qué se hizo** (migración `0041_fotos_de_partidos.sql`, se corre antes del merge, y la llave de Google se carga por SQL):
+- **La base revisa el Drive** con la extensión `http` (como "Actualizar la liga"): `fotos_revisar` recorre el Drive de a 5 pedidos por llamada, guarda las carpetas del club (`fotos_carpetas`: rival y categoría del nombre, día de las fotos) y la lista de fotos (`fotos_archivos`). La app la llama al abrir un partido jugado; la base solo sale al Drive si pasaron 6 horas. "Buscar fotos nuevas" la fuerza (capitán cuando quiera, el resto cada 5 minutos).
+- **Se enlaza sola** la carpeta que calza con un solo partido jugado de su categoría a ±1 día de las fotos. Las demás quedan en Más > Fotos de los partidos para que el capitán confirme (la app propone el partido más parecido). Si el capitán quita una, no se vuelve a enlazar sola.
+- **La llave de Google** vive en `fotos_drive` y nunca sale de la base. Sin llave, el capitán puede pegar el link de la carpeta en el partido.
+- **Galería en cada partido:** grilla de miniaturas (9 y "Ver las N fotos") y visor con anterior/siguiente, deslizar y "Abrir en Drive". Las miniaturas salen del Drive público, sin llave. Se adelantó la galería de la Fase F por la presentación; se avisa al carril de Comunicaciones.
+
+**Comprobado:** `npm run build`, `npm run test:db` (30 pruebas nuevas en `fotos.mjs`, con un Drive de mentira), `npm run test:fotos-drive` (6 del detector) y recorrido en modo demostración a 390 px sin errores. No se probó contra el Drive real (falta la llave): las miniaturas del Drive se ven recién en producción.
 
 ---
+
 
 ## 2026-11-07 · La liga: "Última actualización" y sin cargar fechas a mano
 

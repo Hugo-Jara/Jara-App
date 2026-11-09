@@ -24,6 +24,7 @@ export default function Mas() {
   ];
   // Solo para encargados y administradores.
   if (persona.esEncargado) {
+    FILAS.unshift({ a: '/fotos-partidos', icono: 'noticias', nombre: 'Fotos de los partidos', desc: 'Enlazar cada partido con su carpeta del Drive' });
     FILAS.unshift({ a: '/ingresos', icono: 'club', nombre: 'Pases de ingreso', desc: 'Aprobar a quienes pidieron entrar a la app' });
   }
   // El tablero de ejemplo queda solo mientras no haya tesorería real que mostrar.
