@@ -46,6 +46,9 @@ export function validarEdicion(e) {
   for (const b of e.bloques) {
     if (!TIPOS_BLOQUE[b.tipo] || typeof b.id !== 'string' || !Array.isArray(b.notas) || (b.tipo === 'columnas' ? b.notas.length < 1 || b.notas.length > 200 : b.notas.length !== 1) || !Array.isArray(b.eventos)) throw new Error('Bloques del respaldo inválidos.');
     if (b.compacto != null && typeof b.compacto !== 'boolean') throw new Error('Ajuste de bloque inválido.');
+    if ((b.tituloSeccion != null && (!cadena(b.tituloSeccion) || b.tituloSeccion.length > 250)) || (b.introduccion != null && !cadena(b.introduccion))) throw new Error('Introducción de sección inválida.');
+    if (b.formatosIntroduccion != null && (!Array.isArray(b.formatosIntroduccion) || b.formatosIntroduccion.length > 10000 || !b.formatosIntroduccion.every(f => Number.isInteger(f.inicio) && Number.isInteger(f.fin) && f.inicio >= 0 && f.fin > f.inicio && f.fin <= (b.introduccion || '').length && ['negrita', 'cursiva', 'subrayado'].every(k => f[k] == null || typeof f[k] === 'boolean')))) throw new Error('Formato de introducción inválido.');
+
     for (const n of b.notas) {
       if (typeof n.id !== 'string' || !cadena(n.titulo) || !cadena(n.texto) || !Array.isArray(n.fotos)) throw new Error('Noticias del respaldo inválidas.');
       if (n.formatos != null && (!Array.isArray(n.formatos) || n.formatos.length > 10000 || !n.formatos.every(f => Number.isInteger(f.inicio) && Number.isInteger(f.fin) && f.inicio >= 0 && f.fin > f.inicio && f.fin <= n.texto.length && ['negrita', 'cursiva', 'subrayado'].every(k => f[k] == null || typeof f[k] === 'boolean')))) throw new Error('Formato de texto inválido.');
