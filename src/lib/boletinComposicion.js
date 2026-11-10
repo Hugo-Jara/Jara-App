@@ -199,6 +199,44 @@ export async function componerEdicion(e) {
     return articuloConFoto(n, tipo, inicio, x, ancho);
   }
 
+  // Introducción de ancho completo; conserva los formatos y continúa sin cortar texto.
+  function introduccionColumnas(b, posicion) {
+    if (!b.tituloSeccion?.trim() && !b.introduccion?.trim()) return posicion;
+    let { p, y } = posicion;
+    const ancho = ANCHO - 2 * MARGEN, familia = `"${e.fuente || 'Georgia'}"`;
+    const fuenteTitulo = `bold 39px ${familia}`;
+    const titulo = lineas(b.tituloSeccion || '', ancho, fuenteTitulo);
+    if (titulo.length * 45 + 110 > FIN - INICIO) throw new Error('El título de la sección es demasiado largo.');
+    if (y + titulo.length * 45 + 110 > FIN) { p++; y = INICIO; }
+    texto(p, MARGEN, y, titulo, fuenteTitulo, 45); y += titulo.length * 45 + (titulo.length ? 18 : 0);
+    const contenido = b.introduccion || '', tramos = dividirFormato(contenido, b.formatosIntroduccion || []);
+    const tamanio = compactoActual ? 23 : 27, salto = Math.ceil(tamanio * 1.34);
+    for (const parrafo of [...contenido.matchAll(/[^\n]+/g)].filter(m => m[0].trim())) {
+      const palabras = [...parrafo[0].matchAll(/\S+/g)].map(m => {
+        const inicio = parrafo.index + m.index, fin = inicio + m[0].length;
+        const partes = tramos.filter(t => t.inicio < fin && t.fin > inicio).map(t => ({ texto: contenido.slice(Math.max(inicio, t.inicio), Math.min(fin, t.fin)), fuente: `${t.cursiva ? 'italic ' : ''}${t.negrita ? 'bold ' : ''}${tamanio}px ${familia}`, subrayado: t.subrayado }));
+        const anchoPalabra = partes.reduce((n, parte) => { medida.font = parte.fuente; return n + medida.measureText(parte.texto).width; }, 0);
+        return { partes, ancho: anchoPalabra };
+      });
+      let indice = 0;
+      while (indice < palabras.length) {
+        if (y + salto > FIN) { p++; y = INICIO; }
+        medida.font = `${tamanio}px ${familia}`; const espacio = medida.measureText(' ').width;
+        let px = MARGEN, usado = 0; const fila = [];
+        while (indice < palabras.length) {
+          const nuevo = usado + (fila.length ? espacio : 0) + palabras[indice].ancho;
+          if (nuevo > ancho) { if (!fila.length) throw new Error('Hay una palabra demasiado larga en la introducción.'); break; }
+          usado = nuevo; fila.push(palabras[indice++]);
+        }
+        fila.forEach((palabra, i) => { if (i) px += espacio; palabra.partes.forEach(parte => { poner(p, { tipo: 'texto', x: px, y, ...parte, color: '#17130f' }); medida.font = parte.fuente; px += medida.measureText(parte.texto).width; }); });
+        y += salto;
+      }
+      y += Math.round(tamanio * .6);
+    }
+    if (y + 100 > FIN) { p++; y = INICIO; }
+    return { p, y: y + 8 };
+  }
+
   function bloqueFrase(b, posicion) {
     let { p, y } = posicion;
     const contenido = b.notas[0].texto || '';
@@ -250,6 +288,7 @@ export async function componerEdicion(e) {
     } else if (b.tipo === 'frase' || b.tipo === 'cierre') {
       posicion = bloqueFrase(b, posicion);
     } else if (b.tipo === 'columnas') {
+      posicion = introduccionColumnas(b, posicion);
       const w = (ANCHO - 2 * MARGEN - 40) / 2;
       const lado = (columna, x) => b.notas.reduce((pos, nota, i) => columnaDe(nota, i) === columna ? componerArticulo(nota, b.tipo, pos, x, w) : pos, posicion);
       const a = lado('izquierda', MARGEN);

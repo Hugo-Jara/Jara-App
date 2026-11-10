@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-10 · Introducción para noticias en dos columnas
+
+- Agrega un título y una introducción opcionales a ancho completo antes de las noticias, con negrita, cursiva y subrayado. Se muestran en el PNG y en la lectura móvil y admiten borradores anteriores.
+- El texto de la sección permanece en su bloque al mover noticias. La última noticia no se puede trasladar a otro bloque mientras la sección tenga introducción, para no descartarla.
+- Pendiente: la publicación para socios y la carga remota de ediciones históricas necesitan diseño y revisión del administrador de base de datos; este cambio no las implementa.
+
+**Comprobado:** pruebas del boletín y compilación. La revisión en navegador móvil queda pendiente por la restricción de Chromium en este entorno.
+
+---
+
 ## 2026-11-10 · El Jara Informa: distribución y ajuste de páginas
 
 - El encabezado recorta el fondo negro exterior de la insignia original en el periódico y PNG.

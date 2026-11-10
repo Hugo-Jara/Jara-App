@@ -191,3 +191,19 @@ test('se rechaza un ajuste que alteraría una página anterior', async () => {
   const respuesta = await proponerAjuste(e, paginas, 1, falso);
   assert.match(respuesta.error, /página anterior/); assert.equal(respuesta.edicion, undefined);
 });
+
+
+test('la introducción con formato aparece antes de las dos columnas y se valida en el respaldo', async () => {
+  const e = edicionNueva(4), b = bloqueNuevo('columnas');
+  b.tituloSeccion = 'Nuestra historia'; b.introduccion = 'Once días para celebrar';
+  b.formatosIntroduccion = [{ inicio: 0, fin: 4, negrita: true }];
+  b.notas[0].titulo = 'Primera columna'; b.notas[1].titulo = 'Segunda columna'; e.bloques = [b];
+  assert.doesNotThrow(() => validarEdicion(e));
+  const pagina = (await componerEdicion(e))[0];
+  const titulo = pagina.operaciones.find(o => o.texto === 'Nuestra historia');
+  const palabra = pagina.operaciones.find(o => o.texto === 'Once');
+  const nota = pagina.operaciones.find(o => o.texto === 'Primera columna');
+  assert.ok(titulo && palabra && nota); assert.ok(titulo.y < palabra.y && palabra.y < nota.y);
+  assert.match(palabra.fuente, /bold/);
+  b.formatosIntroduccion[0].fin = 999; assert.throws(() => validarEdicion(e));
+});

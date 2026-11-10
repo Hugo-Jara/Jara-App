@@ -22,6 +22,7 @@ export function moverEnColumna(bloque, id, direccion) {
 export function cambiarFormato(edicion, bloqueId, notaId, tipo) {
   const indice = edicion.bloques.findIndex(b => b.id === bloqueId), b = edicion.bloques[indice];
   if (!b || !['principal', 'breve', 'destacada', 'columnas'].includes(tipo)) return edicion;
+  if (b.tipo === 'columnas' && b.notas.length === 1 && (b.tituloSeccion?.trim() || b.introduccion?.trim())) return edicion;
   const notas = b.tipo === 'columnas' ? normalizarColumnas(b) : b.notas;
   const n = notas.find(v => v.id === notaId); if (!n || b.tipo === tipo) return edicion;
   const limpio = { ...n }; delete limpio.columna;
@@ -34,6 +35,7 @@ export function cambiarFormato(edicion, bloqueId, notaId, tipo) {
 export function trasladarNoticia(edicion, origenId, notaId, destinoId, columna) {
   if (origenId === destinoId || !['izquierda', 'derecha'].includes(columna)) return edicion;
   const origen = edicion.bloques.find(b => b.id === origenId), destino = edicion.bloques.find(b => b.id === destinoId);
+  if (origen?.tipo === 'columnas' && origen.notas.length === 1 && (origen.tituloSeccion?.trim() || origen.introduccion?.trim())) return edicion;
   if (!origen || !destino || destino.tipo !== 'columnas' || destino.notas.length >= 200 || !['columnas','principal','breve','destacada'].includes(origen.tipo)) return edicion;
   const notasOrigen = origen.tipo === 'columnas' ? normalizarColumnas(origen) : origen.notas;
   const nota = notasOrigen.find(n => n.id === notaId); if (!nota) return edicion;
