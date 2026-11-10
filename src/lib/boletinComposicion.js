@@ -1,4 +1,5 @@
 import { dividirFormato } from './boletinFormato.js';
+import { columnaDe } from './boletinColumnas.js';
 // La misma composición en canvas alimenta la vista previa, el lector y los PNG.
 export const ANCHO = 1280;
 export const ALTO = 1600;
@@ -9,8 +10,8 @@ export async function componerEdicion(e) {
   const escudo = await cargar(`${import.meta.env?.BASE_URL || "/"}escudo.jpg`);
   for (const b of e.bloques) for (const n of b.notas) for (const f of n.fotos) if (f.src && !recursos.has(f.src)) recursos.set(f.src, await cargar(f.src));
   const medida = document.createElement('canvas').getContext('2d');
-  const paginas = [[]];
-  function poner(p, op) { if (p > 39) throw new Error('La edición supera 40 páginas. Divide el contenido en varias ediciones.'); while (paginas.length <= p) paginas.push([]); paginas[p].push(op); }
+  const paginas = [[]]; let bloqueActual = null, compactoActual = false;
+  function poner(p, op) { if (p > 39) throw new Error('La edición supera 40 páginas. Divide el contenido en varias ediciones.'); while (paginas.length <= p) paginas.push([]); paginas[p].push({ ...op, bloqueId: bloqueActual }); }
   function lineas(texto, ancho, fuente) {
     medida.font = fuente;
     const resultado = []; let linea = '';
@@ -86,15 +87,17 @@ export async function componerEdicion(e) {
     const izquierda = disposicion.endsWith('_izquierda');
     const familia = `"${e.fuente || 'Georgia'}"`;
     const factor = { auto: 1, pequeno: .85, mediano: 1, grande: 1.15 };
-    const pxTitulo = Math.round((tipo === 'principal' ? 55 : 39) * (factor[n.tamanoTitulo || 'auto'] || 1));
-    const pxTexto = Math.round(27 * (factor[n.tamanoTexto || 'auto'] || 1));
+    const tituloModo = compactoActual && (!n.tamanoTitulo || n.tamanoTitulo === 'auto') ? 'pequeno' : n.tamanoTitulo || 'auto';
+    const textoModo = compactoActual && (!n.tamanoTexto || n.tamanoTexto === 'auto') ? 'pequeno' : n.tamanoTexto || 'auto';
+    const pxTitulo = Math.round((tipo === 'principal' ? 55 : 39) * (factor[tituloModo] || 1));
+    const pxTexto = Math.round(27 * (factor[textoModo] || 1));
     const saltoTexto = Math.ceil(pxTexto * 1.34);
     const fuenteTitulo = `bold ${pxTitulo}px ${familia}`;
     const saltoTitulo = Math.ceil(pxTitulo * 1.12);
     const titulo = lineas(n.titulo || 'Noticia sin título', ancho, fuenteTitulo);
     const categoria = n.categoria ? lineas(n.categoria.toUpperCase(), ancho, 'bold 20px Arial') : [];
     const altoCategoria = categoria.length * 24;
-    const altoTitulo = titulo.length * saltoTitulo + 32 + altoCategoria;
+    const altoTitulo = titulo.length * saltoTitulo + (compactoActual ? 16 : 32) + altoCategoria;
     if (altoTitulo > FIN - INICIO - 100) throw new Error('Un titular ocupa demasiado espacio. Acórtalo antes de exportar.');
     const ponerOp = (pagina, op) => { if (!medir) poner(pagina, op); };
     const dibujar = (pagina, px, py, ls, fuente, paso, color) => { if (!medir) texto(pagina, px, py, ls, fuente, paso, color); };
@@ -163,7 +166,7 @@ export async function componerEdicion(e) {
         else linea.forEach((palabra, j) => { if (j) px += espacioReal; palabra.partes.forEach(t => { ponerOp(p, { tipo: 'texto', x: px, y, texto: t.texto, fuente: t.fuente, subrayado: t.subrayado, color: '#17130f' }); medida.font = t.fuente; px += medida.measureText(t.texto).width; }); });
         y += saltoTexto;
       }
-      y += Math.round(pxTexto * .66);
+      y += Math.round(pxTexto * (compactoActual ? .35 : .66));
     }
     if (lateral && p === paginaFoto) y = Math.max(y, finFoto);
     const pendientes = disposicion === 'abajo' ? n.fotos : n.fotos.slice(1);
@@ -178,11 +181,11 @@ export async function componerEdicion(e) {
       y += h + 65;
     }
     ponerOp(p, { tipo: 'rect', x, y: Math.min(y + 4, FIN), ancho, alto: 2, color: '#a92520' });
-    return { p, y: y + 32 };
+    return { p, y: y + (compactoActual ? 18 : 32) };
   }
   const avisos = [];
   function componerArticulo(n, tipo, posicion, x, ancho) {
-    if (!e.fuente && !n.disposicion && !n.mantenerJunta && !n.formatos?.length && !n.alineacionTitulo && !n.alineacionTexto && !n.tamanoTitulo && !n.tamanoTexto && !n.categoria) return articulo(n, tipo, posicion, x, ancho);
+    if (!compactoActual && !e.fuente && !n.disposicion && !n.mantenerJunta && !n.formatos?.length && !n.alineacionTitulo && !n.alineacionTexto && !n.tamanoTitulo && !n.tamanoTexto && !n.categoria) return articulo(n, tipo, posicion, x, ancho);
     let inicio = posicion;
     if (n.mantenerJunta) {
       const aqui = articuloConFoto(n, tipo, posicion, x, ancho, true);
@@ -241,14 +244,16 @@ export async function componerEdicion(e) {
 
   let posicion = { p: 0, y: INICIO };
   for (const b of e.bloques) {
+    bloqueActual = b.id; compactoActual = !!b.compacto;
     if (b.tipo === 'agenda') {
       posicion = bloqueAgenda(b, posicion);
     } else if (b.tipo === 'frase' || b.tipo === 'cierre') {
       posicion = bloqueFrase(b, posicion);
     } else if (b.tipo === 'columnas') {
       const w = (ANCHO - 2 * MARGEN - 40) / 2;
-      const a = componerArticulo(b.notas[0], b.tipo, posicion, MARGEN, w);
-      const d = componerArticulo(b.notas[1], b.tipo, posicion, MARGEN + w + 40, w);
+      const lado = (columna, x) => b.notas.reduce((pos, nota, i) => columnaDe(nota, i) === columna ? componerArticulo(nota, b.tipo, pos, x, w) : pos, posicion);
+      const a = lado('izquierda', MARGEN);
+      const d = lado('derecha', MARGEN + w + 40);
       for (let p = posicion.p; p <= Math.max(a.p, d.p); p++) poner(p, { tipo: 'rect', x: ANCHO / 2, y: p === posicion.p ? posicion.y : INICIO, ancho: 1, alto: Math.max(0, (p === Math.max(a.p, d.p) ? Math.max(a.p === p ? a.y : INICIO, d.p === p ? d.y : INICIO) : FIN) - (p === posicion.p ? posicion.y : INICIO)), color: '#756a5a' });
       posicion = a.p > d.p ? a : d.p > a.p ? d : { p: a.p, y: Math.max(a.y, d.y) };
     } else posicion = componerArticulo(b.notas[0], b.tipo, posicion, MARGEN, ANCHO - MARGEN * 2);
@@ -270,7 +275,12 @@ export async function componerEdicion(e) {
     };
     extremo(etiqueta, false); extremo(periodo, true);
     c.fillStyle = '#17130f'; c.fillRect(46, 60, 1188, 2);
-    c.drawImage(escudo, 49, 80, 125, 125);
+    // Recorta solo el exterior de la insignia original, sin alterar el escudo.
+    c.save(); c.beginPath();
+    const sx = n => 49 + 125 * n / 517, sy = n => 80 + 125 * n / 517;
+    c.moveTo(sx(62), sy(145)); c.quadraticCurveTo(sx(258), sy(20), sx(456), sy(145));
+    c.lineTo(sx(412), sy(427)); c.lineTo(sx(258), sy(477)); c.lineTo(sx(107), sy(427));
+    c.closePath(); c.clip(); c.drawImage(escudo, 49, 80, 125, 125); c.restore();
     const centroMarca = (200 + 1234) / 2;
     const centrado = (valor, y, fuente, color = '#17130f') => { c.font = fuente; dibujarTexto(valor, centroMarca - c.measureText(valor).width / 2, y, fuente, color); };
     centrado('EL JARA INFORMA', 79, 'bold 88px Georgia');
@@ -306,5 +316,6 @@ export async function componerEdicion(e) {
     return canvas;
   });
   canvases.avisos = avisos;
+  canvases.operaciones = paginas;
   return canvases;
 }

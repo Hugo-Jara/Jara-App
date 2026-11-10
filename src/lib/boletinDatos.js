@@ -41,13 +41,16 @@ export function moverFoto(fotos, id, delta) {
 export function validarEdicion(e) {
   if (!e || e.version !== 1 || typeof e.id !== 'string' || !Number.isInteger(e.numero) || e.numero < 1 || typeof e.nombre !== 'string' || typeof e.periodo !== 'string' || typeof e.resumen !== 'string' || !Array.isArray(e.bloques) || e.bloques.length > 200) throw new Error('El respaldo no contiene una edición compatible.');
   const cadena = v => typeof v === 'string' && v.length <= 200000;
+  if (e.paginasListas != null && (!Array.isArray(e.paginasListas) || e.paginasListas.length > 40 || !e.paginasListas.every(p => Number.isInteger(p.indice) && p.indice >= 0 && p.indice < 40 && typeof p.firma === 'string' && p.firma.length <= 30))) throw new Error('Estado de páginas inválido.');
   if (e.fuente != null && !Object.hasOwn(FUENTES_BOLETIN, e.fuente)) throw new Error('Fuente del boletín inválida.');
   for (const b of e.bloques) {
-    if (!TIPOS_BLOQUE[b.tipo] || typeof b.id !== 'string' || !Array.isArray(b.notas) || b.notas.length !== (b.tipo === 'columnas' ? 2 : 1) || !Array.isArray(b.eventos)) throw new Error('Bloques del respaldo inválidos.');
+    if (!TIPOS_BLOQUE[b.tipo] || typeof b.id !== 'string' || !Array.isArray(b.notas) || (b.tipo === 'columnas' ? b.notas.length < 1 || b.notas.length > 200 : b.notas.length !== 1) || !Array.isArray(b.eventos)) throw new Error('Bloques del respaldo inválidos.');
+    if (b.compacto != null && typeof b.compacto !== 'boolean') throw new Error('Ajuste de bloque inválido.');
     for (const n of b.notas) {
       if (typeof n.id !== 'string' || !cadena(n.titulo) || !cadena(n.texto) || !Array.isArray(n.fotos)) throw new Error('Noticias del respaldo inválidas.');
       if (n.formatos != null && (!Array.isArray(n.formatos) || n.formatos.length > 10000 || !n.formatos.every(f => Number.isInteger(f.inicio) && Number.isInteger(f.fin) && f.inicio >= 0 && f.fin > f.inicio && f.fin <= n.texto.length && ['negrita', 'cursiva', 'subrayado'].every(k => f[k] == null || typeof f[k] === 'boolean')))) throw new Error('Formato de texto inválido.');
       if ((n.alineacionTitulo != null && !['izquierda','centro','derecha'].includes(n.alineacionTitulo)) || (n.alineacionTexto != null && !['izquierda','centro','derecha','justificado'].includes(n.alineacionTexto)) || (n.tamanoTitulo != null && !['auto','pequeno','mediano','grande'].includes(n.tamanoTitulo)) || (n.tamanoTexto != null && !['auto','pequeno','mediano','grande'].includes(n.tamanoTexto)) || (n.categoria != null && (!cadena(n.categoria) || n.categoria.length > 70))) throw new Error('Estilo de noticia inválido.');
+      if (n.columna != null && !['izquierda', 'derecha'].includes(n.columna)) throw new Error('Columna de noticia inválida.');
       if ((n.disposicion != null && !Object.hasOwn(DISPOSICIONES_FOTO, n.disposicion)) || (n.mantenerJunta != null && typeof n.mantenerJunta !== 'boolean')) throw new Error('Distribución de noticia inválida.');
       for (const f of n.fotos) if ((f.mostrarCompleta != null && typeof f.mostrarCompleta !== 'boolean') || typeof f.id !== 'string' || (!f.demo && (typeof f.src !== 'string' || !/^data:image\/(png|jpeg|webp|gif);base64,/.test(f.src))) || ![f.x, f.y, f.zoom].every(Number.isFinite) || f.x < 0 || f.x > 100 || f.y < 0 || f.y > 100 || f.zoom < 1 || f.zoom > 3 || !cadena(f.pie || '')) throw new Error('Fotografía o encuadre del respaldo inválido.');
     }

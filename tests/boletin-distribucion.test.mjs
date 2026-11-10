@@ -12,7 +12,7 @@ globalThis.document = { createElement() {
   const ctx = { font: '', measureText: s => ({ width: s.length * 12 }),
     fillText: (texto, x, y) => canvas.operaciones.push({ tipo: 'texto', texto, x, y, fuente: ctx.font }),
     drawImage: (img, x, y, w, h) => canvas.operaciones.push({ tipo: 'foto', src: img.src, x, y, w, h }),
-    fillRect() {}, strokeRect() {}, save() {}, restore() {}, beginPath() {}, rect() {}, clip() {}, arc() {}, stroke() {} };
+    fillRect() {}, strokeRect() {}, save() {}, restore() {}, beginPath() {}, moveTo() {}, quadraticCurveTo() {}, lineTo() {}, closePath() {}, rect() {}, clip() {}, arc() {}, stroke() {} };
   canvas.getContext = () => ctx;
   return canvas;
 } };
@@ -137,4 +137,57 @@ test('el texto con énfasis se conserva al dividirse en varias páginas y al res
   for (let i = 0; i < 800; i++) assert.match(textoDibujado, new RegExp(`\\bdato${i}\\b`));
   const destacado = escritos.find(o => o.texto === 'dato510');
   assert.match(destacado.fuente, /italic bold/);
+});
+
+test('varias noticias se ubican en cada columna sin perder contenido', async () => {
+  const e = edicionNueva(5), b = bloqueNuevo('columnas');
+  b.notas[0].titulo = 'Izquierda uno'; b.notas[0].texto = 'Uno';
+  b.notas[1].titulo = 'Derecha uno'; b.notas[1].texto = 'Dos';
+  const { agregarEnColumna } = await import('../src/lib/boletinColumnas.js');
+  const ampliado = agregarEnColumna(b, 'izquierda');
+  ampliado.notas[2].titulo = 'Izquierda dos'; ampliado.notas[2].texto = 'Tres';
+  e.bloques = [ampliado]; validarEdicion(JSON.parse(JSON.stringify(e)));
+  const pagina = (await componerEdicion(e))[0];
+  const [a, d, c] = ['Izquierda uno', 'Derecha uno', 'Izquierda dos'].map(t => pagina.operaciones.find(op => op.texto === t));
+  assert.ok(a && d && c); assert.ok(a.x < 640 && c.x < 640 && d.x > 640); assert.ok(c.y > a.y);
+});
+
+test('mover y cambiar formato conserva fotos, encuadre y marcas', async () => {
+  const { moverAColumna, cambiarFormato, trasladarNoticia, columnaDe } = await import('../src/lib/boletinColumnas.js');
+  const e = crear('abajo', 'Titular con énfasis', false), original = e.bloques[0].notas[0];
+  original.formatos = [{ inicio: 0, fin: 7, negrita: true }]; original.fotos[0].x = 17;
+  const grupo = bloqueNuevo('columnas'); e.bloques.push(grupo);
+  const movida = trasladarNoticia(e, e.bloques[0].id, original.id, grupo.id, 'derecha');
+  const grupoNuevo = movida.bloques[0]; assert.equal(grupoNuevo.notas.length, 3);
+  const nota = grupoNuevo.notas.find(n => n.id === original.id);
+  assert.equal(nota.columna, 'derecha'); assert.deepEqual(nota.fotos, original.fotos); assert.deepEqual(nota.formatos, original.formatos);
+  const otra = moverAColumna(grupoNuevo, nota.id, 'izquierda');
+  assert.equal(columnaDe(otra.notas.find(n => n.id === nota.id), 2), 'izquierda');
+  const individual = cambiarFormato({ ...movida, bloques: [otra] }, otra.id, nota.id, 'principal');
+  validarEdicion(JSON.parse(JSON.stringify(individual)));
+  assert.equal(individual.bloques.length, 2); assert.equal(individual.bloques[0].notas.length, 2);
+  assert.deepEqual(individual.bloques[1].notas[0].fotos, original.fotos);
+  assert.deepEqual(individual.bloques[1].notas[0].formatos, original.formatos);
+});
+
+test('ajustar la segunda página conserva la primera y permite descartar la propuesta', async () => {
+  const { proponerAjuste, firmaPagina } = await import('../src/lib/boletinAjuste.js');
+  const e = edicionNueva(5);
+  const noticia = (titulo, cantidad) => { const b = bloqueNuevo('breve'); b.notas[0].titulo = titulo; b.notas[0].texto = 'palabra '.repeat(cantidad); b.notas[0].disposicion = 'abajo'; return b; };
+  e.bloques = [noticia('Primera página', 340), noticia('Segunda página', 230), noticia('Última noticia', 120)];
+  const antes = await componerEdicion(e); assert.ok(antes.length >= 3);
+  const propuesta = await proponerAjuste(e, antes, 1, componerEdicion);
+  assert.ok(propuesta.edicion, propuesta.error);
+  assert.equal(firmaPagina(e, antes.operaciones[0]), firmaPagina(propuesta.edicion, propuesta.paginas.operaciones[0]));
+  assert.ok(propuesta.ids.length > 0); assert.equal(e.bloques.some(b => b.compacto), false);
+  validarEdicion(JSON.parse(JSON.stringify(propuesta.edicion)));
+});
+
+test('se rechaza un ajuste que alteraría una página anterior', async () => {
+  const { proponerAjuste } = await import('../src/lib/boletinAjuste.js');
+  const e = edicionNueva(1), a = bloqueNuevo('breve'), b = bloqueNuevo('breve'); e.bloques = [a,b];
+  const paginas = [0,1,2]; paginas.operaciones = [[{ tipo: 'texto', texto: 'Antes', bloqueId: a.id }], [{ tipo: 'texto', texto: 'Actual', bloqueId: b.id }], [{ tipo: 'texto', texto: 'Más', bloqueId: b.id }]];
+  const falso = async () => { const p = [0,1]; p.operaciones = [[{ tipo: 'texto', texto: 'Cambiada', bloqueId: a.id }], [{ tipo: 'texto', texto: 'Actual y más', bloqueId: b.id }]]; return p; };
+  const respuesta = await proponerAjuste(e, paginas, 1, falso);
+  assert.match(respuesta.error, /página anterior/); assert.equal(respuesta.edicion, undefined);
 });

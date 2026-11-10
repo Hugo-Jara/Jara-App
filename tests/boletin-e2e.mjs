@@ -183,6 +183,24 @@ try {
       await sinDesborde();
     });
 
+    await paso(p('Columnas: agregar, mover y cambiar formato conserva las noticias'), async () => {
+      await page.goto(`${BASE}/noticias?editor=1`);
+      await page.getByRole('button', { name: 'Crear nuevo boletín' }).click();
+      await page.getByRole('button', { name: '+ Noticias en dos columnas' }).click();
+      const titulares = page.getByLabel('Titular');
+      await titulares.nth(0).fill('Izquierda inicial'); await titulares.nth(1).fill('Derecha inicial');
+      await page.getByRole('button', { name: '+ Noticia a la izquierda' }).click();
+      await titulares.nth(1).fill('Izquierda adicional');
+      await page.getByRole('button', { name: 'Mover a la izquierda' }).click();
+      await page.getByLabel('Cambiar formato').first().selectOption('principal');
+      await page.getByText(/^Guardado local/).waitFor({ timeout: 10000 });
+      await page.goto(`${BASE}/noticias?editor=1`);
+      await page.getByRole('button', { name: 'Continuar edición' }).first().click();
+      const valores = await page.getByLabel('Titular').evaluateAll(inputs => inputs.map(i => i.value));
+      for (const nombre of ['Izquierda inicial','Derecha inicial','Izquierda adicional']) verificar(valores.includes(nombre), `falta noticia: ${nombre}`);
+      await sinDesborde();
+    });
+
     await paso(p('Los borradores locales no aparecen en el catálogo de los socios'), async () => {
       await page.goto(`${BASE}/noticias`);
       await page.locator('h3:has-text("Última edición disponible") + article').getByRole('heading', { name: 'El Jara Informa N°3' }).waitFor();
