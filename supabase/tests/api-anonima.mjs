@@ -54,6 +54,10 @@ const funciones = [
   ['fondo_clasificar', { p_compra: NADA, p_item: 'bienes' }],
   ['fondo_respaldo', { p_gasto: NADA, p_tipo: 'boleta', p_marcado: true }],
   ['fondo_presentar', { p_rendicion: 1 }],
+  // Honorarios del entrenador (0047).
+  ['fondo_honorario_pedir', { p_gasto: NADA, p_documento: '1', p_fecha: '2026-11-01' }],
+  ['fondo_honorario_pagado', { p_gasto: NADA, p_ruta: 'a/b.pdf' }],
+  ['honorarios_por_pagar', {}],
 ];
 for (const [f, params] of funciones) {
   const r = await sb.rpc(f, params);

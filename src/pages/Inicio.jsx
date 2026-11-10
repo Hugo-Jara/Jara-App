@@ -11,6 +11,7 @@ import { fechaLarga } from '../lib/fechas.js';
 import { pesos } from '../lib/pedido.js';
 import { plural } from '../lib/texto.js';
 import Icono from '../components/Icono.jsx';
+import { useHonorariosPorPagar, desglose, nombreMes } from '../lib/fondo.js';
 
 const TEXTO_RESPUESTA = { voy: 'Confirmaste que vas.', duda: 'Quedaste en duda.', baja: 'Avisaste que no vas.' };
 
@@ -122,6 +123,23 @@ function PasesPendientes() {
   );
 }
 
+// Solo para Hacienda: honorarios del entrenador que el equipo del fondo pidió pagar.
+function HonorariosPorPagar({ persona }) {
+  const lista = useHonorariosPorPagar(persona);
+  if (!lista.length) return null;
+  const total = lista.reduce((t, h) => t + desglose(h.monto).liquido, 0);
+  return (
+    <Link to="/fondo?v=honorarios" className="card accion aviso">
+      <div className="sobretitulo">Te toca pagar</div>
+      <p className="accion-dato">
+        Honorarios del entrenador de {lista.map((h) => nombreMes(h.mes)).join(' y ')}: transferir {pesos(total)} líquidos
+        desde la cuenta del club y subir el comprobante.
+      </p>
+      <span className="ver-mas">Ver la boleta y pagar <Icono nombre="flecha" size={16} /></span>
+    </Link>
+  );
+}
+
 function UltimoPartido({ partido }) {
   if (!partido) {
     return (
@@ -210,6 +228,7 @@ export default function Inicio() {
       <h1 className="titulo display">Hola, {nombre}</h1>
       <p className="subtitulo">Esto es lo que viene en el Jara.</p>
       {persona.esEncargado && <PasesPendientes />}
+      <HonorariosPorPagar persona={persona} />
       {partidos.cargando
         ? <section className="card accion"><p className="vacio">Cargando tus partidos…</p></section>
         : partidos.mios.length
