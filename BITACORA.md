@@ -4,6 +4,21 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-10 · Compras 3: paso a paso del fondo, pedir el pago de honorarios y editor para Comunicaciones
+
+**Para qué:** que el equipo del fondo sepa qué le toca sin preguntar, que Hacienda se entere cuando hay que pagarle al entrenador, y que Comunicaciones pueda armar el boletín en la app real.
+
+**Qué se hizo** (migración `0047_honorarios_pedir_pago.sql`, se corre antes del merge; mueve plata, la revisan el administrador de la app y Hacienda):
+- **Fondo > Paso a paso** (pestaña nueva, la primera): arriba "Lo que falta ahora", armado con los datos del fondo (compras por pasar, respaldos pendientes, honorarios por pedir o pagar, F29 por marcar, gastos listos para rendir), con un botón que lleva a la pestaña. Abajo, los pasos de una compra del fondo, de los honorarios de cada mes y de la rendición, y las reglas del reglamento. La pestaña muestra cuántas cosas faltan. `/fondo?v=honorarios` abre directo una pestaña.
+- **Honorarios: pedir el pago.** Cada cuota muestra bruto ($212.500), retención 15,25 % ($32.406) y líquido a transferir ($180.094). El equipo del fondo sube la boleta, anota N° y fecha y aprieta "Pedir el pago a Hacienda" (puede avisar por WhatsApp o anular el pedido). Hacienda lo ve en Inicio ("Te toca pagar") y en la cuota sube el comprobante con "Ya transferí": queda pagada por transferencia y el comprobante cuenta como respaldo. Después sale el aviso del F29 del mes siguiente.
+- Base: columnas `pago_pedido_en` y `pago_pedido_por` en `fondo_gastos`; funciones `fondo_honorario_pedir`, `fondo_honorario_anular`, `fondo_honorario_pagado` (solo Hacienda de verdad, ninguna cuenta de prueba), `fondo_honorarios_pedidos` y `honorarios_por_pagar` (para Inicio; a cualquier otra cuenta le devuelve vacío). La boleta tiene que estar subida, desde el 1 de octubre y no futura.
+- **Editor del boletín en la app real** para quien tiene `edita_comunicaciones` (también con "Ver como" en Comunicaciones) y los administradores: botón "Abrir el editor del boletín" en Noticias. Los borradores siguen guardándose solo en ese aparato; nada se publica. Los socios siguen viendo "Se viene El Jara Informa".
+- Sin la 0047 corrida, el fondo y la guía funcionan; solo falla el botón de pedir el pago.
+
+**Comprobado:** `npm run test:db` pasa (30 pruebas nuevas en `supabase/tests/honorarios.mjs`), `npm run test:pedidos`, `npm run test:boletin` y `npm run test:boletin:e2e` pasan, `npm run build` pasa y se revisó en modo demostración (iPhone 13): pedir, pagar, aviso en Inicio y editor.
+
+---
+
 ## 2026-11-09 · ¿Quién atajó? Goles recibidos de cada arquero
 
 **Para qué:** los planteles a veces tienen dos arqueros que se turnan los partidos o juegan un tiempo cada uno. Cada uno tiene que tener sus números aparte.

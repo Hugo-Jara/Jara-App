@@ -53,6 +53,18 @@ const RESPALDOS_HONORARIOS = [
 export const respaldosDe = (c) =>
   c.item === 'personal' ? RESPALDOS_HONORARIOS : [...RESPALDOS_COMPRA, ...(c.entrega ? [NOMINA] : []), ORIGINAL];
 
+// Honorarios del entrenador: la cuota es el monto bruto de la boleta. El club
+// transfiere el líquido y paga la retención en el F29 del mes siguiente.
+// Retención de boletas de honorarios en 2026: 15,25 % (SII).
+export const RETENCION = 0.1525;
+export const HONORARIO_BRUTO = 212500;
+export function desglose(bruto) {
+  const retencion = Math.round(bruto * RETENCION);
+  return { bruto, retencion, liquido: bruto - retencion };
+}
+const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+export const nombreMes = (m) => MESES[(m - 1 + 12) % 12];
+
 export const ESTADOS = {
   pendiente: 'Faltan respaldos',
   lista: 'Lista para rendir',
@@ -138,10 +150,15 @@ function useFondoReal() {
 
   const cargar = useCallback(async () => {
     try {
-      const f = await llamar('fondo_ver');
+      const [f, pedidos] = await Promise.all([
+        llamar('fondo_ver'),
+        // Sin la migración 0047 corrida, el fondo se ve igual, sin pedidos de pago.
+        llamar('fondo_honorarios_pedidos').catch(() => []),
+      ]);
+      const pedido = Object.fromEntries((pedidos ?? []).map((p) => [p.id, { en: p.pedido_en, por: p.pedido_por }]));
       setEstado({
         cargando: false, error: '',
-        datos: { items: f.items, compras: f.gastos.map(gastoDesdeFila), documentos: f.documentos,
+        datos: { items: f.items, compras: f.gastos.map((g) => ({ ...gastoDesdeFila(g), pedido: pedido[g.id] ?? null })), documentos: f.documentos,
                  rendiciones: f.rendiciones, porClasificar: f.por_clasificar },
       });
     } catch (e) {
@@ -169,7 +186,36 @@ function useFondoReal() {
     }),
     presentar: y((id) => llamar('fondo_presentar', { p_rendicion: id })),
     marcarSubida: y((id, subida) => llamar('fondo_subida', { p_rendicion: id, p_subida: subida })),
+    // Honorarios (0047): el equipo del fondo pide el pago con la boleta; Hacienda lo paga.
+    pedirPago: y(async (id, { documento, fecha, boleta }) => {
+      if (boleta) {
+        const a = await subir(id, boleta, BUCKET_FONDO);
+        await llamar('fondo_respaldo', { p_gasto: id, p_tipo: 'boleta', p_marcado: true, p_ruta: a.ruta, p_nombre: a.nombre });
+      }
+      await llamar('fondo_honorario_pedir', { p_gasto: id, p_documento: documento, p_fecha: fecha });
+    }),
+    anularPedido: y((id) => llamar('fondo_honorario_anular', { p_gasto: id })),
+    pagarHonorario: y(async (id, comprobante) => {
+      const a = await subir(id, comprobante, BUCKET_FONDO);
+      if (!a) throw new Error('Falta el comprobante de la transferencia.');
+      await llamar('fondo_honorario_pagado', { p_gasto: id, p_ruta: a.ruta, p_nombre: a.nombre });
+    }),
   };
+}
+
+// Para Inicio: las cuotas de honorarios que Hacienda tiene que pagar.
+// A cualquier otra cuenta la base le devuelve una lista vacía.
+export function useHonorariosPorPagar(persona) {
+  const [lista, setLista] = useState([]);
+  const demo_ = useSyncExternalStore(suscribir, () => demo);
+  const actua = !!persona?.apruebaCompras && !persona?.haciendaSoloMirar;
+  useEffect(() => {
+    if (esDemo || !actua) return;
+    llamar('honorarios_por_pagar').then((x) => setLista(x ?? []), () => setLista([]));
+  }, [actua]);
+  if (!actua) return [];
+  if (esDemo) return demo_.compras.filter((c) => c.item === 'personal' && c.pedido && !c.pago).map((c) => ({ id: c.id, que: c.que, monto: c.monto, mes: c.mes }));
+  return lista;
 }
 
 // ¿Muestro el fondo en "Más"? Pregunta a la base; en demo, sí.
@@ -250,6 +296,20 @@ function useFondoDemo() {
     }),
     marcarSubida: async (id, subida) =>
       cambiar((s) => ({ ...s, rendiciones: s.rendiciones.map((r) => (r.id === id ? { ...r, subida } : r)) })),
+    pedirPago: async (id, { documento, fecha, boleta }) => {
+      const c = demo.compras.find((x) => x.id === id);
+      if (!boleta && !c.respaldos.boleta) throw new Error('Primero sube la boleta de honorarios, para que Hacienda la vea antes de pagar');
+      if (!documento?.trim()) throw new Error('Falta el N° de la boleta de honorarios');
+      if (!fecha) throw new Error('Falta la fecha de la boleta');
+      if (fecha < FONDO.desde) throw new Error('La boleta es anterior al 1 de octubre: así no se puede rendir (art. 5)');
+      enGasto(id, (x) => ({ ...x, documento: documento.trim(), fecha, pedido: { en: new Date().toISOString(), por: 'Equipo del fondo (ejemplo)' },
+                            respaldos: { ...x.respaldos, boleta: boleta ? local(boleta) : x.respaldos.boleta } }));
+    },
+    anularPedido: async (id) => enGasto(id, (x) => ({ ...x, pedido: null })),
+    pagarHonorario: async (id, comprobante) => {
+      if (!comprobante) throw new Error('Falta el comprobante de la transferencia.');
+      enGasto(id, (x) => ({ ...x, pago: 'transferencia', respaldos: { ...x.respaldos, comprobante: local(comprobante) } }));
+    },
     reiniciar: () => cambiar(inicial),
   };
 }

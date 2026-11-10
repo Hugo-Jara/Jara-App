@@ -1,14 +1,18 @@
 import { useState } from 'react';
-import { useFondo, enlaceFondo, FONDO, PAGOS, ESTADOS, respaldosDe, motivoNoRendible } from '../lib/fondo.js';
+import { useSearchParams } from 'react-router-dom';
+import { useFondo, enlaceFondo, FONDO, PAGOS, ESTADOS, respaldosDe, motivoNoRendible, desglose, nombreMes } from '../lib/fondo.js';
 import { pesos } from '../lib/pedido.js';
 import { fechaCorta, hoyIso } from '../lib/fechas.js';
 import { plural } from '../lib/texto.js';
+import { useSesion } from '../lib/sesion.jsx';
+import GuiaFondo, { pendientesDelFondo } from '../components/GuiaFondo.jsx';
 
 // Fondo Las Condes 2026 (Compras 2). Lo ven el equipo del fondo, Hacienda y
 // los administradores; la base rechaza a cualquier otra cuenta. Las compras se
 // piden por Compras, en el tópico "Fondo", y acá se pasan al fondo con su ítem.
 
 const VISTAS = [
+  { id: 'guia', nombre: 'Paso a paso' },
   { id: 'panel', nombre: 'Panel' },
   { id: 'compras', nombre: 'Compras' },
   { id: 'honorarios', nombre: 'Honorarios' },
@@ -334,6 +338,101 @@ function Agregar({ f, listo }) {
   );
 }
 
+// Una cuota de honorarios: pedir el pago (equipo del fondo) y pagarla (Hacienda).
+function Honorario({ c, f, puedePagar }) {
+  const [documento, setDocumento] = useState(c.documento ?? '');
+  const [fecha, setFecha] = useState(c.fecha ?? '');
+  const [boleta, setBoleta] = useState(null);
+  const [comprobante, setComprobante] = useState(null);
+  const accion = useAccion();
+  const d = desglose(c.monto);
+  const mes = nombreMes(c.mes);
+  const boletaSubida = typeof c.respaldos.boleta === 'object' ? c.respaldos.boleta : null;
+  const rendida = c.estado === 'rendida';
+  const estado = c.pago ? 'Pagada' : c.pedido ? 'Pago pedido' : 'Sin pedir';
+  const clase = c.pago ? 'al_dia' : c.pedido ? 'pendiente' : 'sin_gastos';
+
+  const pedir = (e) => {
+    e.preventDefault();
+    accion.correr(() => f.pedirPago(c.id, { documento, fecha, boleta }));
+  };
+  const pagar = (e) => {
+    e.preventDefault();
+    if (!window.confirm(`¿Ya transferiste ${pesos(d.liquido)} al entrenador desde la cuenta del club?`)) return;
+    accion.correr(() => f.pagarHonorario(c.id, comprobante));
+  };
+  const anular = () => window.confirm('¿Anular el pedido de pago? Se puede volver a pedir.') && accion.correr(() => f.anularPedido(c.id));
+  const whatsapp = `Hola, te pido el pago de los honorarios del entrenador de ${mes} (fondo Las Condes): `
+    + `transferir ${pesos(d.liquido)} líquidos (boleta N° ${c.documento} por ${pesos(d.bruto)}). `
+    + `La boleta y los pasos están en la app: Más > Fondo Las Condes > Honorarios. `
+    + `${window.location.origin}${window.location.pathname}?v=honorarios`;
+
+  return (
+    <section className="card honorario">
+      <div className="item-cabeza">
+        <div className="item-que">Honorarios de {mes}</div>
+        <span className={`ef ${clase}`}>{estado}</span>
+      </div>
+      <dl className="total-detalle" style={{ marginTop: 10 }}>
+        <div><dt>Boleta (bruto)</dt><dd>{pesos(d.bruto)}</dd></div>
+        <div><dt>Retención</dt><dd>{pesos(d.retencion)}</dd></div>
+        <div><dt>Se transfiere</dt><dd>{pesos(d.liquido)}</dd></div>
+      </dl>
+
+      {c.pago ? (
+        <p className="respuesta">
+          Pagada {c.pago === 'transferencia' ? 'por transferencia del club' : `(${PAGOS[c.pago].toLowerCase()})`}.
+          {!c.respaldos.f29 && ` Falta pagar la retención de ${pesos(d.retencion)} en el F29 de ${nombreMes(c.mes + 1)} (hasta el día 20) y marcarlo en sus respaldos.`}
+        </p>
+      ) : c.pedido ? (
+        <>
+          <p className="item-meta">
+            Pago pedido{c.pedido.en ? ` el ${fechaCorta(c.pedido.en.slice(0, 10))}` : ''}{c.pedido.por ? ` por ${c.pedido.por}` : ''}.
+            Boleta N° {c.documento}{c.fecha ? ` del ${fechaCorta(c.fecha)}` : ''}.
+            {boletaSubida && <> <button type="button" className="enlace" onClick={() => abrir(boletaSubida)}>Ver la boleta</button></>}
+          </p>
+          {puedePagar ? (
+            <form onSubmit={pagar}>
+              <p className="item-comentario">Te toca: transfiere {pesos(d.liquido)} al entrenador desde la cuenta del club y sube el comprobante.</p>
+              <label htmlFor={`comp-${c.id}`}>Comprobante de la transferencia</label>
+              <input id={`comp-${c.id}`} type="file" accept="image/*,application/pdf" required onChange={(e) => setComprobante(e.target.files[0] ?? null)} />
+              <div className="botones">
+                <button className="btn" disabled={accion.ocupado || !comprobante}>{accion.ocupado ? 'Guardando…' : 'Ya transferí'}</button>
+              </div>
+            </form>
+          ) : (
+            <p className="item-comentario">Esperando que Hacienda transfiera {pesos(d.liquido)} y suba el comprobante.</p>
+          )}
+          <div className="botones">
+            {!puedePagar && <a className="btn secundario chico" target="_blank" rel="noopener noreferrer" href={`https://wa.me/?text=${encodeURIComponent(whatsapp)}`}>Avisar a Hacienda por WhatsApp</a>}
+            <button type="button" className="btn chico secundario" disabled={accion.ocupado} onClick={anular}>Anular pedido</button>
+          </div>
+        </>
+      ) : !rendida && (
+        <form onSubmit={pedir}>
+          <p className="item-meta">Cuando el entrenador entregue su boleta de {mes}, súbela y pide el pago. Hacienda lo ve en su Inicio.</p>
+          {boletaSubida ? (
+            <p className="item-meta">Boleta subida: <button type="button" className="enlace" onClick={() => abrir(boletaSubida)}>{boletaSubida.nombre ?? 'ver'}</button></p>
+          ) : (
+            <>
+              <label htmlFor={`bol-${c.id}`}>Boleta de honorarios (foto o PDF)</label>
+              <input id={`bol-${c.id}`} type="file" accept="image/*,application/pdf" required onChange={(e) => setBoleta(e.target.files[0] ?? null)} />
+            </>
+          )}
+          <label htmlFor={`doc-${c.id}`}>N° de la boleta</label>
+          <input id={`doc-${c.id}`} required inputMode="numeric" maxLength={40} value={documento} onChange={(e) => setDocumento(e.target.value)} />
+          <label htmlFor={`fec-${c.id}`}>Fecha de la boleta</label>
+          <input id={`fec-${c.id}`} type="date" required min={FONDO.desde} max={hoyIso()} value={fecha} onChange={(e) => setFecha(e.target.value)} />
+          <div className="botones">
+            <button className="btn" disabled={accion.ocupado}>{accion.ocupado ? 'Enviando…' : 'Pedir el pago a Hacienda'}</button>
+          </div>
+        </form>
+      )}
+      {accion.error && <p className="error">{accion.error}</p>}
+    </section>
+  );
+}
+
 function Hoja({ f, rendicion, compras, volver }) {
   const accion = useAccion();
   const total = compras.reduce((t, c) => t + c.monto, 0);
@@ -445,7 +544,11 @@ function Rendiciones({ f, verHoja }) {
 
 export default function Fondo() {
   const f = useFondo();
-  const [vista, setVista] = useState('panel');
+  const { persona } = useSesion();
+  const [params] = useSearchParams();
+  const [vista, setVista] = useState(() => (VISTAS.some((v) => v.id === params.get('v')) ? params.get('v') : 'guia'));
+  // Marca la cuota como pagada solo Hacienda de verdad (la base lo vuelve a revisar).
+  const puedePagar = !!persona?.apruebaCompras && !persona?.haciendaSoloMirar;
   const [abierta, setAbierta] = useState(null);
   const [agregando, setAgregando] = useState(false);
   const [hoja, setHoja] = useState(null);
@@ -469,6 +572,7 @@ export default function Fondo() {
     </ul>
   );
   const rendicionHoja = f.rendiciones.find((r) => r.id === hoja);
+  const pendientes = pendientesDelFondo(f).length;
 
   return (
     <div className="fondo">
@@ -483,10 +587,12 @@ export default function Fondo() {
       <div className="filtros no-imprimir" role="tablist">
         {VISTAS.map((v) => (
           <button key={v.id} role="tab" aria-selected={vista === v.id} className={`filtro ${vista === v.id ? 'activo' : ''}`} onClick={() => ir(v.id)}>
-            {v.nombre}
+            {v.nombre}{v.id === 'guia' && pendientes > 0 && <span className="filtro-cuenta">{pendientes}</span>}
           </button>
         ))}
       </div>
+
+      {vista === 'guia' && <GuiaFondo f={f} ir={ir} />}
 
       {vista === 'panel' && <Panel f={f} />}
 
@@ -502,7 +608,9 @@ export default function Fondo() {
 
       {vista === 'honorarios' && (
         <>
-          <p className="subtitulo">Entrenador: 3 cuotas de {pesos(212500)}, de octubre a diciembre. Cada mes pide su boleta de honorarios, la transferencia y el F29 (arts. 18–20).</p>
+          <p className="subtitulo">Entrenador: 3 cuotas de {pesos(212500)} brutos, de octubre a diciembre. Cada mes: boleta de honorarios, transferencia del líquido y la retención en el F29 (arts. 18–20).</p>
+          {f.compras.filter((c) => c.item === 'personal').map((c) => <Honorario key={c.id} c={c} f={f} puedePagar={puedePagar} />)}
+          <h2 className="seccion">Datos y respaldos de cada cuota</h2>
           {lista((c) => c.item === 'personal')}
         </>
       )}

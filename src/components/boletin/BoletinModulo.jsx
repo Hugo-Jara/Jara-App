@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { esDemo } from '../../lib/supabase.js';
+import { useSesion } from '../../lib/sesion.jsx';
 import { CATALOGO, edicionNueva, idNuevo, nombreEdicion, validarEdicion } from '../../lib/boletinDatos.js';
 import { listarBorradores, guardarBorrador, eliminarBorrador, respaldar } from '../../lib/boletinStorage.js';
 import BoletinEditor from './BoletinEditor.jsx';
@@ -15,21 +16,26 @@ function Tarjeta({ edicion, ultima }) {
 export default function BoletinModulo({ administrar = false }) {
   const [params, setParams] = useSearchParams();
   const [borradores, setBorradores] = useState([]), [edicion, setEdicion] = useState(null), [error, setError] = useState(''), [cargando, setCargando] = useState(true), [ocupado, setOcupado] = useState(false);
-  const editor = administrar || params.has('editor');
+  // En la app real, el editor lo abren Comunicaciones (permiso edita_comunicaciones,
+  // también con "Ver como") y los administradores. Los borradores siguen siendo
+  // locales: quedan en este aparato y no los ve nadie más.
+  const { persona } = useSesion();
+  const puedeEditar = esDemo || !!persona?.editaComunicaciones || !!persona?.esAdmin;
+  const editor = (administrar || params.has('editor')) && puedeEditar;
   const demo = CATALOGO.find(e => e.id === params.get('edicion'));
   const recargar = async () => { setCargando(true); try { setBorradores((await listarBorradores()).sort((a, b) => b.modificada.localeCompare(a.modificada))); setError(''); } catch (e) { setError(`No pudimos abrir los borradores locales: ${e.message}`); } finally { setCargando(false); } };
-  useEffect(() => { if (editor && esDemo) recargar(); }, [editor]);
+  useEffect(() => { if (editor) recargar(); }, [editor]);
   const accion = async fn => { setOcupado(true); try { await fn(); setError(''); } catch (e) { setError(e.message); } finally { setOcupado(false); } };
   if (edicion) return <BoletinEditor key={edicion.id} inicial={edicion} salir={() => { setEdicion(null); recargar(); }} />;
   // Con la base real (producción) no se muestran las ediciones ficticias: los
   // socios ven el anuncio hasta que exista publicación oficial.
-  if (!esDemo && !editor) return <section className="card"><h2 className="noticia-titulo">Se viene El Jara Informa</h2><p className="noticia-bajada">El boletín del club llega a la app para la fiesta de los 20 años. Acá vas a encontrar sus ediciones para leerlas a tu ritmo.</p>{params.has('edicion') && <Link className="volver" to="/noticias">← Noticias</Link>}</section>;
+  if (!esDemo && !editor) return <section className="card"><h2 className="noticia-titulo">Se viene El Jara Informa</h2><p className="noticia-bajada">El boletín del club llega a la app para la fiesta de los 20 años. Acá vas a encontrar sus ediciones para leerlas a tu ritmo.</p>{puedeEditar && <Link className="btn secundario" to="/noticias?editor=1">Abrir el editor del boletín</Link>}{params.has('edicion') && <Link className="volver" to="/noticias">← Noticias</Link>}</section>;
   if (params.has('edicion')) return <><Link className="volver" to="/noticias">← Catálogo de ediciones</Link>{demo ? <BoletinVista edicion={demo} /> : <p role="alert">Esta edición no existe en el catálogo demostrativo.</p>}</>;
   if (editor) return <section className="noticias-boletin">
-    <Link className="volver" to="/noticias">← Noticias</Link><p className="noticias-etiqueta">COMUNICACIONES · DEMO LOCAL</p><h2>Mis borradores</h2>
-    {!esDemo ? <p>El editor demostrativo está disponible sin conexión a la base. La publicación oficial se incorporará más adelante.</p> : <>
+    <Link className="volver" to="/noticias">← Noticias</Link><p className="noticias-etiqueta">{esDemo ? 'COMUNICACIONES · DEMO LOCAL' : 'COMUNICACIONES · BORRADORES EN ESTE APARATO'}</p><h2>Mis borradores</h2>
+    <>
       <p>Solo se guardan en este navegador. No se publican para los socios. Borrar el almacenamiento del navegador elimina también las fotografías; exporta respaldos.</p>
-      <button className="btn" disabled={ocupado || cargando || !!error} onClick={() => accion(async () => { const lista = await listarBorradores(); const n = Math.max(...CATALOGO.map(e => e.numero), ...lista.map(e => e.numero)) + 1; const e = edicionNueva(n); await guardarBorrador(e); setEdicion(e); })}>Crear nuevo boletín</button>
+      <button className="btn" disabled={ocupado || cargando || !!error} onClick={() => accion(async () => { const lista = await listarBorradores(); const n = Math.max(...(esDemo ? CATALOGO.map(e => e.numero) : [0]), ...lista.map(e => e.numero)) + 1; const e = edicionNueva(n); await guardarBorrador(e); setEdicion(e); })}>Crear nuevo boletín</button>
       <label className="noticias-campo">Importar respaldo local<input type="file" accept="application/json,.json" disabled={ocupado || cargando} onChange={ev => { const f = ev.target.files[0]; ev.target.value = ''; if (f) accion(async () => { if (f.size > 150 * 1024 * 1024) throw new Error('El respaldo supera 150 MB.'); const e = validarEdicion(JSON.parse(await f.text())); await guardarBorrador({ ...e, id: idNuevo(), modificada: new Date().toISOString() }); await recargar(); }); }} /></label>
       {cargando && <p role="status">Cargando borradores…</p>}
       {!cargando && !borradores.length && <p>No hay borradores todavía. Crea tu primera edición.</p>}
@@ -40,7 +46,7 @@ export default function BoletinModulo({ administrar = false }) {
         <button className="btn secundario" disabled={ocupado} onClick={() => { if (confirm(`¿Eliminar el borrador «${nombreEdicion(e)}» y sus fotografías?`)) accion(async () => { await eliminarBorrador(e.id); await recargar(); }); }}>Eliminar borrador</button>
       </div></article>)}
       {error && <><p className="noticias-error" role="alert">{error}</p><button className="btn secundario" onClick={recargar}>Reintentar almacenamiento</button></>}
-    </>}
+    </>
   </section>;
   return <section className="noticias-boletin"><p className="noticias-etiqueta">TODOS JUEGAN · CATÁLOGO DEMOSTRATIVO</p><h2 className="noticias-masthead">EL JARA INFORMA</h2><p>El periódico del club, para leer a tu ritmo. Todas estas ediciones contienen información inventada.</p>
     {esDemo && <Link className="btn secundario" to="/noticias?editor=1">Administrar ediciones demo</Link>}
