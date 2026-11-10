@@ -247,5 +247,48 @@ ok('No se reacciona a un comentario borrado', /fue borrado/.test(r.error ?? ''),
 r = await como('a', 'select * from partido_reacciones');
 ok('Las reacciones no se leen desde el navegador', !!r.error);
 
+// ¿Quién atajó? (0046). C es arquero en su perfil y jugó 2-1, 0-0, 3-0 y 1-0 (otro plantel).
+await db.exec(`insert into perfiles (persona_id, posicion) values ('${PER.c}', 'arquero')`);
+const arco = async (quien, persona, anio = null) => {
+  const r = await como(quien, 'select arquero_cifras($1, $2) as x', [persona, anio]);
+  if (r.error) throw new Error(r.error);
+  return r.rows[0].x;
+};
+x = await arco('d', PER.c);
+ok('Arquero sin marcas: cuenta los partidos que jugó', x.pj === 4 && x.recibidos === 1 && x.invictas === 3, JSON.stringify(x));
+x = await arco('d', PER.b);
+ok('Quien no es arquero ni fue marcado no tiene cifras de arco', x.pj === 0 && x.recibidos === 0, JSON.stringify(x));
+r = await como('a', 'select partido_arco_guardar($1, $2)', [P.hoy, JSON.stringify([{ persona_id: PER.c, recibidos: 0 }])]);
+ok('Solo quien anota puede poner quién atajó', /Solo quien anota/.test(r.error ?? ''), r.error);
+r = await como('enc', 'select partido_arco_guardar($1, $2)', [P.hoy, JSON.stringify([{ persona_id: PER.b, recibidos: 0 }, { persona_id: PER.c, recibidos: 0 }])]);
+ok('Dos arqueros: lo recibido tiene que sumar los goles del rival', /suman 0 y el rival hizo 1/.test(r.error ?? ''), r.error);
+r = await como('enc', 'select partido_arco_guardar($1, $2)', [P.hoy, JSON.stringify([{ persona_id: PER.b, recibidos: 1 }, { persona_id: PER.c, recibidos: 0 }])]);
+ok('Dos arqueros, un tiempo cada uno', !r.error, r.error);
+x = await arco('d', PER.c);
+ok('El arquero marcado se lleva solo lo que recibió él', x.pj === 4 && x.recibidos === 0 && x.invictas === 4 && x.por_partido[P.hoy] === 0, JSON.stringify(x));
+x = await arco('d', PER.b);
+ok('El otro arquero suma ese partido aparte', x.pj === 1 && x.recibidos === 1 && x.invictas === 0, JSON.stringify(x));
+r = await como('enc', 'select partido_arco_guardar($1, $2)', [P.ayer, JSON.stringify([{ persona_id: PER.d }])]);
+x = await arco('a', PER.d);
+ok('Un solo arquero se lleva todos los goles en contra', !r.error && x.pj === 1 && x.invictas === 1, r.error ?? JSON.stringify(x));
+r = await db.query('select 1 from partido_jugadores where partido_id = $1 and persona_id = $2', [P.ayer, PER.d]);
+ok('El que atajó queda como que jugó', r.rows.length === 1);
+x = await arco('a', PER.c);
+ok('Si marcan a otro, al arquero de perfil no se le cuenta ese partido', x.pj === 3, JSON.stringify(x));
+r = await como('a', 'select partido_arco($1) as x', [P.hoy]);
+x = r.rows[0]?.x;
+ok('Cualquiera del club ve quién atajó y los arqueros sugeridos', !r.error && x.arqueros.length === 2 && x.sugeridos.includes(PER.c), r.error ?? JSON.stringify(x));
+r = await como('enc', 'select partido_arco_guardar($1, $2)', [P.hoy, '[]']);
+x = await arco('d', PER.b);
+ok('Se puede desmarcar', !r.error && x.pj === 0, r.error ?? JSON.stringify(x));
+x = await arco('d', PER.c, 1999);
+ok('Filtra por año', x.pj === 0, JSON.stringify(x));
+r = await como('a', 'select * from partido_arqueros');
+ok('La tabla de arqueros no se lee desde el navegador', !!r.error);
+await db.exec('set role anon');
+r = await db.query('select arquero_cifras($1)', [PER.a]).then(() => null, (e) => e.message);
+await db.exec('reset role');
+ok('Sin sesión no se puede', !!r);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);
