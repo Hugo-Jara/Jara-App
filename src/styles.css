@@ -475,8 +475,6 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .noticias-agregar { border-top: 2px solid #a92520; padding-top: 14px; }
 /* Opciones táctiles del boletín; no afectan el resto de la aplicación. */
 .noticias-editor { padding-bottom: 64px; }
-.noticias-vista-flotante { position: fixed; z-index: 20; right: max(14px, env(safe-area-inset-right)); bottom: calc(82px + env(safe-area-inset-bottom)); width: auto; margin: 0; min-height: 48px; box-shadow: 0 4px 16px #0009; }
-.noticias-vista-flotante:disabled { opacity: .6; }
 .noticias-tipos, .noticias-disposiciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
 .noticias-tipo, .noticias-opcion-disposicion { background: #1b1514; color: #f7efdd; border: 1px solid #685448; border-radius: 10px; font: inherit; text-align: left; cursor: pointer; min-width: 0; }
 .noticias-tipo { display: flex; align-items: center; gap: 10px; padding: 11px; min-height: 98px; }
@@ -779,3 +777,8 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .guia-reglas li + li { margin-top: 8px; }
 .honorario form { margin-top: 6px; }
 .honorario .botones { flex-wrap: wrap; }
+
+.noticias-lectura-cierre .noticias-frase-movil { font-style: italic; font-weight: normal; }
+/* El acceso deja espacio en el flujo y desaparece al escribir. */
+
+.noticias-vista-bloque { margin-top: 16px; }

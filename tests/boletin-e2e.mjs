@@ -158,7 +158,7 @@ try {
     });
 
     await paso(p('Formato, encuadre y vista previa se conservan en el borrador'), async () => {
-      await page.getByLabel('Titular').first().fill('Noticia de prueba');
+      await page.getByLabel('Titular', { exact: true }).first().fill('Noticia de prueba');
       const campo = page.getByRole('textbox', { name: 'Texto de la noticia' }).first();
       await campo.fill('Texto importante para probar.');
       await campo.evaluate(el => {
@@ -172,14 +172,32 @@ try {
       await page.getByLabel('Tamaño del texto').first().selectOption('grande');
       await page.getByLabel('Cómo mostrar la foto').first().selectOption('completa');
       await page.getByText(/^Guardado local/).waitFor({ timeout: 10000 });
-      await page.locator('.noticias-vista-flotante').click();
+      await page.getByRole('button', { name: 'Vista previa y PNG', exact: true }).click();
       await page.locator('.noticias-pagina canvas').waitFor({ timeout: 15000 });
       await sinDesborde();
-      await page.locator('.noticias-vista-flotante').click();
+      await page.getByRole('button', { name: '← Volver a editar', exact: true }).click();
       verificar((await page.getByRole('textbox', { name: 'Texto de la noticia' }).first().textContent()).includes('importante'), 'se perdió el texto');
       verificar(await page.getByLabel('Alinear titular').first().inputValue() === 'centro', 'se perdió la alineación');
       verificar(await page.getByLabel('Cómo mostrar la foto').first().inputValue() === 'completa', 'se perdió el modo de fotografía');
       verificar(await page.locator('.noticias-texto-editable strong, .noticias-texto-editable b, .noticias-texto-editable [style*="bold"]').count() > 0, 'se perdió la negrita');
+      await sinDesborde();
+    });
+
+    await paso(p('Columnas: agregar, mover y cambiar formato conserva las noticias'), async () => {
+      await page.goto(`${BASE}/noticias?editor=1`);
+      await page.getByRole('button', { name: 'Crear nuevo boletín' }).click();
+      await page.getByRole('button', { name: '+ Noticias en dos columnas' }).click();
+      const titulares = page.getByLabel('Titular', { exact: true });
+      await titulares.nth(0).fill('Izquierda inicial'); await titulares.nth(1).fill('Derecha inicial');
+      await page.getByRole('button', { name: '+ Noticia a la izquierda' }).click();
+      await titulares.nth(1).fill('Izquierda adicional');
+      await page.getByRole('button', { name: 'Mover a la izquierda' }).click();
+      await page.getByLabel('Cambiar formato').first().selectOption('principal');
+      await page.getByText(/^Guardado local/).waitFor({ timeout: 10000 });
+      await page.goto(`${BASE}/noticias?editor=1`);
+      await page.getByRole('button', { name: 'Continuar edición' }).first().click();
+      const valores = await page.getByLabel('Titular', { exact: true }).evaluateAll(inputs => inputs.map(i => i.value));
+      for (const nombre of ['Izquierda inicial','Derecha inicial','Izquierda adicional']) verificar(valores.includes(nombre), `falta noticia: ${nombre}`);
       await sinDesborde();
     });
 

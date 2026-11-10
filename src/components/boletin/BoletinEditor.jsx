@@ -5,6 +5,7 @@ import BoletinVista from './BoletinVista.jsx';
 import EncuadreFoto from './EncuadreFoto.jsx';
 import TextoEnriquecido from './TextoEnriquecido.jsx';
 import { relacionFoto } from '../../lib/boletinEncuadre.js';
+import { agregarEnColumna, cambiarFormato, columnaDe, moverAColumna, moverEnColumna, normalizarColumnas, trasladarNoticia } from '../../lib/boletinColumnas.js';
 const mover = (lista, i, delta) => { const nueva = [...lista]; [nueva[i], nueva[i + delta]] = [nueva[i + delta], nueva[i]]; return nueva; };
 function Orden({ i, largo, cambiar, quitar, objeto }) {
   return <div className="noticias-herramientas"><button type="button" className="btn secundario chico" disabled={!i} aria-label={`Subir ${objeto} ${i + 1}`} onClick={() => cambiar(-1)}>↑</button><button type="button" className="btn secundario chico" disabled={i === largo - 1} aria-label={`Bajar ${objeto} ${i + 1}`} onClick={() => cambiar(1)}>↓</button><button type="button" className="btn secundario chico" onClick={quitar}>Quitar {objeto}</button></div>;
@@ -39,7 +40,7 @@ function FotosEditor({ fotos, cambiar, error, avisarCarga, tipo, disposicion }) 
   </div>;
 }
 const DESCRIPCIONES = {
-  principal: 'Titular grande para la noticia principal.', columnas: 'Dos noticias, una junto a la otra.',
+  principal: 'Titular grande para la noticia principal.', columnas: 'Noticias organizadas en dos columnas.',
   breve: 'Una noticia de formato sencillo.', destacada: 'Destaca el titular con un fondo de color.', agenda: 'Fechas y actividades próximas.', frase: 'Una frase centrada para destacar una idea.', cierre: 'Un mensaje para cerrar la edición.',
 };
 function Esquema({ tipo }) {
@@ -58,10 +59,11 @@ function Distribucion({ nota, cambiar }) {
 }
 export default function BoletinEditor({ inicial, salir }) {
   const [edicion, setEdicion] = useState(inicial), [estado, setEstado] = useState('Guardado local'), [error, setError] = useState(''), [vista, setVista] = useState(false), [ocupado, setOcupado] = useState(false), [cargas, setCargas] = useState(0);
-  const cargasActivas = useRef(0), posicionEditor = useRef(0);
+  const cargasActivas = useRef(0), posicionEditor = useRef(0), ultimoAjuste = useRef(null);
+  const [puedeDeshacer, setPuedeDeshacer] = useState(false);
   const cambiarVista = () => {
     if (cargasActivas.current) return;
-    if (!vista) { posicionEditor.current = window.scrollY; setVista(true); window.scrollTo(0, 0); }
+    if (!vista) { posicionEditor.current = window.scrollY; setVista(true); }
     else { setVista(false); requestAnimationFrame(() => window.scrollTo(0, posicionEditor.current)); }
   };
   const avisarCarga = d => { cargasActivas.current += d; setCargas(cargasActivas.current); };
@@ -84,8 +86,10 @@ export default function BoletinEditor({ inicial, salir }) {
     <p className="noticias-ayuda">No es una publicación oficial. Si borras los datos del navegador, perderás estos borradores y sus fotos. Guarda respaldos antes de cambiar de dispositivo. Evita editar la misma edición en dos pestañas.</p>
     {error && <p className="noticias-error" role="alert">{error}</p>}
     <div className="noticias-herramientas"><button className="btn secundario" disabled={cargas > 0} onClick={cambiarVista}>{vista ? 'Volver a editar' : 'Vista previa y PNG'}</button><button className="btn secundario" onClick={() => respaldar(edicion)}>Exportar respaldo</button><button className="btn secundario" onClick={() => guardar(edicion).catch(() => {})}>Guardar ahora</button></div>
-    <button type="button" className="btn noticias-vista-flotante" disabled={cargas > 0} onClick={cambiarVista}>{vista ? '← Volver a editar' : '👁 Vista previa'}</button>
-    {vista ? <BoletinVista edicion={edicion} local todas /> : <>
+    {vista ? <BoletinVista edicion={edicion} local todas puedeDeshacer={puedeDeshacer} alVolverEditar={cambiarVista}
+      alAplicar={propuesta => { const anteriores = Object.fromEntries(edicion.bloques.filter(b => propuesta.ids.includes(b.id)).map(b => [b.id, !!b.compacto])); ultimoAjuste.current = anteriores; setPuedeDeshacer(true); cambiar(e => ({ ...e, bloques: e.bloques.map(b => propuesta.ids.includes(b.id) ? { ...b, compacto: true } : b) })); }}
+      alDeshacer={() => { const anteriores = ultimoAjuste.current || {}; cambiar(e => ({ ...e, bloques: e.bloques.map(b => Object.hasOwn(anteriores, b.id) ? { ...b, compacto: anteriores[b.id] } : b) })); ultimoAjuste.current = null; setPuedeDeshacer(false); }}
+      alMarcar={(indice, firma) => cambiar(e => ({ ...e, paginasListas: [...(e.paginasListas || []).filter(p => p.indice !== indice), ...(firma ? [{ indice, firma }] : [])] }))} /> : <>
       <div className="noticias-metadatos">
         <label className="noticias-campo">Número de boletín<input type="number" min="1" max="99999" value={edicion.numero} onChange={ev => cambiar(e => ({ ...e, numero: Math.max(1, Math.min(99999, Number(ev.target.value) || 1)) }))} /></label>
         <p className="noticias-ayuda">Sugerencia local; no es una numeración oficial sincronizada.</p>
@@ -97,16 +101,24 @@ export default function BoletinEditor({ inicial, salir }) {
         {b.tipo === 'agenda' ? <>
           {b.eventos.map((v, j) => <div key={v.id} className="noticias-evento"><label className="noticias-campo">Fecha de actividad<input value={v.fecha} maxLength="100" onChange={ev => bloque(b.id, b => ({ ...b, eventos: b.eventos.map(t => t.id === v.id ? { ...t, fecha: ev.target.value } : t) }))} /></label><label className="noticias-campo">Nombre de la actividad<input value={v.titulo || ''} maxLength="120" onChange={ev => { const titulo = ev.target.value; bloque(b.id, b => ({ ...b, eventos: b.eventos.map(t => t.id === v.id ? { ...t, titulo } : t) })); }} /></label><label className="noticias-campo">Descripción<textarea value={v.descripcion} onChange={ev => bloque(b.id, b => ({ ...b, eventos: b.eventos.map(t => t.id === v.id ? { ...t, descripcion: ev.target.value } : t) }))} /></label><Orden i={j} largo={b.eventos.length} objeto="actividad" cambiar={d => bloque(b.id, b => ({ ...b, eventos: mover(b.eventos, j, d) }))} quitar={() => bloque(b.id, b => ({ ...b, eventos: b.eventos.filter(t => t.id !== v.id) }))} /></div>)}
           <button className="btn secundario" onClick={() => bloque(b.id, b => ({ ...b, eventos: [...b.eventos, { id: crypto.randomUUID(), fecha: '', titulo: '', descripcion: '' }] }))}>Agregar actividad</button>
-        </> : b.notas.map((n, j) => {
+        </> : <>{(b.tipo === 'columnas' ? ['izquierda','derecha'].flatMap(col => b.notas.filter((n, i) => columnaDe(n, i) === col)) : b.notas).map((n, j) => {
           const nota = fn => bloque(b.id, b => ({ ...b, notas: b.notas.map(t => t.id === n.id ? fn(t) : t) }));
           if (b.tipo === 'frase' || b.tipo === 'cierre') return <div key={n.id} className="noticias-nota-editor"><label className="noticias-campo">{b.tipo === 'frase' ? 'Frase destacada' : 'Mensaje de cierre'}<textarea spellCheck lang="es-CL" rows="4" value={n.texto} maxLength="200000" onChange={ev => { const texto = ev.target.value; nota(n => ({ ...n, texto, formatos: [] })); }} /></label><p className="noticias-ayuda">Aparecerá centrado, entre líneas divisorias.</p></div>;
-          return <div key={n.id} className="noticias-nota-editor">{b.tipo === 'columnas' && <h3>Noticia {j + 1}</h3>}<label className="noticias-campo">Titular<input value={n.titulo} maxLength="250" onChange={ev => nota(n => ({ ...n, titulo: ev.target.value }))} /></label><label className="noticias-campo">Categoría (opcional)<input value={n.categoria || ''} maxLength="70" placeholder="Ej.: Deportes" onChange={ev => { const categoria = ev.target.value; nota(n => ({ ...n, categoria })); }} /></label>
+          const columna = b.tipo === 'columnas' ? columnaDe(n, b.notas.findIndex(v => v.id === n.id)) : null;
+          const misma = b.tipo === 'columnas' ? b.notas.filter((v, k) => columnaDe(v, k) === columna) : [];
+          const ordenNota = misma.findIndex(v => v.id === n.id);
+          const destinos = edicion.bloques.filter(v => v.tipo === 'columnas' && v.id !== b.id && v.notas.length < 200);
+          return <div key={n.id} className="noticias-nota-editor">{b.tipo === 'columnas' && <><h3>Noticia {j + 1} · {columna === 'izquierda' ? 'columna izquierda' : 'columna derecha'}</h3><div className="noticias-herramientas"><button type="button" className="btn secundario chico" disabled={cargas > 0 || ordenNota === 0} aria-label={`Subir noticia ${j + 1}`} onClick={() => bloque(b.id, v => moverEnColumna(v, n.id, -1))}>↑ Subir</button><button type="button" className="btn secundario chico" disabled={cargas > 0 || ordenNota === misma.length - 1} aria-label={`Bajar noticia ${j + 1}`} onClick={() => bloque(b.id, v => moverEnColumna(v, n.id, 1))}>↓ Bajar</button><button type="button" className="btn secundario chico" disabled={cargas > 0} onClick={() => bloque(b.id, v => moverAColumna(v, n.id, columna === 'izquierda' ? 'derecha' : 'izquierda'))}>Mover a la {columna === 'izquierda' ? 'derecha' : 'izquierda'}</button>{b.notas.length > 1 && <button type="button" className="btn secundario chico" disabled={cargas > 0} onClick={() => { if (confirm('¿Quitar esta noticia y sus fotografías?')) bloque(b.id, v => ({ ...v, notas: normalizarColumnas(v).filter(t => t.id !== n.id) })); }}>Quitar noticia</button>}</div></>}
+          <label className="noticias-campo">Cambiar formato<select disabled={cargas > 0} value={b.tipo} onChange={ev => { const tipo = ev.target.value; cambiar(e => cambiarFormato(e, b.id, n.id, tipo)); }}>{['principal','breve','destacada','columnas'].map(tipo => <option key={tipo} value={tipo}>{TIPOS_BLOQUE[tipo]}</option>)}</select></label>
+          {destinos.length > 0 && <label className="noticias-campo">Mover noticia a otro bloque<select disabled={cargas > 0} value="" onChange={ev => { const [destinoId, lado] = ev.target.value.split('|'); if (destinoId) cambiar(e => trasladarNoticia(e, b.id, n.id, destinoId, lado)); }}><option value="">Selecciona destino</option>{destinos.flatMap(destino => ['izquierda', 'derecha'].map(lado => <option key={`${destino.id}-${lado}`} value={`${destino.id}|${lado}`}>Bloque {edicion.bloques.findIndex(v => v.id === destino.id) + 1} · {lado}</option>))}</select></label>}
+          <label className="noticias-campo">Titular<input value={n.titulo} maxLength="250" onChange={ev => nota(n => ({ ...n, titulo: ev.target.value }))} /></label><label className="noticias-campo">Categoría (opcional)<input value={n.categoria || ''} maxLength="70" placeholder="Ej.: Deportes" onChange={ev => { const categoria = ev.target.value; nota(n => ({ ...n, categoria })); }} /></label>
           <div className="noticias-ajustes-texto"><label className="noticias-campo">Tamaño del titular<select value={n.tamanoTitulo || 'auto'} onChange={ev => { const tamanoTitulo = ev.target.value; nota(n => ({ ...n, tamanoTitulo })); }}>{[['auto','Automático'],['pequeno','Pequeño'],['mediano','Mediano'],['grande','Grande']].map(([v,t]) => <option value={v} key={v}>{t}</option>)}</select></label>
           <label className="noticias-campo">Alinear titular<select value={n.alineacionTitulo || 'izquierda'} onChange={ev => { const alineacionTitulo = ev.target.value; nota(n => ({ ...n, alineacionTitulo })); }}>{[['izquierda','Izquierda'],['centro','Centro'],['derecha','Derecha']].map(([v,t]) => <option value={v} key={v}>{t}</option>)}</select></label>
           <label className="noticias-campo">Tamaño del texto<select value={n.tamanoTexto || 'auto'} onChange={ev => { const tamanoTexto = ev.target.value; nota(n => ({ ...n, tamanoTexto })); }}>{[['auto','Automático'],['pequeno','Pequeño'],['mediano','Mediano'],['grande','Grande']].map(([v,t]) => <option value={v} key={v}>{t}</option>)}</select></label>
           <label className="noticias-campo">Alinear texto<select value={n.alineacionTexto || 'izquierda'} onChange={ev => { const alineacionTexto = ev.target.value; nota(n => ({ ...n, alineacionTexto })); }}>{[['izquierda','Izquierda'],['centro','Centro'],['derecha','Derecha'],['justificado','Justificado']].map(([v,t]) => <option value={v} key={v}>{t}</option>)}</select></label></div>
           <TextoEnriquecido nota={n} cambiar={nota} />{n.fotos.length > 0 && <Distribucion nota={n} cambiar={nota} />}<FotosEditor tipo={b.tipo} disposicion={n.disposicion || 'abajo'} fotos={n.fotos} cambiar={fn => nota(n => ({ ...n, fotos: fn(n.fotos) }))} error={setError} avisarCarga={avisarCarga} /></div>;
-        })}
+        })}{b.tipo === 'columnas' && <div className="noticias-herramientas"><button type="button" className="btn secundario chico" disabled={cargas > 0 || b.notas.length >= 200} onClick={() => bloque(b.id, v => agregarEnColumna(v, 'izquierda'))}>+ Noticia a la izquierda</button><button type="button" className="btn secundario chico" disabled={cargas > 0 || b.notas.length >= 200} onClick={() => bloque(b.id, v => agregarEnColumna(v, 'derecha'))}>+ Noticia a la derecha</button></div>}</>}
+        <button type="button" className="btn secundario noticias-vista-bloque" disabled={cargas > 0} onClick={cambiarVista}>👁 Vista previa</button>
       </fieldset>)}
       <div className="noticias-agregar"><h3>Agregar bloque</h3><div className="noticias-tipos">{Object.entries(TIPOS_BLOQUE).map(([tipo, nombre]) => <button type="button" className="noticias-tipo" key={tipo} onClick={() => cambiar(e => ({ ...e, bloques: [...e.bloques, bloqueNuevo(tipo)] }))}><Esquema tipo={tipo}/><span><strong>+ {nombre}</strong><small>{DESCRIPCIONES[tipo]}</small></span></button>)}</div></div>
     </>}
