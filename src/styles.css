@@ -475,8 +475,6 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .noticias-agregar { border-top: 2px solid #a92520; padding-top: 14px; }
 /* Opciones táctiles del boletín; no afectan el resto de la aplicación. */
 .noticias-editor { padding-bottom: 64px; }
-.noticias-vista-flotante { position: sticky; z-index: 10; top: 8px; display: block; width: auto; margin: 8px 0 8px auto; min-height: 44px; box-shadow: 0 4px 16px #0009; }
-.noticias-vista-flotante:disabled { opacity: .6; }
 .noticias-tipos, .noticias-disposiciones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
 .noticias-tipo, .noticias-opcion-disposicion { background: #1b1514; color: #f7efdd; border: 1px solid #685448; border-radius: 10px; font: inherit; text-align: left; cursor: pointer; min-width: 0; }
 .noticias-tipo { display: flex; align-items: center; gap: 10px; padding: 11px; min-height: 98px; }
@@ -782,4 +780,5 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 
 .noticias-lectura-cierre .noticias-frase-movil { font-style: italic; font-weight: normal; }
 /* El acceso deja espacio en el flujo y desaparece al escribir. */
-.noticias-editor:has(.noticias-metadatos :is(input, select):focus, .noticias-nota-editor :is(input, textarea, select, [contenteditable='true']):focus, .noticias-evento :is(input, textarea):focus) .noticias-vista-flotante { visibility: hidden; }
+
+.noticias-vista-bloque { margin-top: 16px; }

@@ -9,7 +9,7 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 - El encabezado recorta el fondo negro exterior de la insignia original en el periódico y PNG.
 - Las noticias de dos columnas permiten agregar, ordenar y trasladar noticias; se puede cambiar su formato conservando textos y fotos. Los borradores anteriores siguen admitidos.
 - La vista previa propone compactar una página sin alterar el contenido de páginas anteriores; se puede revisar, aplicar o descartar, deshacer el último ajuste y marcar páginas listas. Las páginas posteriores pueden redistribuirse. Si no resulta, se informa para que se ordene manualmente.
-- La vista previa se acerca al boletín al abrirse, el acceso al editor no tapa los campos al escribir y el cierre usa cursiva tanto en lectura móvil como en el PNG.
+- La vista previa se acerca al boletín al abrirse; los botones de vista previa por bloque y volver a editar están en el flujo de la página, sin tapar controles. El cierre usa cursiva tanto en lectura móvil como en el PNG.
 
 **Comprobado:** `npm run test:boletin`, `npm run test:db` y `npm run build` pasan. Las pruebas de navegador y la revisión visual en celular quedan pendientes: Chromium no pudo iniciarse en este entorno por una restricción de sockets.
 
