@@ -4,11 +4,27 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-09 · ¿Quién atajó? Goles recibidos de cada arquero
+
+**Para qué:** los planteles a veces tienen dos arqueros que se turnan los partidos o juegan un tiempo cada uno. Cada uno tiene que tener sus números aparte.
+
+**Qué se hizo** (migración `0046_quien_atajo.sql`, se corre antes del merge):
+- Tabla `partido_arqueros` (cerrada al navegador) y funciones `partido_arco` (leer, con los arqueros del plantel para sugerir), `partido_arco_guardar` (anotar; solo quien anota resultados) y `arquero_cifras` (partidos al arco, goles recibidos, vallas invictas y lo de cada partido).
+- Al poner o corregir el resultado aparece "¿Quién atajó?". Si jugó un solo arquero (por su perfil), viene marcado. Uno solo se lleva todos los goles en contra; con dos o más se anota cuánto recibió cada uno y tiene que sumar el total. El que atajó queda como que jugó.
+- En el partido: "Al arco: X (recibió 1) y Y (valla invicta)".
+- En el perfil: goles recibidos (con promedio) y vallas invictas, y en sus últimos partidos "recibió N" o "valla invicta". Aparece para quien atajó alguna vez o tiene "Arquero" en su perfil.
+- Partidos anotados antes, sin arquero marcado: se le cuentan a quien tenga "Arquero" como posición y haya jugado.
+- Sin la 0046 corrida, la app funciona igual y no muestra nada de esto.
+
+**Comprobado:** `npm run test:db` pasa (15 pruebas nuevas en `charla.mjs`), `npm run build` pasa y se revisó en modo demostración (iPhone 13).
+
+---
+
 ## 2026-11-09 · Estadísticas en el perfil del jugador
 - El perfil de cada jugador (el propio y el de otros) muestra una tarjeta "Estadísticas": partidos jugados, goles, asistencias, veces jugador del partido y tarjetas, con "Este año" e "Histórico".
 - Si la cifra lo deja entre los 10 primeros del club, dice el puesto ("3º del club"); si no, los goles muestran el promedio por partido.
 - Si juega en más de un plantel, desglosa sus números por plantel. Abajo, sus últimos 5 partidos con resultado, con su aporte (goles y asistencias) y enlace al partido.
-- Sale de las mismas funciones que la tabla de Jugadores (`estadisticas` y `mvp_conteo`): **sin migración**.
+- Sale de las mismas funciones que la tabla de Jugadores (`estadisticas` y `mvp_conteo`).
 - Componente nuevo `src/components/EstadisticasJugador.jsx`; en `Perfil.jsx` solo se agrega la tarjeta.
 
 **Comprobado:** `npm run build` pasa y se revisó en modo demostración (iPhone 13).

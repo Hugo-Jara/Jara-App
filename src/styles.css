@@ -765,3 +765,7 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .jugador-partido { flex: 1; min-width: 0; display: grid; gap: 2px; font-size: 14.5px; }
 .jugador-aporte { font-size: 13px; font-weight: 700; color: var(--gold); white-space: nowrap; }
 .jugador-ver-tabla { display: inline-block; margin-top: 14px; font-size: 13px; text-decoration: none; }
+.arco-marca { margin-left: auto; font-size: 14px; }
+.arco-recibidos { display: grid; gap: 8px; margin-top: 10px; }
+.arco-recibidos label { display: grid; grid-template-columns: 1fr 80px; align-items: center; gap: 10px; font-size: 14px; margin: 0; }
+.arco-recibidos .ayuda { margin: 0; }

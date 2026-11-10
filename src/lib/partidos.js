@@ -52,6 +52,14 @@ const base = {
   }),
   eliminar: (id) => llamar('partido_eliminar', { p_id: id }),
   equipos: () => llamar('equipos_del_club'),
+  arquero: (personaId, anio) => llamar('arquero_cifras', { p_persona: personaId, p_anio: anio ?? null }),
+  arco: async (partidoId) => {
+    const r = await llamar('partido_arco', { p_partido: partidoId });
+    return { arqueros: r.arqueros.map((a) => ({ personaId: a.persona_id, recibidos: a.recibidos })), sugeridos: r.sugeridos };
+  },
+  arcoGuardar: (partidoId, arqueros) => llamar('partido_arco_guardar', {
+    p_partido: partidoId, p_arqueros: arqueros.map((a) => ({ persona_id: a.personaId, recibidos: a.recibidos })),
+  }),
 };
 
 // --- Modo demostración: lo mismo, en memoria ------------------------------
@@ -123,6 +131,9 @@ let demo = [{
     plantel: jugadores, respuestas: jugadores.map((j) => va(j.nombre, 'voy')), jugaron: jugadores.map((j) => j.id),
   };
 }))];
+// En demostración, quién tiene "Arquero" en su perfil y quién atajó en cada partido.
+const ARQUEROS_DEMO = ['demo', 'd-Nico'];
+const arcoDemo = {};
 const EQUIPOS_DEMO = [{ id: 'e-jueves', nombre: 'Senior Jueves' }, { id: 'e-sabado', nombre: 'Senior Sábado' }, { id: 'e-junior', nombre: 'Junior Sábado' }];
 const enDemo = {
   cargar: async () => demo,
@@ -167,6 +178,23 @@ const enDemo = {
     return [...suma.values()];
   },
   equipos: async () => EQUIPOS_DEMO,
+  arquero: async (personaId) => {
+    const por = {};
+    demo.filter(tieneResultado).forEach((p) => {
+      const marcados = arcoDemo[p.id] ?? [];
+      const yo = marcados.find((a) => a.personaId === personaId);
+      const jugo = (p.jugaron ?? []).includes(personaId) || p.estadisticas.some((g) => g.personaId === personaId);
+      if (yo) por[p.id] = yo.recibidos;
+      else if (!marcados.length && jugo && ARQUEROS_DEMO.includes(personaId)) por[p.id] = p.golesContra;
+    });
+    const v = Object.values(por);
+    return { pj: v.length, recibidos: v.reduce((t, n) => t + n, 0), invictas: v.filter((n) => n === 0).length, por_partido: por };
+  },
+  arco: async (partidoId) => ({ arqueros: structuredClone(arcoDemo[partidoId] ?? []), sugeridos: ARQUEROS_DEMO }),
+  arcoGuardar: async (partidoId, arqueros) => {
+    const p = demo.find((x) => x.id === partidoId);
+    arcoDemo[partidoId] = arqueros.length === 1 ? [{ ...arqueros[0], recibidos: p.golesContra }] : arqueros;
+  },
 };
 
 const origen = esDemo ? enDemo : base;
@@ -206,6 +234,12 @@ export const equiposDelClub = () => origen.equipos();
 // Crea un partido ya jugado (por ejemplo, desde una carpeta de fotos) y devuelve su id.
 export const crearPartidoJugado = async (d) => { const id = await origen.guardar(d); await almacen.recargar(); return id; };
 export const tablaEstadisticas = (equipoIds, anio) => origen.estadisticas(equipoIds, anio);
+// ¿Quién atajó? (0046): partidos al arco, goles recibidos, vallas invictas y lo
+// recibido en cada partido ({partidoId: n}) de un arquero.
+export const cifrasArquero = (personaId, anio) => origen.arquero(personaId, anio);
+// Quién atajó en un partido ({ arqueros: [{personaId, recibidos}], sugeridos: [ids] }) y anotarlo.
+export const leerArco = (partidoId) => origen.arco(partidoId);
+export const guardarArco = (partidoId, arqueros) => origen.arcoGuardar(partidoId, arqueros);
 
 export const tieneResultado = (p) => p.golesFavor != null && p.golesContra != null;
 

@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
-import { usePartidos, porEstado, sinResponder, recordatorioPartido, tieneResultado, textoResultado } from '../lib/partidos.js';
+import { usePartidos, porEstado, sinResponder, recordatorioPartido, tieneResultado, textoResultado, leerArco, guardarArco } from '../lib/partidos.js';
 import { fechaLarga, hoyIso } from '../lib/fechas.js';
 import RecordarPorWhatsApp from '../components/RecordarPorWhatsApp.jsx';
 import { complejoDe } from '../lib/complejos.js';
@@ -94,6 +94,49 @@ function Estadisticas({ partido }) {
   );
 }
 
+// ¿Quién atajó? (0046). Uno: se lleva todos los goles en contra. Dos (un tiempo
+// cada uno, o uno entró por el otro): se anota cuántos recibió cada uno.
+function QuienAtajo({ arco, arqueros, setArqueros, contra, candidatos }) {
+  const marcado = (id) => arqueros.some((a) => a.personaId === id);
+  const alternar = (id) => setArqueros(marcado(id) ? arqueros.filter((a) => a.personaId !== id)
+    : arqueros.length >= 3 ? arqueros : [...arqueros, { personaId: id, recibidos: arqueros.length ? 0 : Number(contra || 0) }]);
+  const poner = (id, v) => setArqueros(arqueros.map((a) => (a.personaId === id ? { ...a, recibidos: v } : a)));
+  // Primero los que tienen "Arquero" en su perfil.
+  const lista = [...candidatos].sort((a, b) => arco.sugeridos.includes(b.id) - arco.sugeridos.includes(a.id));
+  const suma = arqueros.reduce((t, a) => t + Number(a.recibidos || 0), 0);
+  if (!lista.length) return null;
+  return (
+    <fieldset className="jugaron">
+      <legend className="sobretitulo">¿Quién atajó?</legend>
+      <p className="ayuda">Marca al arquero. Si atajaron dos (un tiempo cada uno, o uno entró por el otro), marca a los dos y pon cuántos goles recibió cada uno.</p>
+      <div className="jugaron-lista">
+        {lista.map((j) => (
+          <label key={j.id} className={`jugaron-item ${marcado(j.id) ? 'si' : ''}`}>
+            <input type="checkbox" checked={marcado(j.id)} onChange={() => alternar(j.id)} />
+            <NombreConApodo id={j.id} nombre={j.nombre} />
+            {arco.sugeridos.includes(j.id) && <span className="arco-marca" title="Arquero en su perfil">🧤</span>}
+          </label>
+        ))}
+      </div>
+      {arqueros.length === 1 && contra !== '' && (
+        <p className="ayuda abajo">{Number(contra) === 0 ? 'Valla invicta.' : `Se lleva los ${contra} ${Number(contra) === 1 ? 'gol' : 'goles'} en contra.`}</p>
+      )}
+      {arqueros.length > 1 && (
+        <div className="arco-recibidos">
+          {arqueros.map((a) => (
+            <label key={a.personaId}>
+              <span>{candidatos.find((j) => j.id === a.personaId)?.nombre} recibió</span>
+              <input type="number" inputMode="numeric" min="0" max="99" value={a.recibidos}
+                     onChange={(e) => poner(a.personaId, e.target.value)} aria-label="Goles que recibió" />
+            </label>
+          ))}
+          <p className={`ayuda ${contra !== '' && suma !== Number(contra) ? 'error' : ''}`}>Suman {suma} de {contra || 0} goles en contra.</p>
+        </div>
+      )}
+    </fieldset>
+  );
+}
+
 const CAMPOS = [['goles', 'Goles', 99], ['asistencias', 'Asist.', 99], ['amarillas', 'Amarillas', 2], ['rojas', 'Rojas', 1]];
 
 // Anotar o corregir el marcador y las cifras de cada jugador: solo quien anota
@@ -110,6 +153,22 @@ function Resultado({ partido, anotar }) {
   const [error, setError] = useState('');
   const [guardando, setGuardando] = useState(false);
   const puede = partido.puedoAnotar && partido.fecha <= hoyIso();
+  // ¿Quién atajó? (0046). Si la base todavía no lo tiene, queda nulo y no se muestra.
+  const [arco, setArco] = useState(null);
+  const [arqueros, setArqueros] = useState([]);
+  useEffect(() => {
+    let vigente = true;
+    leerArco(partido.id).then((a) => { if (vigente) { setArco(a); setArqueros(a.arqueros); } }, () => {});
+    return () => { vigente = false; };
+  }, [partido.id]);
+  const abrir = () => {
+    // Si nadie está marcado y jugó un solo arquero (por su perfil), viene marcado.
+    if (arco && !arco.arqueros.length) {
+      const jugo = arco.sugeridos.filter((id) => jugaron.has(id));
+      setArqueros(jugo.length === 1 ? [{ personaId: jugo[0], recibidos: Number(contra || 0) }] : []);
+    } else if (arco) setArqueros(arco.arqueros);
+    setEditando(true);
+  };
   // Quienes pueden aparecer: el plantel, más quien ya estaba anotado.
   const opciones = [...partido.plantel, ...(partido.estadisticas ?? []).filter((g) => !partido.plantel.some((j) => j.id === g.personaId)).map((g) => ({ id: g.personaId, nombre: g.nombre }))];
 
@@ -128,18 +187,31 @@ function Resultado({ partido, anotar }) {
     const asist = elegidas.reduce((t, f) => t + num(f.asistencias), 0);
     if (goles > Number(favor)) return setError(`Los goles de los jugadores suman ${goles} y el marcador dice ${favor}.`);
     if (asist > Number(favor)) return setError(`Las asistencias suman ${asist} y el equipo hizo ${favor} goles.`);
+    const recibidos = arqueros.reduce((t, a) => t + num(a.recibidos), 0);
+    if (arqueros.length > 1 && recibidos !== Number(contra)) {
+      return setError(`Los goles que recibió cada arquero suman ${recibidos} y el rival hizo ${contra}.`);
+    }
     setError(''); setGuardando(true);
     try {
       await anotar(partido.id, Number(favor), Number(contra), elegidas.map((f) => ({
         personaId: f.personaId, goles: num(f.goles), asistencias: num(f.asistencias), amarillas: num(f.amarillas), rojas: num(f.rojas),
-      })), [...new Set([...jugaron, ...elegidas.map((f) => f.personaId)])]);
+      })), [...new Set([...jugaron, ...elegidas.map((f) => f.personaId), ...arqueros.map((a) => a.personaId)])]);
+      if (arco) {
+        const marcados = arqueros.map((a) => ({ personaId: a.personaId, recibidos: arqueros.length === 1 ? Number(contra) : num(a.recibidos) }));
+        await guardarArco(partido.id, marcados);
+        setArco({ ...arco, arqueros: marcados });
+      }
       setEditando(false);
     } catch (x) { setError(x.message); }
     setGuardando(false);
   };
   const quitar = async () => {
     setError(''); setGuardando(true);
-    try { await anotar(partido.id, null, null, []); setFavor(''); setContra(''); setFilas([]); setEditando(false); }
+    try {
+      await anotar(partido.id, null, null, []);
+      if (arco) { await guardarArco(partido.id, []); setArco({ ...arco, arqueros: [] }); setArqueros([]); }
+      setFavor(''); setContra(''); setFilas([]); setEditando(false);
+    }
     catch (x) { setError(x.message); }
     setGuardando(false);
   };
@@ -156,12 +228,20 @@ function Resultado({ partido, anotar }) {
               <span className="marcador-texto">{textoResultado(partido)} contra {partido.rival}</span>
             </div>
             <Estadisticas partido={partido} />
+            {arco?.arqueros.length > 0 && (
+              <p className="ayuda abajo">Al arco: {arco.arqueros.map((a, i) => (
+                <span key={a.personaId}>{i > 0 && (i === arco.arqueros.length - 1 ? ' y ' : ', ')}
+                  <NombreConApodo id={a.personaId} nombre={convocables.find((j) => j.id === a.personaId)?.nombre ?? ''} enlace />
+                  {arco.arqueros.length > 1 && ` (${a.recibidos === 0 ? 'valla invicta' : `recibió ${a.recibidos}`})`}
+                </span>
+              ))}.</p>
+            )}
             {partido.jugaron?.length > 0 && <p className="ayuda abajo">Jugaron {partido.jugaron.length}.</p>}
             {!partido.estadisticas.length && partido.golesFavor > 0 && <p className="ayuda abajo">Todavía no se anota quién hizo los goles.</p>}
           </>
         ) : <p className="vacio">Todavía no se anota el resultado.</p>}
         {puede && (
-          <button className="btn secundario" style={{ marginTop: 14 }} onClick={() => setEditando(true)}>
+          <button className="btn secundario" style={{ marginTop: 14 }} onClick={abrir}>
             {hay ? 'Corregir resultado y estadísticas' : 'Poner resultado y estadísticas'}
           </button>
         )}
@@ -191,6 +271,9 @@ function Resultado({ partido, anotar }) {
           </div>
         </fieldset>
       )}
+
+      {arco && <QuienAtajo arco={arco} arqueros={arqueros} setArqueros={setArqueros} contra={contra}
+                           candidatos={convocables.filter((j) => jugaron.has(j.id) || arqueros.some((a) => a.personaId === j.id))} />}
 
       <div className="sobretitulo" style={{ marginTop: 18 }}>Goles, asistencias y tarjetas</div>
       {filas.map((f, i) => (
