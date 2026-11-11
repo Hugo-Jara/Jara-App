@@ -4,6 +4,18 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-11 · El Jara Informa: base para publicar ediciones (0050)
+
+- Migración `0050_boletin_publicar.sql`: tabla `boletin_ediciones` y bucket privado `boletin` (fotos del borrador en `<edición>/fotos/`, páginas en `<edición>/v<versión>/pagina-NN.png`).
+- Gestionan ediciones Comunicaciones y administradores (`gestiona_boletin()`), revisado en las funciones y en las reglas del bucket. Los socios ven solo lo publicado de su club.
+- Funciones: `boletin_catalogo`, `boletin_ultima`, `boletin_edicion`, `boletin_guardar`, `boletin_crear_historica`, `boletin_publicar`, `boletin_retirar` y `boletin_eliminar`.
+- Publicar revisa que estén todas las páginas antes de cambiar el estado. Guardar el borrador no cambia la copia que ven los socios. Solo se elimina un borrador o una edición retirada, escribiendo su número.
+- Falta el lado de la app (botones Publicar, Retirar, Eliminar, Subir edición anterior, catálogo desde la base y tarjeta en Inicio), en un PR aparte del módulo Comunicación.
+
+**Comprobado:** `npm run test:db` con el nuevo `supabase/tests/boletin.mjs` (44 pruebas).
+
+---
+
 ## 2026-11-11 · Ajustes visuales del boletín
 
 - La marca de demostración del PNG depende del entorno; se conserva el borrador importado sin cambiar sus contenidos.
