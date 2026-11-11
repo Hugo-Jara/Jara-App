@@ -636,5 +636,33 @@ await como('doble', 'select entrenamiento_bajar($1)', [elPrimero]);
 r = await como('doble', `select entrenamiento_invitar($1, 'José Inventado')`, [entM1]);
 ok('Si lo bajó, lo puede volver a sumar', !r.error && (await invitados()).filter((i) => i.por === P.doble).length === 2, r.error);
 
+console.log('\n0049 · Archivos a una lista de compras cerrada');
+{
+  const subirA = async (quien, bucket, ruta) => {
+    if (quien === 'anon') {
+      await db.exec('set role anon');
+      try { await db.query('insert into storage.objects (bucket_id, name) values ($1, $2)', [bucket, ruta]); return null; }
+      catch (e) { return e.message; } finally { await db.exec('reset role'); }
+    }
+    return (await como(quien, 'insert into storage.objects (bucket_id, name) values ($1, $2)', [bucket, ruta])).error;
+  };
+  await db.query(`insert into topicos (club_id, slug, nombre, activo) values ($1, 'prueba49', 'Prueba 0049', false), ($1, 'prueba49b', 'Prueba 0049 b', false)`, [CLUB]);
+  const lista = (await db.query(`insert into pedidos (club_id, nombre, carpeta, abierto, topico)
+    values ($1, 'Lista cerrada', 'carpeta-cerrada', false, 'prueba49') returning id`, [CLUB])).rows[0].id;
+  await db.query(`insert into pedido_items (pedido_id, quien, que, monto, estado, persona_id, cotizacion_ruta, cotizacion_nombre, referencia)
+    values ($1, 'Carla', 'Stickers', 28041, 'entregado', $2, 'carpeta-cerrada/cot.pdf', 'cot.pdf', 'tienda')`, [lista, P.capi]);
+  ok('Hacienda sube un comprobante a una lista cerrada', !(await subirA('admin', 'comprobantes', 'carpeta-cerrada/c.pdf')));
+  ok('…y una boleta', !(await subirA('admin', 'pedidos', 'carpeta-cerrada/b.pdf')));
+  ok('Quien pidió una compra entregada sube su boleta a la lista cerrada', !(await subirA('capi', 'pedidos', 'carpeta-cerrada/b2.pdf')));
+  ok('…pero no un comprobante', !!(await subirA('capi', 'comprobantes', 'carpeta-cerrada/c2.pdf')));
+  ok('Otra cuenta sin compras ahí no sube nada', !!(await subirA('teso', 'pedidos', 'carpeta-cerrada/x.pdf')));
+  ok('Sin cuenta tampoco', !!(await subirA('anon', 'comprobantes', 'carpeta-cerrada/y.pdf')));
+  await db.query('update pedidos set archivado = true where id = $1', [lista]);
+  ok('A una lista archivada ni Hacienda sube', !!(await subirA('admin', 'comprobantes', 'carpeta-cerrada/z.pdf')));
+  const abierta = (await db.query(`insert into pedidos (club_id, nombre, carpeta, abierto, topico)
+    values ($1, 'Lista abierta prueba', 'carpeta-abierta', true, 'prueba49b') returning id`, [CLUB])).rows[0];
+  ok('A una lista abierta se sigue subiendo sin cuenta', !!abierta && !(await subirA('anon', 'pedidos', 'carpeta-abierta/q.pdf')));
+}
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

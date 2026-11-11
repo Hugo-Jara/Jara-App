@@ -55,15 +55,53 @@ export const desdeFila = (f) => ({
 
 // Lo mismo que comprueba la base: PDF o foto, de menos de 10 MB.
 export const MAX_ARCHIVO = 10 * 1024 * 1024;
-export async function subir(carpeta, file, bucket = BUCKET) {
-  if (!file) return null;
-  if (!/^image\/|^application\/pdf$/.test(file.type)) throw new Error('El archivo tiene que ser una foto o un PDF.');
+// Los formatos que aceptan los buckets de Storage (0006 y 0017).
+const TIPOS_OK = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf'];
+
+// Algunos celulares entregan la foto sin tipo (HEIC/HEIF) o en un formato que
+// Storage no acepta (HEIF, GIF, AVIF, BMP...). Se corrige el tipo cuando se
+// puede y, si no, la foto se pasa a JPEG antes de subirla.
+async function prepararArchivo(file) {
+  let tipo = (file.type || '').toLowerCase();
+  if (tipo === 'image/jpg' || tipo === 'image/pjpeg') tipo = 'image/jpeg';
+  if (!tipo || tipo === 'application/octet-stream') {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    tipo = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
+             heic: 'image/heic', heif: 'image/heic' }[ext] || tipo;
+  }
+  if (tipo === 'image/heif') tipo = 'image/heic';
+  if (TIPOS_OK.includes(tipo)) return { file, tipo };
+  if (!tipo.startsWith('image/')) throw new Error('El archivo tiene que ser una foto o un PDF.');
+  try {
+    const imagen = await createImageBitmap(file);
+    const lienzo = document.createElement('canvas');
+    lienzo.width = imagen.width; lienzo.height = imagen.height;
+    lienzo.getContext('2d').drawImage(imagen, 0, 0);
+    const jpg = await new Promise((ok) => lienzo.toBlob(ok, 'image/jpeg', 0.9));
+    if (!jpg) throw new Error();
+    const nombre = file.name.replace(/\.[^.]*$/, '') + '.jpg';
+    return { file: new File([jpg], nombre, { type: 'image/jpeg' }), tipo: 'image/jpeg' };
+  } catch {
+    throw new Error('Ese formato de foto no se puede subir. Prueba con una captura de pantalla o un PDF.');
+  }
+}
+
+export async function subir(carpeta, original, bucket = BUCKET) {
+  if (!original) return null;
+  const { file, tipo } = await prepararArchivo(original);
   if (file.size > MAX_ARCHIVO) throw new Error('El archivo pesa más de 10 MB. Prueba con una foto más liviana o un PDF más chico.');
+  if (!carpeta) throw new Error('No se pudo subir el archivo: esta lista ya no recibe archivos. Avísale a la administración de la app.');
   const limpio = file.name.normalize('NFD').replace(/[^\w.-]+/g, '_').slice(-60);
   const ruta = `${carpeta}/${crypto.randomUUID()}-${limpio}`;
-  const { error } = await supabase.storage.from(bucket).upload(ruta, file, { contentType: file.type });
-  if (error) throw new Error('No se pudo subir el archivo. Revisa que sea una foto o un PDF de menos de 10 MB.');
-  return { ruta, nombre: file.name };
+  const { error } = await supabase.storage.from(bucket).upload(ruta, file, { contentType: tipo });
+  if (error) {
+    const m = `${error.message || ''} ${error.statusCode || ''}`.toLowerCase();
+    if (/mime|type/.test(m)) throw new Error('No se pudo subir el archivo: tiene que ser una foto (JPG, PNG, WEBP o HEIC) o un PDF.');
+    if (/size|large|413/.test(m)) throw new Error('El archivo pesa más de 10 MB. Prueba con una foto más liviana o un PDF más chico.');
+    if (/row-level|policy|403|unauthorized/.test(m)) throw new Error('No se pudo subir el archivo: la base no dejó guardarlo aquí. Avísale a la administración de la app.');
+    throw new Error('No se pudo subir el archivo. Revisa tu conexión e inténtalo de nuevo.');
+  }
+  return { ruta, nombre: original.name };
 }
 
 function usePedidoReal(token) {
