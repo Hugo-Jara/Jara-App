@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { esDemo } from '../../lib/supabase.js';
 import { componerEdicion } from '../../lib/boletinComposicion.js';
 import { descargar } from '../../lib/boletinStorage.js';
 import { nombreEdicion } from '../../lib/boletinDatos.js';
@@ -12,11 +13,13 @@ export function useComposicion(edicion) {
   useEffect(() => {
     let vigente = true;
     setEstado({ paginas: [], error: '', cargando: true });
-    const timer = setTimeout(() => componerEdicion(edicion).then(paginas => { if (vigente) setEstado({ paginas, error: '', cargando: false }); }).catch(e => { if (vigente) setEstado({ paginas: [], error: `No podemos diagramar esta edición: ${e.message}`, cargando: false }); }), 350);
+    const timer = setTimeout(() => componerEdicion(edicion, { demostrativa: esDemo }).then(paginas => { if (vigente) setEstado({ paginas, error: '', cargando: false }); }).catch(e => { if (vigente) setEstado({ paginas: [], error: `No podemos diagramar esta edición: ${e.message}`, cargando: false }); }), 350);
     return () => { vigente = false; clearTimeout(timer); };
   }, [edicion]);
   return estado;
 }
+const tamanoSeccion = { auto: 26, pequeno: 23, mediano: 26, grande: 29 };
+const tamanoIntroduccion = { auto: 17, pequeno: 16, mediano: 17, grande: 19 };
 function Pagina({ canvas, numero }) {
   const ref = useRef();
   useEffect(() => { if (canvas) ref.current.replaceChildren(canvas); }, [canvas]);
@@ -35,7 +38,7 @@ export default function BoletinVista({ edicion, local = false, todas = false, al
   const indice = Math.min(actual, Math.max(0, paginas.length - 1));
   const ajustar = async () => {
     setAjustando(true); setAvisoAjuste('');
-    try { const resultado = await proponerAjuste(edicion, paginas, indice, componerEdicion); if (resultado.error) setAvisoAjuste(resultado.error); else { setPropuesta(resultado); setAvisoAjuste('Revisa la propuesta. El tamaño automático de algunos textos y los espacios pueden reducirse; las páginas siguientes pueden reorganizarse.'); } }
+    try { const resultado = await proponerAjuste(edicion, paginas, indice, e => componerEdicion(e, { demostrativa: esDemo })); if (resultado.error) setAvisoAjuste(resultado.error); else { setPropuesta(resultado); setAvisoAjuste('Revisa la propuesta. El tamaño automático de algunos textos y los espacios pueden reducirse; las páginas siguientes pueden reorganizarse.'); } }
     finally { setAjustando(false); }
   };
   const firmas = paginas.operaciones?.map(ops => firmaPagina(edicionVisible, ops)) || [];
@@ -63,7 +66,7 @@ export default function BoletinVista({ edicion, local = false, todas = false, al
     {error && <p role="alert" className="noticias-error">{error} La exportación está bloqueada hasta corregirlo.</p>}
     {cargando && <p role="status">Diagramando páginas…</p>}
     {movil ? <div className="noticias-lectura" style={{ fontFamily: edicion.fuente || 'Georgia' }}><h3>EL JARA INFORMA</h3>{edicion.bloques.map(b => <section key={b.id} className={`noticias-lectura-${b.tipo}`}>
-      {b.tipo === 'columnas' && (b.tituloSeccion || b.introduccion) && <div className="noticias-introduccion-lectura">{b.tituloSeccion && <h3>{b.tituloSeccion}</h3>}{b.introduccion && <p><TextoFormateado texto={b.introduccion} formatos={b.formatosIntroduccion} /></p>}</div>}
+      {b.tipo === 'columnas' && (b.tituloSeccion || b.introduccion) && <div className="noticias-introduccion-lectura">{b.tituloSeccion && <h3 style={{ fontSize: tamanoSeccion[b.tamanoTituloSeccion || 'auto'] }}>{b.tituloSeccion}</h3>}{b.introduccion && <p style={{ fontSize: tamanoIntroduccion[b.tamanoIntroduccion || 'auto'] }}><TextoFormateado texto={b.introduccion} formatos={b.formatosIntroduccion} /></p>}</div>}
       {b.tipo === 'agenda' ? <><h3>Lo que viene</h3>{b.eventos.map(v => <p key={v.id}><strong>{v.fecha || 'Fecha por confirmar'}</strong><br />{v.titulo && <><strong>{v.titulo}</strong><br /></>}{v.descripcion}</p>)}</> : ['frase','cierre'].includes(b.tipo) ? <p className="noticias-frase-movil">{b.notas[0].texto}</p> : (b.tipo === 'columnas' ? ['izquierda','derecha'].flatMap(col => b.notas.filter((n, i) => columnaDe(n, i) === col)) : b.notas).map(n => <article key={n.id}>{n.categoria && <p className="noticias-lectura-categoria">{n.categoria}</p>}<h3 style={{ textAlign: n.alineacionTitulo === 'centro' ? 'center' : n.alineacionTitulo === 'derecha' ? 'right' : 'left' }}>{n.titulo || 'Noticia sin título'}</h3>{n.disposicion === 'arriba' && <FotosNota fotos={n.fotos.slice(0, 1)} tipo={b.tipo} disposicion={n.disposicion} cantidadTotal={n.fotos.length} />}<p style={{ textAlign: n.alineacionTexto === 'centro' ? 'center' : n.alineacionTexto === 'derecha' ? 'right' : n.alineacionTexto === 'justificado' ? 'justify' : 'left' }}><TextoFormateado texto={n.texto} formatos={n.formatos} /></p><FotosNota fotos={n.disposicion === 'arriba' ? n.fotos.slice(1) : n.fotos} tipo={b.tipo} disposicion={n.disposicion} indiceInicial={n.disposicion === 'arriba' ? 1 : 0} cantidadTotal={n.fotos.length} /></article>)}
     </section>)}</div> : !!paginas.length && <>
       <div ref={visorRef}>{local && <button type="button" className="btn secundario" disabled={ajustando} onClick={alVolverEditar}>← Volver a editar</button>}<div className="noticias-herramientas"><button className="btn secundario" disabled={ajustando || indice === 0} onClick={() => setActual(indice - 1)}>← Anterior</button><span aria-live="polite">Página {indice + 1} de {paginas.length}</span><button className="btn secundario" disabled={ajustando || indice === paginas.length - 1} onClick={() => setActual(indice + 1)}>Siguiente →</button></div></div>

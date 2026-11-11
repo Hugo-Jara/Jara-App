@@ -45,6 +45,7 @@ export function validarEdicion(e) {
   if (e.fuente != null && !Object.hasOwn(FUENTES_BOLETIN, e.fuente)) throw new Error('Fuente del boletín inválida.');
   for (const b of e.bloques) {
     if (!TIPOS_BLOQUE[b.tipo] || typeof b.id !== 'string' || !Array.isArray(b.notas) || (b.tipo === 'columnas' ? b.notas.length < 1 || b.notas.length > 200 : b.notas.length !== 1) || !Array.isArray(b.eventos)) throw new Error('Bloques del respaldo inválidos.');
+    if (['tamanoTituloSeccion', 'tamanoIntroduccion'].some(k => b[k] != null && !['auto','pequeno','mediano','grande'].includes(b[k]))) throw new Error('Tamaño de sección inválido.');
     if (b.compacto != null && typeof b.compacto !== 'boolean') throw new Error('Ajuste de bloque inválido.');
     if ((b.tituloSeccion != null && (!cadena(b.tituloSeccion) || b.tituloSeccion.length > 250)) || (b.introduccion != null && !cadena(b.introduccion))) throw new Error('Introducción de sección inválida.');
     if (b.formatosIntroduccion != null && (!Array.isArray(b.formatosIntroduccion) || b.formatosIntroduccion.length > 10000 || !b.formatosIntroduccion.every(f => Number.isInteger(f.inicio) && Number.isInteger(f.fin) && f.inicio >= 0 && f.fin > f.inicio && f.fin <= (b.introduccion || '').length && ['negrita', 'cursiva', 'subrayado'].every(k => f[k] == null || typeof f[k] === 'boolean')))) throw new Error('Formato de introducción inválido.');

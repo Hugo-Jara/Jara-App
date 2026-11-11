@@ -4,6 +4,15 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-11 · Ajustes visuales del boletín
+
+- La marca de demostración del PNG depende del entorno; se conserva el borrador importado sin cambiar sus contenidos.
+- Se agregan tamaños separados para título e introducción de la sección en dos columnas y jerarquía legible en la lectura móvil. El botón indica que guarda un borrador local.
+
+**Comprobado:** `npm run test:boletin` (23 pruebas), `npm run test:db` y `npm run build`. Pendiente prueba visual a 375 px y e2e: Chromium no está instalado en el entorno.
+
+---
+
 ## 2026-11-11 · Compras: subir comprobante o boleta a una lista cerrada
 
 - Causa: Storage solo dejaba subir archivos a la carpeta de una lista **abierta** (reglas de 0006 y 0017), pero Compras muestra también las solicitudes de listas cerradas. Hacienda veía "Entregar con comprobante" en una compra aprobada de una lista cerrada y el archivo se rechazaba con "No se pudo subir el archivo".

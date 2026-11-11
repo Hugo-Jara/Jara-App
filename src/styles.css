@@ -782,3 +782,9 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 /* El acceso deja espacio en el flujo y desaparece al escribir. */
 
 .noticias-vista-bloque { margin-top: 16px; }
+
+/* Jerarquía legible en la vista adaptada al celular. */
+.noticias-lectura h3 { font-size: 26px; line-height: 1.2; margin: 0 0 12px; }
+.noticias-lectura p { font-size: 17px; line-height: 1.55; margin: 0 0 16px; }
+.noticias-lectura article + article { border-top: 1px solid #d1bc9e; padding-top: 20px; }
+.noticias-lectura .noticias-lectura-categoria { font-size: 14px; }

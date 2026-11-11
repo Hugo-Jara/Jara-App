@@ -207,3 +207,26 @@ test('la introducción con formato aparece antes de las dos columnas y se valida
   assert.match(palabra.fuente, /bold/);
   b.formatosIntroduccion[0].fin = 999; assert.throws(() => validarEdicion(e));
 });
+
+
+test('la leyenda cambia según el entorno sin modificar la edición importada', async () => {
+  const e = crear('abajo', 'Texto de prueba'), original = JSON.stringify(e);
+  const demo = (await componerEdicion(e, { demostrativa: true }))[0];
+  const real = (await componerEdicion(e, { demostrativa: false }))[0];
+  assert.ok(demo.operaciones.some(o => o.texto === 'TODOS JUEGAN · EDICIÓN DEMOSTRATIVA'));
+  assert.ok(real.operaciones.some(o => o.texto === 'TODOS JUEGAN'));
+  assert.ok(!real.operaciones.some(o => o.texto?.includes('EDICIÓN DEMOSTRATIVA')));
+  assert.equal(JSON.stringify(e), original);
+});
+
+test('los tamaños de sección son opcionales, se validan y cambian la composición', async () => {
+  const e = edicionNueva(4), b = bloqueNuevo('columnas');
+  b.tituloSeccion = 'Título sección'; b.introduccion = 'Introducción'; e.bloques = [b];
+  const original = (await componerEdicion(e))[0].operaciones;
+  b.tamanoTituloSeccion = 'grande'; b.tamanoIntroduccion = 'pequeno';
+  assert.doesNotThrow(() => validarEdicion(e));
+  const nuevo = (await componerEdicion(e))[0].operaciones;
+  assert.notEqual(original.find(o => o.texto === 'Título sección').fuente, nuevo.find(o => o.texto === 'Título sección').fuente);
+  assert.notEqual(original.find(o => o.texto === 'Introducción').fuente, nuevo.find(o => o.texto === 'Introducción').fuente);
+  b.tamanoIntroduccion = 'ilegal'; assert.throws(() => validarEdicion(e));
+});
