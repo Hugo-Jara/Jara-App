@@ -38,7 +38,7 @@ button { font-family: inherit; }
 .barra-texto { flex: 1; min-width: 0; }
 .barra-nombre { font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--red); }
 .barra-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.btn-salir { background: none; border: 1px solid var(--border); color: var(--text-dim); font-size: 12px; padding: 8px 14px; border-radius: 100px; cursor: pointer; }
+.btn-salir { background: none; border: 1px solid var(--border); color: var(--text-dim); font-size: 12px; padding: 11px 14px; border-radius: 100px; cursor: pointer; }
 .btn-salir:active { background: var(--bg-card-alt); }
 
 /* Cuenta de prueba (Ver como) */
@@ -157,7 +157,7 @@ a.btn { text-decoration: none; }
 .vence { display: inline-block; margin-left: 8px; padding: 3px 8px; border-radius: 100px; background: rgba(198, 54, 43, 0.2); color: var(--rose); letter-spacing: 0.02em; }
 .vence.grande { margin: 0 0 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; }
 
-.volver { display: inline-block; color: var(--gold); font-size: 14px; font-weight: 600; margin-bottom: 14px; padding: 4px 0; }
+.volver { display: inline-block; color: var(--gold); font-size: 14px; font-weight: 600; margin-bottom: 6px; padding: 12px 12px 12px 0; }
 .articulo { margin-bottom: 28px; }
 .nota-titulo { font-size: 19px; line-height: 1.25; margin: 0 0 12px; font-weight: 700; }
 .nota-texto { font-size: 15.5px; line-height: 1.6; margin: 12px 0 0; white-space: pre-line; }
@@ -541,7 +541,7 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 /* Estadísticas: ordenar, ver todos (0025) */
 .orden-fila { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
 .orden-titulo { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); margin-right: 2px; }
-.chip.chico { min-height: 34px; padding: 0 12px; font-size: 13px; }
+.chip.chico { min-height: 38px; padding: 0 12px; font-size: 13px; }
 .ver-todos { display: block; margin: 10px auto 6px; font-size: 14px; }
 
 /* Partidos ya jugados por plantel, con racha */
@@ -677,7 +677,7 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 
 /* Tabla de posiciones: pestañas (Grupo A / General) y pantallazo (0036) */
 .posiciones-pestanas { display: flex; gap: 4px; margin: 0 0 12px; border-bottom: 1px solid var(--border); overflow-x: auto; }
-.posiciones-pestanas button { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); font: inherit; font-size: 14px; font-weight: 600; padding: 8px 12px; cursor: pointer; white-space: nowrap; margin-bottom: -1px; }
+.posiciones-pestanas button { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-dim); font: inherit; font-size: 14px; font-weight: 600; padding: 11px 12px; cursor: pointer; white-space: nowrap; margin-bottom: -1px; }
 .posiciones-pestanas button.activa { color: var(--text); border-bottom-color: var(--red); }
 .posiciones-captura { margin: 12px 0 4px; }
 .aviso-captura { background: rgba(198, 161, 91, 0.12); border: 1px solid var(--gold-dim); color: var(--gold); font-size: 13px; padding: 8px 12px; border-radius: 10px; margin: 8px 0 0; }
@@ -751,7 +751,7 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .jugador-stats-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .jugador-stats-cabeza .item-que { margin: 0; }
 .segmentos.chicos { gap: 6px; }
-.segmentos.chicos .segmento { padding: 6px 10px; font-size: 13px; min-height: 0; }
+.segmentos.chicos .segmento { padding: 6px 10px; font-size: 13px; min-height: 38px; }
 .jugador-kpis { margin-bottom: 10px; }
 .jugador-kpis .kpi { padding: 12px; }
 .jugador-kpis .kpi-valor { font-size: 26px; font-variant-numeric: tabular-nums; }
@@ -762,7 +762,7 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .jugador-ultimos a { display: flex; align-items: center; gap: 12px; padding: 10px 0; color: var(--text); text-decoration: none; }
 .jugador-partido { flex: 1; min-width: 0; display: grid; gap: 2px; font-size: 14.5px; }
 .jugador-aporte { font-size: 13px; font-weight: 700; color: var(--gold); white-space: nowrap; }
-.jugador-ver-tabla { display: inline-block; margin-top: 14px; font-size: 13px; text-decoration: none; }
+.jugador-ver-tabla { display: inline-block; margin-top: 4px; padding: 10px 0; font-size: 13px; text-decoration: none; }
 .arco-marca { margin-left: auto; font-size: 14px; }
 .arco-recibidos { display: grid; gap: 8px; margin-top: 10px; }
 .arco-recibidos label { display: grid; grid-template-columns: 1fr 80px; align-items: center; gap: 10px; font-size: 14px; margin: 0; }
@@ -788,3 +788,11 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .noticias-lectura p { font-size: 17px; line-height: 1.55; margin: 0 0 16px; }
 .noticias-lectura article + article { border-top: 1px solid #d1bc9e; padding-top: 20px; }
 .noticias-lectura .noticias-lectura-categoria { font-size: 14px; }
+
+/* Detalles de la auditoría (nov 2026) */
+/* Los enlaces sueltos que son botones se tocan en un área más alta sin mover lo de alrededor. */
+button.enlace { padding: 10px 0; margin: -10px 0; }
+/* En el iPhone, una casilla con letra bajo 16px hace que Safari acerque la pantalla al tocarla. */
+@media (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']), select, textarea { font-size: 16px !important; }
+}
