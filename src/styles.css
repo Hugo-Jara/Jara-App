@@ -91,7 +91,7 @@ a.btn { text-decoration: none; }
 .ver-clave { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 12px 0 0; cursor: pointer; }
 .ver-clave input { width: 18px; height: 18px; padding: 0; margin: 0; flex: none; accent-color: var(--gold); }
 .ayuda-clave { font-size: 12px; color: var(--text-dim); margin: 8px 0 0; line-height: 1.4; }
-.ingreso .otra-forma { display: block; margin: 16px auto 0; font-size: 13.5px; text-align: center; }
+.ingreso .otra-forma { margin-top: 10px; font-size: 14px; }
 .nota { font-size: 12px; color: var(--text-dim); text-align: center; margin: 18px 0 0; line-height: 1.45; }
 
 /* Navegación inferior */
@@ -569,7 +569,7 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .jugaron legend { padding: 0; }
 .jugaron-cuenta { color: var(--gold); margin-left: 4px; }
 .jugaron-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin-top: 8px; }
-.jugaron-item { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 10px; margin: 0; border: 1px solid var(--border); border-radius: 12px; font-size: 14px; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.jugaron-item { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 10px; margin: 0; border: 1px solid var(--border); border-radius: 12px; font-size: 14px; line-height: 1.25; cursor: pointer; overflow-wrap: anywhere; }
 .jugaron-item.si { border-color: var(--gold); background: rgba(198, 161, 91, 0.12); }
 .jugaron-item input { width: 18px; height: 18px; margin: 0; flex: none; accent-color: var(--gold); }
 /* Perfil del jugador y planteles (0028) */

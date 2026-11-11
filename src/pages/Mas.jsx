@@ -13,14 +13,12 @@ export default function Mas() {
   const { persona } = useSesion();
   const veFondo = useAccesoFondo();
   const tesoreria = usePlantelesTesoreria();
-  const area = persona.club?.etiqueta_area || 'Ministerio';
   const FILAS = [
     { a: '/noticias', icono: 'noticias', nombre: 'Noticias', desc: 'Fotos, novedades y el boletín del club' },
     { a: '/cuota', icono: 'cuota', nombre: 'Mi cuota', desc: 'Tu estado de pago y las fechas que vienen' },
     { a: '/planteles', icono: 'jugadores', nombre: 'Planteles', desc: 'Los jugadores de cada plantel, con dorsal y posición' },
     { a: '/compras', icono: 'compras', nombre: 'Compras', desc: 'Pedir una compra con su cotización' },
-    { a: '/club', icono: 'asambleas', nombre: 'Asambleas', desc: 'Tabla, link al Meet y actas' },
-    { a: '/club', icono: 'club', nombre: `${area}s`, desc: 'Quién es quién y qué hace cada uno' },
+    // Asambleas y los ministerios vuelven a este menú cuando su pantalla exista (hoy /club está en construcción).
   ];
   // Solo para encargados y administradores.
   if (persona.esEncargado) {
