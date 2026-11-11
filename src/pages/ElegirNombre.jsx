@@ -122,6 +122,18 @@ function EnEspera({ solicitud, alCambiar }) {
   const url = `${window.location.origin}${BASE}ingresos`;
   const mensaje = `Hola, pedí entrar a la Jara App como ${solicitud.nombre}. ¿Me das el pase? 👉 ${url}`;
 
+  // Revisa sola cada 20 segundos y al volver a la app (por ejemplo desde
+  // WhatsApp): apenas lo aprueban, la app cambia de pantalla sin que apriete nada.
+  useEffect(() => {
+    const mirar = () => {
+      if (document.visibilityState !== 'visible') return;
+      recargarPersona().then(alCambiar).catch(() => {});
+    };
+    const reloj = setInterval(mirar, 20000);
+    document.addEventListener('visibilitychange', mirar);
+    return () => { clearInterval(reloj); document.removeEventListener('visibilitychange', mirar); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const revisar = async () => {
     setRevisando(true); setAviso('');
     await recargarPersona();
@@ -139,6 +151,7 @@ function EnEspera({ solicitud, alCambiar }) {
       <p className="respuesta" role="status">
         Falta que te den el pase.
         {solicitud.aprueban.length > 0 && <> Lo puede hacer {solicitud.aprueban.join(', ')}.</>}
+        {' '}Apenas te aprueben, entras: esta pantalla revisa sola.
       </p>
       <a className="btn" style={{ marginTop: 16 }} target="_blank" rel="noopener noreferrer"
          href={`https://wa.me/?text=${encodeURIComponent(mensaje)}`}>

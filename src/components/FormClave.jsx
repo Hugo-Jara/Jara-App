@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSesion } from '../lib/sesion.jsx';
+import { recordarClave } from '../lib/entrada.js';
 
 export const CLAVE_MINIMA = 8;
 
@@ -31,8 +32,9 @@ export default function FormClave({ alGuardar, textoBoton = 'Guardar contraseña
     setGuardando(true);
     const { error } = await ponerClave(clave);
     setGuardando(false);
-    if (error) setError(errorClave(error));
-    else alGuardar?.();
+    if (error) return setError(errorClave(error));
+    recordarClave();
+    alGuardar?.();
   };
 
   return (
