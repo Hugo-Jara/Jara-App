@@ -1,3 +1,4 @@
+import { guardarEdicion, publicarEdicion } from '../../lib/boletin.js';
 import { useEffect, useRef, useState } from 'react';
 import { agregarFotos, actualizarFoto, bloqueNuevo, moverFoto, nombreEdicion, quitarFoto, DISPOSICIONES_FOTO, FUENTES_BOLETIN, TIPOS_BLOQUE } from '../../lib/boletinDatos.js';
 import { guardarBorrador, leerFoto, respaldar } from '../../lib/boletinStorage.js';
@@ -57,8 +58,8 @@ function Distribucion({ nota, cambiar }) {
     <p className="noticias-ayuda">Si no caben en una página, la noticia continúa en la siguiente. Revisa el resultado en Vista previa.</p>
   </fieldset>;
 }
-export default function BoletinEditor({ inicial, salir }) {
-  const [edicion, setEdicion] = useState(inicial), [estado, setEstado] = useState('Guardado local'), [error, setError] = useState(''), [vista, setVista] = useState(false), [ocupado, setOcupado] = useState(false), [cargas, setCargas] = useState(0);
+export default function BoletinEditor({ inicial, salir, remoto = false }) {
+  const [edicion, setEdicion] = useState(inicial), [estado, setEstado] = useState(remoto ? 'Borrador editable' : 'Guardado local'), [error, setError] = useState(''), [vista, setVista] = useState(false), [ocupado, setOcupado] = useState(false), [cargas, setCargas] = useState(0);
   const cargasActivas = useRef(0), posicionEditor = useRef(0), ultimoAjuste = useRef(null);
   const [puedeDeshacer, setPuedeDeshacer] = useState(false);
   const cambiarVista = () => {
@@ -71,29 +72,29 @@ export default function BoletinEditor({ inicial, salir }) {
   const cambiar = fn => { setEdicion(prev => { const next = { ...fn(prev), modificada: new Date().toISOString() }; ultima.current = next; return next; }); setEstado('Cambios pendientes…'); };
   const guardar = e => {
     const rev = ++revision.current;
-    cola.current = cola.current.catch(() => {}).then(() => guardarBorrador(e)).then(() => { guardada.current = e; if (rev === revision.current && ultima.current === e) { setEstado('Guardado local'); setError(''); } }).catch(err => { setEstado('No se pudo guardar'); setError(`No pudimos guardar el borrador. Revisa el espacio y exporta un respaldo antes de salir. ${err.message}`); throw err; });
+    cola.current = cola.current.catch(() => {}).then(() => remoto ? guardarEdicion(e) : guardarBorrador(e)).then(() => { guardada.current = e; if (rev === revision.current && ultima.current === e) { setEstado(remoto ? 'Borrador guardado' : 'Guardado local'); setError(''); } }).catch(err => { setEstado('No se pudo guardar'); setError(`No pudimos guardar el borrador. Revisa la conexión y exporta un respaldo antes de salir. ${err.message}`); throw err; });
     return cola.current;
   };
-  useEffect(() => { const timer = setTimeout(() => { if (edicion !== guardada.current) guardar(edicion).catch(() => {}); }, 450); return () => clearTimeout(timer); }, [edicion]);
-  useEffect(() => { const avisar = ev => { if (ultima.current !== guardada.current || cargasActivas.current > 0) { ev.preventDefault(); ev.returnValue = ''; } }; window.addEventListener('beforeunload', avisar); return () => { window.removeEventListener('beforeunload', avisar); if (ultima.current !== guardada.current) guardar(ultima.current).catch(() => {}); }; }, []);
+  useEffect(() => { const timer = setTimeout(() => { if (!remoto && edicion !== guardada.current) guardar(edicion).catch(() => {}); }, 450); return () => clearTimeout(timer); }, [edicion]);
+  useEffect(() => { const avisar = ev => { if (ultima.current !== guardada.current || cargasActivas.current > 0) { ev.preventDefault(); ev.returnValue = ''; } }; window.addEventListener('beforeunload', avisar); return () => { window.removeEventListener('beforeunload', avisar); if (!remoto && ultima.current !== guardada.current) guardar(ultima.current).catch(() => {}); }; }, []);
   const volver = async () => { setOcupado(true); try { await guardar(ultima.current); salir(); } catch {} finally { setOcupado(false); } };
   const bloque = (id, fn) => cambiar(e => ({ ...e, bloques: e.bloques.map(b => b.id === id ? fn(b) : b) }));
   return <section className="noticias-boletin noticias-editor" lang="es-CL">
     <button className="enlace" disabled={ocupado || cargas > 0} onClick={volver}>← Guardar y volver a borradores</button>
     {cargas > 0 && <p className="noticias-ayuda" role="status">Espera a que terminen de cargar las fotografías para volver a los borradores.</p>}
-    <p className="noticias-etiqueta">EDITOR · BORRADOR EN ESTE NAVEGADOR</p><h2>{nombreEdicion(edicion)}</h2>
+    <p className="noticias-etiqueta">EDITOR · {remoto ? 'BORRADOR EN EL CLUB' : 'BORRADOR EN ESTE NAVEGADOR'}</p><h2>{nombreEdicion(edicion)}</h2>
     <p role="status" aria-live="polite">{estado} {estado === 'Guardado local' && `· ${new Date(edicion.modificada).toLocaleString('es-CL')}`}</p>
-    <p className="noticias-ayuda">No es una publicación oficial. Si borras los datos del navegador, perderás estos borradores y sus fotos. Guarda respaldos antes de cambiar de dispositivo. Evita editar la misma edición en dos pestañas.</p>
+    <p className="noticias-ayuda">{remoto ? 'Guardar borrador conserva tus cambios sin publicarlos. Publicar edición cambia lo que ven los socios. Evita editar en dos pestañas a la vez.' : 'No es una publicación oficial. Si borras los datos del navegador, perderás estos borradores y sus fotos. Guarda respaldos antes de cambiar de dispositivo. Evita editar la misma edición en dos pestañas.'}</p>
     {error && <p className="noticias-error" role="alert">{error}</p>}
-    <div className="noticias-herramientas"><button className="btn secundario" disabled={cargas > 0} onClick={cambiarVista}>{vista ? 'Volver a editar' : 'Vista previa y PNG'}</button><button className="btn secundario" onClick={() => respaldar(edicion)}>Exportar respaldo</button><button className="btn secundario" onClick={() => guardar(edicion).catch(() => {})}>Guardar borrador ahora</button></div>
+    <fieldset disabled={ocupado} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}><div className="noticias-herramientas"><button className="btn secundario" disabled={cargas > 0} onClick={cambiarVista}>{vista ? 'Volver a editar' : 'Vista previa y PNG'}</button><button className="btn secundario" onClick={() => respaldar(edicion)}>Exportar respaldo</button><button className="btn secundario" disabled={ocupado || cargas > 0} onClick={async () => { setOcupado(true); try { await guardar(edicion); } catch {} finally { setOcupado(false); } }}>Guardar borrador</button>{remoto && <button className="btn" disabled={ocupado || cargas > 0} onClick={async () => { setOcupado(true); setError(''); try { await cola.current.catch(() => {}); await publicarEdicion(edicion); guardada.current = edicion; setEstado('Edición publicada'); } catch(e) { setError(e.message); } finally { setOcupado(false); } }}>Publicar edición</button>}</div>
     {vista ? <BoletinVista edicion={edicion} local todas puedeDeshacer={puedeDeshacer} alVolverEditar={cambiarVista}
       alAplicar={propuesta => { const anteriores = Object.fromEntries(edicion.bloques.filter(b => propuesta.ids.includes(b.id)).map(b => [b.id, !!b.compacto])); ultimoAjuste.current = anteriores; setPuedeDeshacer(true); cambiar(e => ({ ...e, bloques: e.bloques.map(b => propuesta.ids.includes(b.id) ? { ...b, compacto: true } : b) })); }}
       alDeshacer={() => { const anteriores = ultimoAjuste.current || {}; cambiar(e => ({ ...e, bloques: e.bloques.map(b => Object.hasOwn(anteriores, b.id) ? { ...b, compacto: anteriores[b.id] } : b) })); ultimoAjuste.current = null; setPuedeDeshacer(false); }}
       alMarcar={(indice, firma) => cambiar(e => ({ ...e, paginasListas: [...(e.paginasListas || []).filter(p => p.indice !== indice), ...(firma ? [{ indice, firma }] : [])] }))} /> : <>
       <div className="noticias-metadatos">
-        <label className="noticias-campo">Número de boletín<input type="number" min="1" max="99999" value={edicion.numero} onChange={ev => cambiar(e => ({ ...e, numero: Math.max(1, Math.min(99999, Number(ev.target.value) || 1)) }))} /></label>
-        <p className="noticias-ayuda">Sugerencia local; no es una numeración oficial sincronizada.</p>
-        {[['nombre', 'Nombre de edición especial (opcional)', 90], ['periodo', 'Fecha o periodo', 70], ['resumen', 'Resumen de la edición', 500]].map(([campo, label, max]) => <label className="noticias-campo" key={campo}>{label}<input value={edicion[campo]} maxLength={max} onChange={ev => cambiar(e => ({ ...e, [campo]: ev.target.value }))} /></label>)}
+        <label className="noticias-campo">Número de boletín<input type="number" min="1" max="9999" value={edicion.numero} onChange={ev => cambiar(e => ({ ...e, numero: Math.max(1, Math.min(9999, Number(ev.target.value) || 1)) }))} /></label>
+        <p className="noticias-ayuda">{remoto ? 'El número debe estar disponible en el catálogo del club.' : 'Sugerencia local; no es una numeración oficial sincronizada.'}</p>
+        {[['nombre', 'Nombre de edición especial (opcional)', 90], ['periodo', 'Fecha o periodo', 60], ['resumen', 'Resumen de la edición', 500]].map(([campo, label, max]) => <label className="noticias-campo" key={campo}>{label}<input value={edicion[campo]} maxLength={max} onChange={ev => cambiar(e => ({ ...e, [campo]: ev.target.value }))} /></label>)}
         <label className="noticias-campo">Letra del boletín<select value={edicion.fuente || 'Georgia'} onChange={ev => { const fuente = ev.target.value; cambiar(e => ({ ...e, fuente })); }}>{Object.keys(FUENTES_BOLETIN).map(f => <option key={f} value={f}>{f}</option>)}</select></label>
       </div>
       {edicion.bloques.map((b, i) => <fieldset className="noticias-bloque-editor" key={b.id}><legend>{i + 1}. {TIPOS_BLOQUE[b.tipo]}</legend>
@@ -128,5 +129,6 @@ export default function BoletinEditor({ inicial, salir }) {
       </fieldset>)}
       <div className="noticias-agregar"><h3>Agregar bloque</h3><div className="noticias-tipos">{Object.entries(TIPOS_BLOQUE).map(([tipo, nombre]) => <button type="button" className="noticias-tipo" key={tipo} onClick={() => cambiar(e => ({ ...e, bloques: [...e.bloques, bloqueNuevo(tipo)] }))}><Esquema tipo={tipo}/><span><strong>+ {nombre}</strong><small>{DESCRIPCIONES[tipo]}</small></span></button>)}</div></div>
     </>}
+    </fieldset>
   </section>;
 }

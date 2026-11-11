@@ -24,6 +24,7 @@
     "test:pedidos": "node supabase/tests/pedidos.mjs",
     "test:boletin": "node --test tests/boletin.test.mjs tests/boletin-distribucion.test.mjs",
     "test:captura": "node --test tests/captura.test.mjs",
+    "test:boletin:publicacion:e2e": "node tests/boletin-publicacion-e2e.mjs",
     "test:boletin:e2e": "node tests/boletin-e2e.mjs"
   },
   "dependencies": {

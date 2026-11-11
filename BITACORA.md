@@ -4,6 +4,19 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-11 · El Jara Informa conectado a publicación
+
+- La app usa las RPC de 0050 para guardar borradores, publicar, retirar, republicar y eliminar con el número de la edición. Guardar y publicar son acciones separadas; una subida fallida no reemplaza la versión publicada.
+- Fotos en el bucket privado, contenido editable con rutas y páginas PNG en carpetas de versión nueva. La publicación confirma todas las páginas antes de cambiar lo que ven los socios; elimina la carpeta anterior después. Para eliminar una edición retirada o un borrador se borran primero sus archivos.
+- Noticias obtiene el catálogo de la base y lee los PNG publicados; la lectura móvil usa la copia publicada. Inicio consulta la última edición publicada. Estados de carga, vacío, error y reintento; la demo conserva su catálogo y almacenamiento local.
+- «Subir edición anterior» valida PNG, ordena sus nombres numéricamente y permite cambiar el orden antes de publicar. Las históricas retiradas se pueden republicar. Se pueden importar respaldos del editor local.
+- En lectura móvil el título de sección mide 30–36 px, por encima de los titulares de noticia (26 px).
+- Sin cambios en `supabase/`, sesión ni permisos.
+
+**Comprobado:** build, `test:db`, `test:pedidos` (274), `test:boletin` (23), recorrido demo en Chromium (16 pasos en tamaños iPhone y Pixel), y `test:boletin:publicacion:e2e` con RPC/Storage simulados (guardar sin publicar, subida fallida y reintento, publicación, retirar/republicar, confirmación de eliminación, PNG históricos y orden, catálogo/lector/última edición y jerarquía móvil). Las pruebas de navegador aceptan `CHROMIUM_PATH` para usar Chromium instalado. No se probó contra el Supabase del club.
+
+---
+
 ## 2026-11-11 · El Jara Informa: base para publicar ediciones (0050)
 
 - Migración `0050_boletin_publicar.sql`: tabla `boletin_ediciones` y bucket privado `boletin` (fotos del borrador en `<edición>/fotos/`, páginas en `<edición>/v<versión>/pagina-NN.png`).

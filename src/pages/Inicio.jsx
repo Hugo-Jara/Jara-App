@@ -1,3 +1,5 @@
+import { UltimoBoletin } from '../components/boletin/BoletinReal.jsx';
+import { esDemo } from '../lib/supabase.js';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
@@ -229,6 +231,7 @@ export default function Inicio() {
       <p className="subtitulo">Esto es lo que viene en el Jara.</p>
       {persona.esEncargado && <PasesPendientes />}
       <HonorariosPorPagar persona={persona} />
+      {!esDemo && <UltimoBoletin />}
       {partidos.cargando
         ? <section className="card accion"><p className="vacio">Cargando tus partidos…</p></section>
         : partidos.mios.length
