@@ -7,7 +7,13 @@ import { guardarMiApodo } from './apodos.js';
 export const POSICIONES = [
   ['arquero', 'Arquero'], ['defensa', 'Defensa'], ['lateral', 'Lateral'],
   ['volante', 'Volante'], ['delantero', 'Delantero'],
+  // Cuerpo técnico (0048): es solo cómo se muestra, no da permisos.
+  ['dt', 'DT'], ['ayudante', 'Ayudante técnico'],
 ];
+export const POSICIONES_TECNICAS = ['dt', 'ayudante'];
+// ¿Se muestra como cuerpo técnico? Por su posición o porque el administrador
+// le dio el permiso de cuerpo técnico (0033).
+export const esTecnico = (perfil) => POSICIONES_TECNICAS.includes(perfil?.posicion) || !!perfil?.cuerpo_tecnico;
 export const PIES = [['derecho', 'Derecho'], ['izquierdo', 'Izquierdo'], ['ambos', 'Ambos']];
 export const nombrePosicion = (v) => POSICIONES.find(([k]) => k === v)?.[1] ?? '';
 // '@usuario' o el link completo → 'usuario' (la base hace lo mismo, 0030).
@@ -23,13 +29,14 @@ const DEMO = {
   demo: { id: 'demo', nombre: 'Seba', apodo: null, estado: 'activo', propio: true, puedo_cargar: true,
           foto_ruta: null, instagram: 'club.hugojara.demo', posicion: 'volante', pie: 'derecho', cumple: '03-14', nacimiento: '1990-03-14',
           muestra_fisico: false, estatura_cm: 178, peso_kg: null, telefono: '+56 9 0000 0000', correo: 'demo@correo.cl',
-          planteles: [{ id: 'e-sabado', nombre: 'Senior Sábado', dorsal: 8 }] },
+          planteles: [{ id: 'e-sabado', nombre: 'Senior Sábado', dorsal: 8 }], dirige: [] },
 };
 const PLANTELES_DEMO = [
   { id: 'e-sabado', nombre: 'Senior Sábado', jugadores: [
     { id: 'demo', nombre: 'Seba', posicion: 'volante', dorsal: 8 },
     { id: 'd2', nombre: 'Jugador Inventado', apodo: 'el Muro', posicion: 'defensa', dorsal: 4 },
     { id: 'd3', nombre: 'Arquero Inventado', posicion: 'arquero', dorsal: 1 },
+    { id: 'd-Profe', nombre: 'Profe Inventado', posicion: 'dt' },
   ] },
   { id: 'e-jueves', nombre: 'Senior Jueves', jugadores: [{ id: 'd4', nombre: 'Delantero Inventado', posicion: 'delantero', dorsal: 9 }] },
 ];
@@ -40,7 +47,10 @@ export async function leerPerfil(id = null) {
     if (p) return structuredClone(p);
     const j = PLANTELES_DEMO.flatMap((e) => e.jugadores.map((x) => ({ ...x, equipo: e }))).find((x) => x.id === id);
     if (!j) throw new Error('No encontramos a esa persona en el club');
-    return { ...j, propio: false, puedo_cargar: true, planteles: [{ id: j.equipo.id, nombre: j.equipo.nombre, dorsal: j.dorsal }] };
+    const tecnico = POSICIONES_TECNICAS.includes(j.posicion);
+    return { ...j, propio: false, puedo_cargar: true, cuerpo_tecnico: tecnico,
+             planteles: [{ id: j.equipo.id, nombre: j.equipo.nombre, dorsal: j.dorsal }],
+             dirige: tecnico ? [{ id: j.equipo.id, nombre: j.equipo.nombre }] : [] };
   }
   return llamar('perfil_ver', { p_persona: id });
 }

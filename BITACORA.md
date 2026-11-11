@@ -14,6 +14,22 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-11 · Perfil del DT y partidos dirigidos
+
+**Para qué:** que el DT y el ayudante técnico tengan perfil propio, con su rol y su récord, y no solo lo de un jugador.
+
+**Qué se hizo** (migración `0048_perfil_dt.sql`, se corre antes del merge; toca el perfil, la revisa el administrador de la app):
+- **Posición:** se suman "DT" y "Ayudante técnico", en un grupo aparte ("Cuerpo técnico") del editor. Es solo cómo se muestra: no da permisos. El permiso de votar MVP sigue siendo `cuerpo_tecnico` (0033), que se da por SQL.
+- **Perfil del DT:** muestra su rol y los planteles que dirige ("DT · Senior Sábado"), esconde pie hábil y dorsal, y trae la ficha "Como DT": partidos dirigidos con G/E/P, rendimiento (puntos ganados de los posibles), goles a favor y en contra, vallas invictas, récord por plantel, goleador y jugador del partido más repetido en sus partidos, y los últimos 5 resultados. Este año o histórico. Si además jugó algún partido, sus números de jugador salen aparte.
+- **¿Quién dirigió?:** al anotar el resultado aparece con el cuerpo técnico del plantel ya marcado; quien anota desmarca al que no estuvo. El cuerpo técnico ya no viene marcado en "¿Quiénes jugaron?" la primera vez.
+- Partidos sin nadie marcado (los anteriores, o si se desmarca todo) cuentan como dirigidos para el cuerpo técnico del plantel: quien tiene `cuerpo_tecnico` o DT/Ayudante en su perfil y está en el plantel.
+- Base: tabla `partido_tecnicos` (cerrada al navegador), funciones `partido_banca`, `partido_banca_guardar`, `dt_cifras` y `es_tecnico_de` (interna); `perfil_guardar` acepta las posiciones nuevas y `perfil_ver` agrega `cuerpo_tecnico` y `dirige`.
+- Sin la 0048 corrida, la app sigue funcionando: no aparecen ¿Quién dirigió? ni la ficha del DT, y guardar DT como posición falla.
+
+**Comprobado:** `npm run test:db` pasa (25 pruebas nuevas en `supabase/tests/dt.mjs`), `npm run test:pedidos` y `npm run build` pasan, y se revisó en modo demostración (iPhone 13): perfil del DT, editor y ¿Quién dirigió?.
+
+---
+
 ## 2026-11-10 · Introducción para noticias en dos columnas
 
 - Agrega un título y una introducción opcionales a ancho completo antes de las noticias, con negrita, cursiva y subrayado. Se muestran en el PNG y en la lectura móvil y admiten borradores anteriores.

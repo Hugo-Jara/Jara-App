@@ -60,6 +60,9 @@ const base = {
   arcoGuardar: (partidoId, arqueros) => llamar('partido_arco_guardar', {
     p_partido: partidoId, p_arqueros: arqueros.map((a) => ({ persona_id: a.personaId, recibidos: a.recibidos })),
   }),
+  dt: (personaId, anio) => llamar('dt_cifras', { p_persona: personaId, p_anio: anio ?? null }),
+  banca: (partidoId) => llamar('partido_banca', { p_partido: partidoId }),
+  bancaGuardar: (partidoId, tecnicos) => llamar('partido_banca_guardar', { p_partido: partidoId, p_tecnicos: tecnicos }),
 };
 
 // --- Modo demostración: lo mismo, en memoria ------------------------------
@@ -134,6 +137,9 @@ let demo = [{
 // En demostración, quién tiene "Arquero" en su perfil y quién atajó en cada partido.
 const ARQUEROS_DEMO = ['demo', 'd-Nico'];
 const arcoDemo = {};
+// En demostración, el DT de Senior Sábado y quién dirigió cada partido.
+const TECNICOS_DEMO = { 'e-sabado': [{ id: 'd-Profe', nombre: 'Profe Inventado' }] };
+const bancaDemo = {};
 const EQUIPOS_DEMO = [{ id: 'e-jueves', nombre: 'Senior Jueves' }, { id: 'e-sabado', nombre: 'Senior Sábado' }, { id: 'e-junior', nombre: 'Junior Sábado' }];
 const enDemo = {
   cargar: async () => demo,
@@ -191,6 +197,30 @@ const enDemo = {
     return { pj: v.length, recibidos: v.reduce((t, n) => t + n, 0), invictas: v.filter((n) => n === 0).length, por_partido: por };
   },
   arco: async (partidoId) => ({ arqueros: structuredClone(arcoDemo[partidoId] ?? []), sugeridos: ARQUEROS_DEMO }),
+  dt: async (personaId, anio) => {
+    const mios = demo.filter((p) => tieneResultado(p) && (!anio || p.fecha.startsWith(String(anio))))
+      .filter((p) => (bancaDemo[p.id]?.length ? bancaDemo[p.id].includes(personaId)
+        : (TECNICOS_DEMO[p.equipoId] ?? []).some((t) => t.id === personaId)));
+    const cuenta = (f) => mios.filter(f).length;
+    const goles = {};
+    mios.forEach((p) => p.estadisticas.forEach((g) => { if (g.goles) goles[g.personaId] = { persona_id: g.personaId, nombre: g.nombre, goles: (goles[g.personaId]?.goles ?? 0) + g.goles }; }));
+    const goleador = Object.values(goles).sort((a, b) => b.goles - a.goles)[0] ?? null;
+    const porPlantel = [...new Set(mios.map((p) => p.equipoId))].map((id) => {
+      const ps = mios.filter((p) => p.equipoId === id);
+      return { id, nombre: ps[0].equipo, pj: ps.length, g: ps.filter((p) => signo(p) === 'G').length, e: ps.filter((p) => signo(p) === 'E').length, p: ps.filter((p) => signo(p) === 'P').length };
+    });
+    return {
+      pj: mios.length, g: cuenta((p) => signo(p) === 'G'), e: cuenta((p) => signo(p) === 'E'), p: cuenta((p) => signo(p) === 'P'),
+      gf: mios.reduce((t, p) => t + p.golesFavor, 0), gc: mios.reduce((t, p) => t + p.golesContra, 0),
+      invictas: cuenta((p) => p.golesContra === 0), por_plantel: porPlantel, partidos: mios.map((p) => p.id),
+      goleador, mvp: null,
+    };
+  },
+  banca: async (partidoId) => {
+    const p = demo.find((x) => x.id === partidoId);
+    return { tecnicos: [...(bancaDemo[partidoId] ?? [])], sugeridos: TECNICOS_DEMO[p?.equipoId] ?? [] };
+  },
+  bancaGuardar: async (partidoId, tecnicos) => { bancaDemo[partidoId] = [...tecnicos]; },
   arcoGuardar: async (partidoId, arqueros) => {
     const p = demo.find((x) => x.id === partidoId);
     arcoDemo[partidoId] = arqueros.length === 1 ? [{ ...arqueros[0], recibidos: p.golesContra }] : arqueros;
@@ -240,6 +270,12 @@ export const cifrasArquero = (personaId, anio) => origen.arquero(personaId, anio
 // Quién atajó en un partido ({ arqueros: [{personaId, recibidos}], sugeridos: [ids] }) y anotarlo.
 export const leerArco = (partidoId) => origen.arco(partidoId);
 export const guardarArco = (partidoId, arqueros) => origen.arcoGuardar(partidoId, arqueros);
+// Perfil del DT (0048): récord, goles a favor y en contra, vallas invictas, por
+// plantel, los ids de sus partidos, goleador y jugador del partido más repetido.
+export const cifrasDT = (personaId, anio) => origen.dt(personaId, anio);
+// ¿Quién dirigió? ({ tecnicos: [ids], sugeridos: [{id, nombre}] }) y anotarlo.
+export const leerBanca = (partidoId) => origen.banca(partidoId);
+export const guardarBanca = (partidoId, tecnicos) => origen.bancaGuardar(partidoId, tecnicos);
 
 export const tieneResultado = (p) => p.golesFavor != null && p.golesContra != null;
 

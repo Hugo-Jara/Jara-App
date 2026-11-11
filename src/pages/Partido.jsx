@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
-import { usePartidos, porEstado, sinResponder, recordatorioPartido, tieneResultado, textoResultado, leerArco, guardarArco } from '../lib/partidos.js';
+import { usePartidos, porEstado, sinResponder, recordatorioPartido, tieneResultado, textoResultado, leerArco, guardarArco, leerBanca, guardarBanca } from '../lib/partidos.js';
 import { fechaLarga, hoyIso } from '../lib/fechas.js';
 import RecordarPorWhatsApp from '../components/RecordarPorWhatsApp.jsx';
 import { complejoDe } from '../lib/complejos.js';
@@ -96,6 +96,27 @@ function Estadisticas({ partido }) {
 
 // ¿Quién atajó? (0046). Uno: se lleva todos los goles en contra. Dos (un tiempo
 // cada uno, o uno entró por el otro): se anota cuántos recibió cada uno.
+// ¿Quién dirigió? (0048): viene marcado con el cuerpo técnico del plantel.
+function QuienDirigio({ banca, tecnicos, setTecnicos }) {
+  const lista = banca.sugeridos;
+  if (!lista.length) return null;
+  const alternar = (id) => setTecnicos(tecnicos.includes(id) ? tecnicos.filter((x) => x !== id) : [...tecnicos, id]);
+  return (
+    <fieldset className="jugaron">
+      <legend className="sobretitulo">¿Quién dirigió?</legend>
+      <p className="ayuda">Viene marcado el cuerpo técnico del plantel. Desmarca al que no estuvo: cuenta para los partidos dirigidos de su perfil.</p>
+      <div className="jugaron-lista">
+        {lista.map((t) => (
+          <label key={t.id} className={`jugaron-item ${tecnicos.includes(t.id) ? 'si' : ''}`}>
+            <input type="checkbox" checked={tecnicos.includes(t.id)} onChange={() => alternar(t.id)} />
+            <NombreConApodo id={t.id} nombre={t.nombre} />
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
 function QuienAtajo({ arco, arqueros, setArqueros, contra, candidatos }) {
   const marcado = (id) => arqueros.some((a) => a.personaId === id);
   const alternar = (id) => setArqueros(marcado(id) ? arqueros.filter((a) => a.personaId !== id)
@@ -161,7 +182,21 @@ function Resultado({ partido, anotar }) {
     leerArco(partido.id).then((a) => { if (vigente) { setArco(a); setArqueros(a.arqueros); } }, () => {});
     return () => { vigente = false; };
   }, [partido.id]);
+  // ¿Quién dirigió? (0048). Igual: sin la migración, no se muestra.
+  const [banca, setBanca] = useState(null);
+  const [tecnicos, setTecnicos] = useState([]);
+  useEffect(() => {
+    let vigente = true;
+    leerBanca(partido.id).then((b) => { if (vigente) { setBanca(b); setTecnicos(b.tecnicos); } }, () => {});
+    return () => { vigente = false; };
+  }, [partido.id]);
   const abrir = () => {
+    if (banca) {
+      const ids = banca.sugeridos.map((t) => t.id);
+      // La primera vez viene marcado todo el cuerpo técnico, y no cuenta como que jugó.
+      setTecnicos(banca.tecnicos.length ? banca.tecnicos : ids);
+      if (!hay) setJugaron(new Set([...jugaron].filter((id) => !ids.includes(id))));
+    }
     // Si nadie está marcado y jugó un solo arquero (por su perfil), viene marcado.
     if (arco && !arco.arqueros.length) {
       const jugo = arco.sugeridos.filter((id) => jugaron.has(id));
@@ -201,6 +236,7 @@ function Resultado({ partido, anotar }) {
         await guardarArco(partido.id, marcados);
         setArco({ ...arco, arqueros: marcados });
       }
+      if (banca) { await guardarBanca(partido.id, tecnicos); setBanca({ ...banca, tecnicos }); }
       setEditando(false);
     } catch (x) { setError(x.message); }
     setGuardando(false);
@@ -210,6 +246,7 @@ function Resultado({ partido, anotar }) {
     try {
       await anotar(partido.id, null, null, []);
       if (arco) { await guardarArco(partido.id, []); setArco({ ...arco, arqueros: [] }); setArqueros([]); }
+      if (banca) { await guardarBanca(partido.id, []); setBanca({ ...banca, tecnicos: [] }); setTecnicos([]); }
       setFavor(''); setContra(''); setFilas([]); setEditando(false);
     }
     catch (x) { setError(x.message); }
@@ -233,6 +270,13 @@ function Resultado({ partido, anotar }) {
                 <span key={a.personaId}>{i > 0 && (i === arco.arqueros.length - 1 ? ' y ' : ', ')}
                   <NombreConApodo id={a.personaId} nombre={convocables.find((j) => j.id === a.personaId)?.nombre ?? ''} enlace />
                   {arco.arqueros.length > 1 && ` (${a.recibidos === 0 ? 'valla invicta' : `recibió ${a.recibidos}`})`}
+                </span>
+              ))}.</p>
+            )}
+            {banca?.tecnicos.length > 0 && (
+              <p className="ayuda abajo">Dirigió: {banca.tecnicos.map((id, i) => (
+                <span key={id}>{i > 0 && (i === banca.tecnicos.length - 1 ? ' y ' : ', ')}
+                  <NombreConApodo id={id} nombre={banca.sugeridos.find((t) => t.id === id)?.nombre ?? convocables.find((j) => j.id === id)?.nombre ?? ''} enlace />
                 </span>
               ))}.</p>
             )}
@@ -271,6 +315,8 @@ function Resultado({ partido, anotar }) {
           </div>
         </fieldset>
       )}
+
+      {banca && <QuienDirigio banca={banca} tecnicos={tecnicos} setTecnicos={setTecnicos} />}
 
       {arco && <QuienAtajo arco={arco} arqueros={arqueros} setArqueros={setArqueros} contra={contra}
                            candidatos={convocables.filter((j) => jugaron.has(j.id) || arqueros.some((a) => a.personaId === j.id))} />}
