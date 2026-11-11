@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-11 · Compras: subir comprobante o boleta a una lista cerrada
+
+- Causa: Storage solo dejaba subir archivos a la carpeta de una lista **abierta** (reglas de 0006 y 0017), pero Compras muestra también las solicitudes de listas cerradas. Hacienda veía "Entregar con comprobante" en una compra aprobada de una lista cerrada y el archivo se rechazaba con "No se pudo subir el archivo".
+- Migración `0049_subir_a_lista_cerrada.sql`: a una lista cerrada (no archivada) de su club, Hacienda puede subir comprobantes y boletas, y quien pidió una compra con la plata entregada puede subir su boleta. Las listas abiertas siguen igual.
+- La app corrige fotos sin tipo o en formatos que Storage no acepta (HEIF, GIF, AVIF...) pasándolas a JPEG, y el aviso de error ahora dice si fue el formato, el peso, el permiso o la conexión.
+
+**Comprobado:** `npm run test:db` (8 pruebas nuevas de 0049), `npm run test:pedidos` y `npm run build` pasan.
+
+---
+
 ## 2026-11-10 · Introducción para noticias en dos columnas
 
 - Agrega un título y una introducción opcionales a ancho completo antes de las noticias, con negrita, cursiva y subrayado. Se muestran en el PNG y en la lectura móvil y admiten borradores anteriores.
