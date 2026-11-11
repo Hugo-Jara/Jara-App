@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import {
-  POSICIONES, PIES, nombrePosicion, limpiarInstagram, nombrePie, textoCumple,
+  POSICIONES, POSICIONES_TECNICAS, esTecnico, PIES, nombrePosicion, limpiarInstagram, nombrePie, textoCumple,
   leerPerfil, guardarPerfil, urlsDeFotos, subirMiFoto, quitarMiFoto,
 } from '../lib/perfil.js';
 import FotoJugador from '../components/FotoJugador.jsx';
 import MisFotos from '../components/MisFotos.jsx';
 import FotosDelJugador from '../components/FotosDelJugador.jsx';
 import EstadisticasJugador from '../components/EstadisticasJugador.jsx';
+import EstadisticasDT from '../components/EstadisticasDT.jsx';
 
 // /perfil es el mío; /perfil/:id el de otro. Cada uno edita su foto, apodo,
 // dorsal, posición, pie, fecha de nacimiento, estatura y peso. El tesorero y el
@@ -60,10 +61,19 @@ export default function Perfil() {
   if (error) return <>{volver}<p className="error" role="alert">{error}</p></>;
   if (!perfil) return <>{volver}<p className="vacio suelto">Cargando…</p></>;
 
-  const dorsales = perfil.planteles.filter((e) => e.dorsal);
+  // DT y ayudante técnico (0048): sus planteles como cuerpo técnico y su
+  // récord; lo de jugador (pie, dorsal) solo si lo tiene.
+  const tecnico = esTecnico(perfil);
+  const rolTecnico = POSICIONES_TECNICAS.includes(perfil.posicion) ? nombrePosicion(perfil.posicion) : 'Cuerpo técnico';
+  const dirige = tecnico ? (perfil.dirige?.length ? perfil.dirige : perfil.planteles) : [];
+  const etiquetas = [
+    ...dirige.map((e) => ({ id: `t-${e.id}`, texto: `${rolTecnico} · ${e.nombre}` })),
+    ...perfil.planteles.filter((e) => !tecnico || e.dorsal || !dirige.some((x) => x.id === e.id))
+      .map((e) => ({ id: e.id, texto: `${e.dorsal ? `#${e.dorsal} · ` : ''}${e.nombre}` })),
+  ];
   const datos = [
-    ['Posición', nombrePosicion(perfil.posicion)],
-    ['Pie hábil', nombrePie(perfil.pie)],
+    [tecnico ? 'Rol' : 'Posición', tecnico ? rolTecnico : nombrePosicion(perfil.posicion)],
+    ['Pie hábil', !tecnico && nombrePie(perfil.pie)],
     ['Cumpleaños', textoCumple(perfil.cumple)],
     ['Estatura', perfil.estatura_cm && `${(perfil.estatura_cm / 100).toFixed(2).replace('.', ',')} m`],
     ['Peso', perfil.peso_kg && `${perfil.peso_kg} kg`],
@@ -79,11 +89,9 @@ export default function Perfil() {
         <FotoJugador nombre={perfil.nombre} url={foto} tamano={112} />
         <h1 className="titulo display perfil-nombre">{perfil.nombre}</h1>
         {perfil.apodo && <p className="apodo perfil-apodo">{perfil.apodo}</p>}
-        {(dorsales.length > 0 || perfil.planteles.length > 0) && (
+        {etiquetas.length > 0 && (
           <div className="perfil-planteles">
-            {perfil.planteles.map((e) => (
-              <span key={e.id} className="etiqueta">{e.dorsal ? `#${e.dorsal} · ` : ''}{e.nombre}</span>
-            ))}
+            {etiquetas.map((e) => <span key={e.id} className="etiqueta">{e.texto}</span>)}
           </div>
         )}
         {perfil.propio && (
@@ -109,14 +117,16 @@ export default function Perfil() {
           )}
           {perfil.puedo_cargar && (
             <button type="button" className="btn secundario" style={{ marginTop: 16 }} onClick={() => setEditando(true)}>
-              {perfil.propio ? 'Editar mi perfil' : 'Cargar dorsal, posición y pie'}
+              {perfil.propio ? 'Editar mi perfil' : tecnico ? 'Cargar su rol' : 'Cargar dorsal, posición y pie'}
             </button>
           )}
         </div>
       )}
 
       {/* Sus números del club: partidos, goles, asistencias, jugador del partido. */}
-      {!editando && <EstadisticasJugador perfil={perfil} />}
+      {/* Al DT: su récord como DT y, si además jugó, sus números de jugador. */}
+      {!editando && tecnico && <EstadisticasDT perfil={perfil} />}
+      {!editando && <EstadisticasJugador perfil={perfil} soloSiJugo={tecnico} />}
 
       {editando && (
         <Editor perfil={perfil} onListo={async () => { setEditando(false); await cargar(); }} onCancelar={() => setEditando(false)} />
@@ -155,6 +165,11 @@ function Editor({ perfil, onListo, onCancelar }) {
   }));
   const [estado, setEstado] = useState({ ocupado: false, error: '' });
   const poner = (k, v) => setF((x) => ({ ...x, [k]: v }));
+  const tecnico = POSICIONES_TECNICAS.includes(f.posicion);
+  const chipsPosicion = (lista) => lista.map(([k, t]) => (
+    <button key={k} type="button" role="radio" aria-checked={f.posicion === k}
+            className={`chip ${f.posicion === k ? 'activo' : ''}`} onClick={() => poner('posicion', f.posicion === k ? '' : k)}>{t}</button>
+  ));
 
   const guardar = async (e) => {
     e.preventDefault();
@@ -202,7 +217,7 @@ function Editor({ perfil, onListo, onCancelar }) {
         </div>
       )}
 
-      {perfil.planteles.length > 0 && (
+      {perfil.planteles.length > 0 && !tecnico && (
         <div className="campo">
           <span className="campo-etiqueta">Dorsal</span>
           <div className="perfil-dorsales">
@@ -220,14 +235,16 @@ function Editor({ perfil, onListo, onCancelar }) {
       <div className="campo">
         <span className="campo-etiqueta">Posición</span>
         <div className="chips" role="radiogroup" aria-label="Posición" style={{ marginTop: 0 }}>
-          {POSICIONES.map(([k, t]) => (
-            <button key={k} type="button" role="radio" aria-checked={f.posicion === k}
-                    className={`chip ${f.posicion === k ? 'activo' : ''}`} onClick={() => poner('posicion', f.posicion === k ? '' : k)}>{t}</button>
-          ))}
+          {chipsPosicion(POSICIONES.filter(([k]) => !POSICIONES_TECNICAS.includes(k)))}
         </div>
+        <span className="campo-etiqueta" style={{ marginTop: 12 }}>Cuerpo técnico</span>
+        <div className="chips" role="radiogroup" aria-label="Cuerpo técnico" style={{ marginTop: 0 }}>
+          {chipsPosicion(POSICIONES.filter(([k]) => POSICIONES_TECNICAS.includes(k)))}
+        </div>
+        {tecnico && <p className="item-meta" style={{ marginTop: 8 }}>En el perfil sale su récord como DT. Si algún día juega, sus números de jugador aparecen aparte.</p>}
       </div>
 
-      <div className="campo">
+      {!tecnico && <div className="campo">
         <span className="campo-etiqueta">Pie hábil</span>
         <div className="segmentos" role="radiogroup" aria-label="Pie hábil">
           {PIES.map(([k, t]) => (
@@ -235,7 +252,7 @@ function Editor({ perfil, onListo, onCancelar }) {
                     className={`segmento ${f.pie === k ? 'activo duda' : ''}`} onClick={() => poner('pie', f.pie === k ? '' : k)}>{t}</button>
           ))}
         </div>
-      </div>
+      </div>}
 
       {propio && (
         <>

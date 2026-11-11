@@ -22,7 +22,8 @@ function puesto(lista, id, clave) {
 const ordinal = (n) => `${n}º`;
 const promedio = (a, b) => (b ? (a / b).toFixed(2).replace('.', ',') : '0');
 
-export default function EstadisticasJugador({ perfil }) {
+// soloSiJugo: al DT se le muestra solo si tiene algo anotado como jugador.
+export default function EstadisticasJugador({ perfil, soloSiJugo = false }) {
   const { persona } = useSesion();
   const { jugados } = usePartidos(persona);
   const anioActual = Number(hoyIso().slice(0, 4));
@@ -84,6 +85,7 @@ export default function EstadisticasJugador({ perfil }) {
     ] : []),
   ] : [];
 
+  if (soloSiJugo && (!datos || sinNada)) return null;
   return (
     <section className="card jugador-stats" aria-label="Estadísticas">
       <div className="jugador-stats-cabeza">
