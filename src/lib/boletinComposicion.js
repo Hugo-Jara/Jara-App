@@ -5,7 +5,7 @@ export const ANCHO = 1280;
 export const ALTO = 1600;
 const INICIO = 270, FIN = 1460, MARGEN = 46;
 const cargar = async src => { const i = new Image(); i.src = src; await i.decode(); return i; };
-export async function componerEdicion(e) {
+export async function componerEdicion(e, { demostrativa = true } = {}) {
   const recursos = new Map();
   const escudo = await cargar(`${import.meta.env?.BASE_URL || "/"}escudo.jpg`);
   for (const b of e.bloques) for (const n of b.notas) for (const f of n.fotos) if (f.src && !recursos.has(f.src)) recursos.set(f.src, await cargar(f.src));
@@ -204,13 +204,16 @@ export async function componerEdicion(e) {
     if (!b.tituloSeccion?.trim() && !b.introduccion?.trim()) return posicion;
     let { p, y } = posicion;
     const ancho = ANCHO - 2 * MARGEN, familia = `"${e.fuente || 'Georgia'}"`;
-    const fuenteTitulo = `bold 39px ${familia}`;
+    const factores = { auto: 1, pequeno: .85, mediano: 1, grande: 1.15 };
+    const pxTitulo = Math.round(39 * (factores[b.tamanoTituloSeccion || 'auto'] || 1));
+    const saltoTitulo = Math.ceil(pxTitulo * 1.15), fuenteTitulo = `bold ${pxTitulo}px ${familia}`;
     const titulo = lineas(b.tituloSeccion || '', ancho, fuenteTitulo);
-    if (titulo.length * 45 + 110 > FIN - INICIO) throw new Error('El título de la sección es demasiado largo.');
-    if (y + titulo.length * 45 + 110 > FIN) { p++; y = INICIO; }
-    texto(p, MARGEN, y, titulo, fuenteTitulo, 45); y += titulo.length * 45 + (titulo.length ? 18 : 0);
+    if (titulo.length * saltoTitulo + 110 > FIN - INICIO) throw new Error('El título de la sección es demasiado largo.');
+    if (y + titulo.length * saltoTitulo + 110 > FIN) { p++; y = INICIO; }
+    texto(p, MARGEN, y, titulo, fuenteTitulo, saltoTitulo); y += titulo.length * saltoTitulo + (titulo.length ? 18 : 0);
     const contenido = b.introduccion || '', tramos = dividirFormato(contenido, b.formatosIntroduccion || []);
-    const tamanio = compactoActual ? 23 : 27, salto = Math.ceil(tamanio * 1.34);
+    const modoTexto = b.tamanoIntroduccion || 'auto';
+    const tamanio = Math.round(27 * (modoTexto === 'auto' && compactoActual ? .85 : factores[modoTexto] || 1)), salto = Math.ceil(tamanio * 1.34);
     for (const parrafo of [...contenido.matchAll(/[^\n]+/g)].filter(m => m[0].trim())) {
       const palabras = [...parrafo[0].matchAll(/\S+/g)].map(m => {
         const inicio = parrafo.index + m.index, fin = inicio + m[0].length;
@@ -325,7 +328,7 @@ export async function componerEdicion(e) {
     centrado('EL JARA INFORMA', 79, 'bold 88px Georgia');
     centrado('BOLETÍN · CLUB DEPORTIVO HUGO JARA', 178, 'bold 26px Arial', '#a92520');
     dibujarTexto('CLUB DEPORTIVO HUGO JARA', 46, 226, 'bold 18px Arial');
-    c.font = 'bold 18px Arial'; const leyenda = 'TODOS JUEGAN · EDICIÓN DEMOSTRATIVA';
+    c.font = 'bold 18px Arial'; const leyenda = demostrativa ? 'TODOS JUEGAN · EDICIÓN DEMOSTRATIVA' : 'TODOS JUEGAN';
     dibujarTexto(leyenda, 1234 - c.measureText(leyenda).width, 226, 'bold 18px Arial', '#a92520');
     c.fillStyle = '#17130f'; c.fillRect(46, 252, 1188, 2);
     for (const op of ops) {
