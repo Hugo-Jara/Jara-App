@@ -4,6 +4,19 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-12 · Tesorería: importar la planilla común con un botón (0052)
+
+**Para qué:** los tesoreros prefieren seguir llevando su plantel en la planilla común. La planilla pasa a mandar y la app la importa cuando el tesorero quiere.
+
+- **Botón "Importar planilla"** en Tesorería (`src/components/ImportarPlanilla.jsx`): el tesorero sube el .xlsx (de Excel o descargado de Google Sheets), la app elige la pestaña de su plantel y lee la hoja "Cuotas". El archivo se lee en el aparato, sin librerías (`src/lib/planilla.js`).
+- **Vista previa antes de guardar:** quién calza, quién es nuevo, qué cambia en cada fila, qué filas no se importan y por qué, y quién ya no está en la planilla (con casilla para darlo de baja). Recién con "Confirmar importación" se guarda, todo o nada.
+- **Reglas (migración 0052, `tes_importar_planilla`):** el RUT es la llave y, si no calza, se busca por nombre; un RUT repetido o dos filas de la misma persona detienen la importación; nadie se borra solo; la planilla manda en condición, deuda anterior, pagado, contacto para cobrar, comentario y plan de cuotas; "Pagado" se reemplaza (se anula el pago de planilla anterior), así importar dos veces no duplica; apodo, fecha, RUT, celular y correo del perfil solo se llenan si están vacíos; no se crean personas sin RUT. Cada importación queda en `tes_importaciones`.
+- **Después de importar,** el plantel muestra que se lleva en la planilla y deja de permitir editar en la app condición, pagos, cuotas y sumar jugadores. Cargos extra y caja siguen en la app.
+
+**Comprobado:** `npm run test:db` (incluye `importar.mjs`, 39 pruebas nuevas) y `npm run build` pasan. Recorrido en modo demostración en iPhone 13 emulado con una planilla inventada: vista previa, baja, confirmar y ficha en solo lectura. El lector de .xlsx se probó también con la planilla real (sin guardar nada). No se probó contra el Supabase del club.
+
+---
+
 ## 2026-11-11 · Auditoría antes del lanzamiento: cerrar `perfiles` y `dorsales` (0051)
 
 - Migración `0051_cerrar_dorsales_y_perfiles.sql`: quita a las cuentas los permisos por defecto sobre las tablas `perfiles` y `dorsales`, las únicas que no los tenían quitados. Ya estaban protegidas por la seguridad por fila; esto las deja igual que el resto. La app no cambia.

@@ -251,9 +251,67 @@ const demo = {
 const NOMINA_DEMO = ['Hugo Inventado', 'Ismael Ficticio', 'Joaquín de Prueba'].map((nombre, i) => ({ id: `n${i}`, nombre }));
 const esperar = () => new Promise((r) => setTimeout(r, 150));
 
+// Importar en modo demostración: calza por nombre exacto; sin RUT, no entra.
+function importarDemo(d, { filas, plan, aporte, bajas, archivo, confirmar }) {
+  const sin = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  const pagadoDe = (id) => d.pagos.filter((g) => g.persona === id && g.medio === 'planilla' && !g.anulado).reduce((t, g) => t + g.monto, 0);
+  const res = filas.map((f) => {
+    const j = d.jugadores.find((x) => sin(x.nombre) === sin(f.nombre));
+    const estado = j ? 'calza' : f.rut ? 'nuevo' : 'sin_rut';
+    const cambios = [];
+    if (estado === 'nuevo') cambios.push('Se suma a la nómina y al plantel');
+    if (j && (j.tipo !== f.tipo || Number(j.descuento_pct) !== Number(f.descuento_pct))) cambios.push('Condición');
+    const antes = j ? pagadoDe(j.id) : 0;
+    if (estado !== 'sin_rut' && antes !== f.pagado) cambios.push(`Pagado: $${antes.toLocaleString('es-CL')} → $${f.pagado.toLocaleString('es-CL')}`);
+    return { f, j, estado, cambios, avisos: estado === 'sin_rut' ? ['Sin RUT y no calza con nadie de la app: no se importa'] : [] };
+  });
+  const fuera = d.jugadores.filter((j) => j.activo && !res.some((r) => r.j?.id === j.id)).map((j) => ({ id: j.id, nombre: j.nombre }));
+  const planCambia = !!plan && JSON.stringify(plan) !== JSON.stringify(d.cuotas);
+  const resumen = {
+    filas: res.length, calzan: res.filter((r) => r.estado === 'calza').length, nuevos: res.filter((r) => r.estado === 'nuevo').length,
+    con_cambios: res.filter((r) => r.estado !== 'sin_rut' && r.cambios.length).length,
+    no_se_importan: res.filter((r) => r.estado === 'sin_rut').length, fuera: fuera.length,
+    plan_cambia: planCambia, aporte_cambia: aporte != null && aporte !== Number(d.aporte_pct),
+  };
+  if (confirmar) {
+    for (const { f, j: existe, estado } of res) {
+      if (estado === 'sin_rut') continue;
+      let j = existe;
+      if (!j) {
+        j = { id: `n${++demo.sec}`, nombre: f.nombre, en_plantel: true, con_cuenta: false, apodo: null, rut: null, nacimiento: null };
+        d.jugadores.push(j);
+      }
+      Object.assign(j, {
+        activo: true, tipo: f.tipo, descuento_pct: f.descuento_pct, monto_especial: f.monto_especial, deuda_anterior: f.deuda_anterior,
+        telefono: f.telefono, correo: f.correo, comentario: f.comentario,
+        apodo: j.apodo ?? f.apodo, rut: j.rut ?? f.rut, nacimiento: j.nacimiento ?? f.nacimiento,
+      });
+      if (pagadoDe(j.id) !== f.pagado) {
+        d.pagos.forEach((g) => { if (g.persona === j.id && g.medio === 'planilla') g.anulado = true; });
+        if (f.pagado > 0) {
+          d.pagos.unshift({ id: ++demo.sec, persona: j.id, monto: f.pagado, fecha: hoyIso(), medio: 'planilla',
+                            nota: 'Pagado según la planilla común', anulado: false, registro: 'Tú' });
+        }
+      }
+    }
+    if (planCambia) d.cuotas = plan;
+    if (aporte != null) d.aporte_pct = aporte;
+    const deBaja = d.jugadores.filter((j) => (bajas ?? []).includes(j.id) && fuera.some((x) => x.id === j.id));
+    deBaja.forEach((j) => { j.activo = false; });
+    resumen.bajas = deBaja.length;
+    d.importacion = { hecha_en: new Date().toISOString(), archivo, por: 'Tú', resumen };
+  }
+  return {
+    confirmado: !!confirmar, errores: [], resumen, fuera,
+    filas: res.map((r) => ({ fila: r.f.fila, nombre: r.f.nombre, estado: r.estado, como: r.j ? 'nombre' : null,
+                             en_app: r.j?.nombre ?? null, cambios: r.cambios, avisos: r.avisos })),
+  };
+}
+
 const accionesDemo = (equipo) => {
   const d = () => demo.datos[equipo];
   return {
+    importarPlanilla: async (datos) => { await esperar(); return importarDemo(d(), datos); },
     guardarPlan: async (cuotas, aporte) => { await esperar(); Object.assign(d(), { cuotas, aporte_pct: aporte }); },
     guardarJugador: async (persona, todo) => {
       await esperar();
@@ -293,6 +351,10 @@ const accionesDemo = (equipo) => {
 };
 
 const accionesReales = (equipo, temporada) => ({
+  // Vista previa (confirmar = false) o importación (true) de la planilla común (0052).
+  importarPlanilla: ({ filas, plan, aporte, bajas, archivo, confirmar }) => llamar('tes_importar_planilla', {
+    p_equipo: equipo, p_temporada: temporada, p_filas: filas, p_plan: plan ?? null, p_aporte_pct: aporte ?? null,
+    p_bajas: bajas?.length ? bajas : null, p_archivo: archivo ?? null, p_confirmar: !!confirmar }),
   guardarPlan: (cuotas, aporte) => llamar('tes_guardar_plan', { p_equipo: equipo, p_temporada: temporada, p_cuotas: cuotas, p_aporte_pct: aporte }),
   // RUT y fecha de nacimiento van aparte (0029): al perfil, no a la temporada.
   guardarJugador: async (persona, { rut, nacimiento, ...datos }) => {
@@ -339,8 +401,12 @@ export function useTesoreria(equipo, temporada = TEMPORADA) {
     if (!equipo) return;
     try {
       const datos = esDemo
-        ? structuredClone({ editar: true, ...demo.datos[equipo] })
-        : await llamar('tes_ver', { p_equipo: equipo, p_temporada: temporada });
+        ? structuredClone({ editar: true, importacion: null, ...demo.datos[equipo] })
+        : await Promise.all([
+          llamar('tes_ver', { p_equipo: equipo, p_temporada: temporada }),
+          // Si la 0052 todavía no está corrida, se sigue como antes.
+          llamar('tes_ultima_importacion', { p_equipo: equipo, p_temporada: temporada }).catch(() => null),
+        ]).then(([v, importacion]) => ({ ...v, importacion }));
       setEstado({ cargando: false, error: '', datos });
     } catch (e) {
       setEstado({ cargando: false, error: e.message, datos: null });
@@ -351,7 +417,9 @@ export function useTesoreria(equipo, temporada = TEMPORADA) {
 
   const base = esDemo ? accionesDemo(equipo) : accionesReales(equipo, temporada);
   // Cada acción recarga al terminar, para que todos los números salgan de la base.
+  // Buscar y la vista previa de la planilla no cambian nada: no recargan.
   const acciones = Object.fromEntries(Object.entries(base).map(([k, f]) => [k, k === 'buscarPersonas' ? f : async (...a) => {
+    if (k === 'importarPlanilla' && !a[0]?.confirmar) return f(...a);
     const r = await f(...a);
     await cargar();
     return r;

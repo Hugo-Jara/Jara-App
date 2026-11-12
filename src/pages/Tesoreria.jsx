@@ -7,6 +7,7 @@ import {
 import { pesos } from '../lib/pedido.js';
 import { hoyIso } from '../lib/fechas.js';
 import { plural } from '../lib/texto.js';
+import ImportarPlanilla, { UltimaImportacion } from '../components/ImportarPlanilla.jsx';
 
 // Tesorería de cada plantel (Fase 5). El tesorero ve y edita solo su plantel;
 // Hacienda y los administradores, todos. La base rechaza a cualquier otra cuenta.
@@ -65,10 +66,12 @@ function Plantel({ equipo, nombre }) {
   if (t.error) return <p className="error">{t.error}</p>;
   const p = t.plantel;
   const editar = !!p.editar;
+  // Si el plantel se importa desde la planilla común, lo que la planilla pisa no se edita acá.
+  const fijo = !!p.importacion;
   const ficha = abierto && p.jugadores.find((j) => j.id === abierto);
 
   if (ficha) {
-    return <Ficha j={ficha} plantel={nombre} editar={editar} acciones={t.acciones} volver={() => setAbierto(null)} />;
+    return <Ficha j={ficha} plantel={nombre} editar={editar} fijo={fijo} acciones={t.acciones} volver={() => setAbierto(null)} />;
   }
 
   return (
@@ -85,8 +88,10 @@ function Plantel({ equipo, nombre }) {
       {!editar && (
         <p className="aviso-demo tes-solo-mirar">Estás en modo solo mirar: puedes ver todo, pero no cambiar cuotas, condiciones ni pagos. Las cuentas de prueba siempre entran así; para editar, entra con tu cuenta normal.</p>
       )}
+      <UltimaImportacion importacion={p.importacion} />
+      {editar && <ImportarPlanilla plantel={nombre} acciones={t.acciones} />}
       {p.cuotas.length === 0 && (
-        <p className="item-comentario">Todavía no hay cuotas para esta temporada. {editar ? 'Parte por la pestaña Cuotas.' : ''}</p>
+        <p className="item-comentario">Todavía no hay cuotas para esta temporada. {editar ? 'Importa la planilla o parte por la pestaña Cuotas.' : ''}</p>
       )}
       <div className="filtros" role="tablist" aria-label="Secciones">
         {VISTAS.map((v) => (
@@ -94,9 +99,9 @@ function Plantel({ equipo, nombre }) {
                   className={`filtro${vista === v.id ? ' activo' : ''}`} onClick={() => setVista(v.id)}>{v.nombre}</button>
         ))}
       </div>
-      {vista === 'jugadores' && <Jugadores p={p} nombre={nombre} editar={editar} acciones={t.acciones} abrir={setAbierto} />}
+      {vista === 'jugadores' && <Jugadores p={p} nombre={nombre} editar={editar} fijo={fijo} acciones={t.acciones} abrir={setAbierto} />}
       {vista === 'cobrar' && <Cobrar p={p} nombre={nombre} abrir={setAbierto} />}
-      {vista === 'cuotas' && <Cuotas p={p} editar={editar} acciones={t.acciones} />}
+      {vista === 'cuotas' && <Cuotas p={p} editar={editar && !fijo} acciones={t.acciones} />}
       {vista === 'caja' && <Caja p={p} editar={editar} acciones={t.acciones} />}
     </>
   );
@@ -112,7 +117,7 @@ function EstadoJugador({ j }) {
   return <span className="ef al_dia">Al día</span>;
 }
 
-function Jugadores({ p, nombre, editar, acciones, abrir }) {
+function Jugadores({ p, nombre, editar, fijo, acciones, abrir }) {
   const [buscar, setBuscar] = useState('');
   const lista = p.jugadores.filter((j) => j.nombre.toLowerCase().includes(buscar.trim().toLowerCase()));
   const activos = p.jugadores.filter((j) => j.activo);
@@ -144,7 +149,7 @@ function Jugadores({ p, nombre, editar, acciones, abrir }) {
         <button type="button" className="btn secundario" style={{ marginTop: 10 }} disabled={!activos.length}
                 onClick={() => bajarListaLiga(p.jugadores, nombre)}>Bajar lista</button>
       </section>
-      {editar && <SumarJugador acciones={acciones} />}
+      {editar && !fijo && <SumarJugador acciones={acciones} />}
       {editar && <CargoExtra p={p} acciones={acciones} />}
     </>
   );
@@ -229,7 +234,7 @@ function CargoExtra({ p, acciones }) {
 // ---------------------------------------------------------------------------
 // Ficha de un jugador
 // ---------------------------------------------------------------------------
-function Ficha({ j, plantel, editar, acciones, volver }) {
+function Ficha({ j, plantel, editar, fijo, acciones, volver }) {
   const wa = enlaceWhatsApp(j, plantel);
   return (
     <>
@@ -251,7 +256,7 @@ function Ficha({ j, plantel, editar, acciones, volver }) {
         )}
       </section>
 
-      {editar && <RegistrarPago j={j} acciones={acciones} />}
+      {editar && !fijo && <RegistrarPago j={j} acciones={acciones} />}
 
       <h2 className="seccion">Cuotas y cargos</h2>
       <section className="card">
@@ -277,11 +282,11 @@ function Ficha({ j, plantel, editar, acciones, volver }) {
       <section className="card">
         {j.pagos.length === 0 && <p className="item-meta" style={{ marginTop: 0 }}>Todavía no hay pagos registrados.</p>}
         <ul className="movimientos">
-          {j.pagos.map((g) => <Pago key={g.id} g={g} editar={editar} acciones={acciones} />)}
+          {j.pagos.map((g) => <Pago key={g.id} g={g} editar={editar && !fijo} acciones={acciones} />)}
         </ul>
       </section>
 
-      <Condicion j={j} editar={editar} acciones={acciones} />
+      <Condicion j={j} editar={editar && !fijo} acciones={acciones} />
     </>
   );
 }
