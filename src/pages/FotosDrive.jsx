@@ -125,6 +125,16 @@ export default function FotosDrive() {
     setMasivo({ creando: false, hechos, error: '' });
   };
 
+  if (!persona.esEncargado && !persona.esAdmin) {
+    return (
+      <>
+        <Link to="/mas" className="volver">‹ Más</Link>
+        <h1 className="titulo display">Fotos de los partidos</h1>
+        <p className="vacio suelto">Las carpetas de fotos las enlaza el encargado de cada plantel. Tus fotos están en tu perfil.</p>
+      </>
+    );
+  }
+
   return (
     <>
       <Link to="/mas" className="volver">‹ Más</Link>

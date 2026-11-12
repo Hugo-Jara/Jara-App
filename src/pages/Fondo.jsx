@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useFondo, enlaceFondo, FONDO, PAGOS, ESTADOS, respaldosDe, motivoNoRendible, desglose, nombreMes } from '../lib/fondo.js';
 import { pesos } from '../lib/pedido.js';
 import { fechaCorta, hoyIso } from '../lib/fechas.js';
@@ -557,6 +557,7 @@ export default function Fondo() {
   if (f.error && !f.items) {
     return (
       <div className="fondo">
+        <Link to="/mas" className="volver">‹ Más</Link>
         <h1 className="titulo display">Fondo Las Condes</h1>
         <p className="subtitulo">{f.error}</p>
       </div>
