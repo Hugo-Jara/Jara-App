@@ -38,7 +38,8 @@ function ProximoPartido({ partido, destacado, responder }) {
       ) : (
         <div className="botones">
           <button className="btn" onClick={() => rapido({ estado: 'voy', asado: !!partido.tercerTiempo })}>Voy</button>
-          <button className="btn secundario" onClick={() => rapido({ estado: 'baja' })}>No puedo</button>
+          <button className="btn secundario" onClick={() => rapido({ estado: 'duda' })}>Duda</button>
+          <button className="btn secundario" onClick={() => rapido({ estado: 'baja' })}>No voy</button>
         </div>
       )}
       {error && <p className="error" role="alert">{error}</p>}
