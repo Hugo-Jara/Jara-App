@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { useSesion } from '../lib/sesion.jsx';
 import { ESCUDO } from '../lib/base.js';
 import { supabase } from '../lib/supabase.js';
+import { entraConClave, recordarClave } from '../lib/entrada.js';
 
 export default function Ingreso() {
   const { entrarConGoogle, entrarConCorreo, entrarConClave, esDemo } = useSesion();
-  // 'clave': correo y contraseña. 'link': link o código al correo (también
-  // sirve para crear o recuperar la contraseña).
-  const [modo, setModo] = useState('clave');
+  // 'link': link o código al correo (el camino de quien entra por primera vez;
+  // también sirve para crear o recuperar la contraseña). 'clave': correo y
+  // contraseña, que se muestra primero a quien ya entró así en este aparato.
+  const [modo, setModo] = useState(() => (entraConClave() ? 'clave' : 'link'));
   const [email, setEmail] = useState('');
   const [clave, setClave] = useState('');
   const [verClave, setVerClave] = useState(false);
@@ -33,7 +35,7 @@ export default function Ingreso() {
     setEntrando(true);
     const { error } = await entrarConClave(email, clave);
     setEntrando(false);
-    if (!error) return;
+    if (!error) { recordarClave(); return; }
     if (error.code === 'invalid_credentials' || error.status === 400) {
       setError('Correo o contraseña incorrectos. Si todavía no tienes contraseña, entra con un link o código y la creas al entrar.');
     } else if (error.status === 429) {
@@ -129,8 +131,8 @@ export default function Ingreso() {
             <button className="btn secundario" style={{ marginTop: 14 }} disabled={entrando}>
               {entrando ? 'Entrando…' : 'Entrar'}
             </button>
-            <button type="button" className="enlace otra-forma" onClick={() => cambiarModo('link')}>
-              ¿Primera vez o se te olvidó la contraseña? Entra con un link
+            <button type="button" className="btn secundario otra-forma" onClick={() => cambiarModo('link')}>
+              ¿Primera vez o se te olvidó? Entra con un link
             </button>
           </form>
         ) : (
@@ -139,12 +141,12 @@ export default function Ingreso() {
             <input id="correo" type="email" inputMode="email" autoComplete="email" required
                    placeholder="nombre@correo.cl" value={email} onChange={(e) => setEmail(e.target.value)} />
             <p className="ayuda-clave">
-              Te mandamos un link y un código. Al entrar puedes dejar una contraseña para la próxima vez.
+              Te mandamos un link y un código, sin contraseña. Al entrar puedes dejar una para la próxima vez.
             </p>
             <button className="btn secundario" style={{ marginTop: 14 }} disabled={enviando}>
               {enviando ? 'Enviando…' : 'Enviarme un link o código'}
             </button>
-            <button type="button" className="enlace otra-forma" onClick={() => cambiarModo('clave')}>
+            <button type="button" className="btn secundario otra-forma" onClick={() => cambiarModo('clave')}>
               Ya tengo contraseña
             </button>
           </form>
@@ -153,8 +155,8 @@ export default function Ingreso() {
       </div>
 
       <p className="nota">
-        La primera vez vas a buscar tu nombre en la nómina del club y un encargado de tu plantel te
-        da el pase.
+        ¿Primera vez? Entra con Google o pide un link a tu correo. Después buscas tu nombre en la
+        nómina del club y un encargado de tu plantel te da el pase.
       </p>
     </div>
   );

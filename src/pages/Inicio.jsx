@@ -14,6 +14,7 @@ import { pesos } from '../lib/pedido.js';
 import { plural } from '../lib/texto.js';
 import Icono from '../components/Icono.jsx';
 import { useHonorariosPorPagar, desglose, nombreMes } from '../lib/fondo.js';
+import Bienvenida from '../components/Bienvenida.jsx';
 
 const TEXTO_RESPUESTA = { voy: 'Confirmaste que vas.', duda: 'Quedaste en duda.', baja: 'Avisaste que no vas.' };
 
@@ -229,6 +230,7 @@ export default function Inicio() {
     <>
       <h1 className="titulo display">Hola, {nombre}</h1>
       <p className="subtitulo">Esto es lo que viene en el Jara.</p>
+      <Bienvenida />
       {persona.esEncargado && <PasesPendientes />}
       <HonorariosPorPagar persona={persona} />
       {!esDemo && <UltimoBoletin />}

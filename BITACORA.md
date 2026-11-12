@@ -17,6 +17,23 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-11 · Auditoría antes del lanzamiento: primera impresión
+
+**Para qué:** que el primer ingreso de los socios el 21 de noviembre salga limpio. Sale de la auditoría completa de la app (seguridad, primer ingreso, celular, textos); este PR trae lo que toca la primera impresión. Sin migración.
+
+- **Más:** se esconden "Asambleas" y los ministerios, que abrían una pantalla en construcción con una fecha ya pasada. Vuelven al menú cuando su pantalla exista.
+- **Red para errores** (`RedDeErrores.jsx`): si una pantalla falla al dibujarse, en vez de quedar todo en negro aparece "Algo falló" con "Volver a cargar" e "Ir al inicio".
+- **¿Quiénes jugaron?:** el nombre completo se ve en dos líneas si hace falta; antes se cortaba y dos nombres parecidos se confundían.
+- **Pantalla de entrada:** quien llega por primera vez ve Google y "Enviarme un link o código"; la contraseña queda a un toque. Quien ya entró con contraseña en ese aparato (o la creó) ve primero la contraseña (`src/lib/entrada.js`, solo recuerda la preferencia en el aparato). No toca `sesion.jsx`.
+- **Espera del pase:** la pantalla "Casi listo" revisa sola cada 20 segundos y al volver a la app; apenas aprueban a la persona, entra sin apretar nada.
+- **Bienvenida:** en Inicio, a quien no tiene foto ni posición se le invita a completar su perfil. Se va al completarlo o con "Ahora no".
+
+**Comprobado:** `npm run test:db`, `npm run test:pedidos` y `npm run build` pasan. Probado en iPhone 13 y Pixel 7 emulados con la app conectada a una base en memoria con todas las migraciones: entrada, espera que entra sola al aprobar, bienvenida, menú Más, nombres al anotar y la red de errores.
+
+**Queda de la auditoría:** detalles (botones chicos, zoom en iPhone, textos), quitar permisos sobrantes de `dorsales` y `perfiles` (migración aparte) y decisiones del administrador: si "Voy" en Inicio debe anotar también al tercer tiempo, y los textos del boletín (módulo Comunicación).
+
+---
+
 ## 2026-11-11 · El Jara Informa: base para publicar ediciones (0050)
 
 - Migración `0050_boletin_publicar.sql`: tabla `boletin_ediciones` y bucket privado `boletin` (fotos del borrador en `<edición>/fotos/`, páginas en `<edición>/v<versión>/pagina-NN.png`).
@@ -205,7 +222,6 @@ La primera búsqueda real encontró muchas carpetas de partidos anteriores a la 
 **Comprobado:** `npm run build`, `npm run test:db` (30 pruebas nuevas en `fotos.mjs`, con un Drive de mentira), `npm run test:fotos-drive` (6 del detector) y recorrido en modo demostración a 390 px sin errores. No se probó contra el Drive real (falta la llave): las miniaturas del Drive se ven recién en producción.
 
 ---
-
 
 ## 2026-11-07 · Comunicaciones — Encuadre y presentación del boletín
 
@@ -502,6 +518,7 @@ En "Editar mi perfil", junto al campo de Instagram, un botón **Comprobar** abre
 **Comprobado:** `npm run build`, `npm run test:db` (incluye `supabase/tests/perfil.mjs`, 44 pruebas nuevas) y `npm run test:pedidos` pasan. Recorrido en modo demostración en tamaño iPhone 13 sin errores.
 
 **Pendiente:** enlazar el perfil desde Estadísticas y la asistencia de los partidos (se deja para no chocar con los PR de esas pantallas). La fecha de nacimiento queda lista para el módulo Cumpleaños.
+
 ---
 
 ## 2026-11-04 · Partidos jugados por plantel, racha y PJ en las estadísticas
