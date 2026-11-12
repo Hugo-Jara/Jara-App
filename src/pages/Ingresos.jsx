@@ -18,7 +18,7 @@ function Solicitud({ s, resolver }) {
       </div>
       {!s.enNomina && <p className="item-comentario">No estaba en la nómina: al aprobar se agrega como jugador nuevo.</p>}
       <div className="botones chicos">
-        <button className="btn chico" disabled={ocupado} onClick={() => decidir(true)}>Es él, aprobar</button>
+        <button className="btn chico" disabled={ocupado} onClick={() => decidir(true)}>Sí, aprobar</button>
         <button className="btn chico secundario" disabled={ocupado} onClick={() => decidir(false)}>Rechazar</button>
       </div>
       {error && <p className="error" role="alert">{error}</p>}

@@ -14,7 +14,6 @@ import EntrenamientoForm from './pages/EntrenamientoForm.jsx';
 import Ingresos from './pages/Ingresos.jsx';
 import Cuota from './pages/Cuota.jsx';
 import Compras from './pages/Compras.jsx';
-import Club from './pages/Club.jsx';
 import Entrenar from './pages/Entrenar.jsx';
 import Noticias from './pages/Noticias.jsx';
 import Mas from './pages/Mas.jsx';
@@ -76,7 +75,8 @@ export default function App() {
         <Route path="/tablero" element={<Tablero />} />
         <Route path="/tesoreria" element={<Tesoreria />} />
         <Route path="/fondo" element={<Fondo />} />
-        <Route path="/club" element={<Club />} />
+        {/* La página del club (asambleas y ministerios) vuelve cuando esté lista: src/pages/Club.jsx. */}
+        <Route path="/club" element={<Navigate to="/mas" replace />} />
         <Route path="/perfil" element={<Perfil />} />
         <Route path="/perfil/:id" element={<Perfil />} />
         <Route path="/planteles" element={<Planteles />} />

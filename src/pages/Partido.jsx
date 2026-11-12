@@ -464,6 +464,8 @@ export default function Partido() {
         </div>
       )}
 
+      {/* Un partido ya jugado al que nadie respondió no deja una tarjeta vacía. */}
+      {(!jugado || voy.length + porEstado(partido, 'duda').length + porEstado(partido, 'baja').length > 0) && (
       <div className="card">
         <Grupo titulo={jugado ? 'Dijeron que iban' : 'Voy'} clase="voy" lista={voy} />
         <Grupo titulo="Dudas" clase="duda" lista={porEstado(partido, 'duda')} />
@@ -474,6 +476,7 @@ export default function Partido() {
           <p className="conteo">{voy.filter((r) => r.asado).length} se quedan al tercer tiempo</p>
         )}
       </div>
+      )}
       {partido.puedoEditar && (
         <>
           {!jugado && <RecordarPorWhatsApp mensaje={(url) => recordatorioPartido(partido, url)} />}

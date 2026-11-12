@@ -29,7 +29,7 @@ export default function EntrenamientoForm() {
   }, [d, t.cargando, actual]);
 
   if (t.cargando || !d) return <p className="vacio suelto">Cargando…</p>;
-  if (!t.puedoAdministrar) return <p className="vacio suelto">Las listas de entrenamiento las abre un encargado.</p>;
+  if (!t.puedoAdministrar) return <><Link to="/entrenar" className="volver">‹ Entrenar</Link><p className="vacio suelto">Las listas de entrenamiento las abre un encargado.</p></>;
   const set = (campo) => (e) => setD({ ...d, [campo]: e.target.value });
 
   const enviar = async (e) => {

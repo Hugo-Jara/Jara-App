@@ -17,6 +17,23 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-11 · Auditoría antes del lanzamiento: detalles
+
+**Para qué:** segunda tanda de la auditoría, cosas chicas que se notan en el celular. Sin migración.
+
+- **Botones más fáciles de tocar:** "Salir", los "‹ Volver", las pestañas de La liga, los filtros de Jugadores y los enlaces sueltos ("Reabrir", "Sumar un invitado") tienen un área de toque más alta.
+- **Sin zoom en iPhone:** en pantallas táctiles todas las casillas de texto usan letra de 16px, así Safari no acerca la pantalla al escribir.
+- **Partido ya jugado:** si nadie respondió, ya no queda una tarjeta vacía al final.
+- **Pantallas que no son para ti:** Fondo, "Nuevo partido" y "Nueva lista de entrenamiento" muestran cómo volver. "Fotos de los partidos" le explica al socio que eso lo ve el encargado, en vez de mostrar un botón y un error.
+- **Club:** la dirección `/club`, que seguía mostrando la pantalla en construcción, ahora lleva a Más.
+- **Pases de ingreso:** el botón dice "Sí, aprobar".
+
+**Comprobado:** `npm run test:db`, `npm run test:pedidos` y `npm run build` pasan. Medido en iPhone 13 emulado contra una base en memoria con todas las migraciones: no quedan botones bajo 36px de alto en las pantallas principales.
+
+**Queda de la auditoría:** permisos sobrantes de `dorsales` y `perfiles` (migración aparte), el precio que ve un administrador sin plantel en Entrenar (es de la base) y partir el paquete de la app en trozos.
+
+---
+
 ## 2026-11-11 · Auditoría antes del lanzamiento: primera impresión
 
 **Para qué:** que el primer ingreso de los socios el 21 de noviembre salga limpio. Sale de la auditoría completa de la app (seguridad, primer ingreso, celular, textos); este PR trae lo que toca la primera impresión. Sin migración.

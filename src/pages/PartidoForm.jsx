@@ -53,7 +53,7 @@ export default function PartidoForm() {
       : { equipoId: '', rival: '', fecha: '', citacion: '', horaInicio: '', cancha: '', torneo: '', tercerTiempo: '' });
   }, [d, cargando, id, actual]);
 
-  if (!persona.esEncargado) return <p className="vacio suelto">Los partidos los programa el encargado de cada plantel.</p>;
+  if (!persona.esEncargado) return <><Link to="/partidos" className="volver">‹ Partidos</Link><p className="vacio suelto">Los partidos los programa el encargado de cada plantel.</p></>;
   if (cargando || !d) {
     return id && !cargando && !actual
       ? <p className="vacio suelto">Ese partido ya no existe. <Link className="enlace" to="/partidos">Volver</Link></p>
