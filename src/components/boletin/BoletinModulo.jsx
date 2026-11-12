@@ -1,3 +1,4 @@
+import BoletinReal from './BoletinReal.jsx';
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { esDemo } from '../../lib/supabase.js';
@@ -13,7 +14,10 @@ function Tarjeta({ edicion, ultima }) {
     <div>{ultima && <p className="noticias-etiqueta">ÚLTIMA EDICIÓN · DEMO</p>}<h3>{nombreEdicion(edicion)}</h3><p>{edicion.periodo}</p><p>{cargando ? 'Diagramando…' : error || `${paginas.length} páginas`}</p><Link className="btn" to={`/noticias?edicion=${edicion.id}`}>Leer edición</Link></div>
   </article>;
 }
-export default function BoletinModulo({ administrar = false }) {
+export default function BoletinModulo(props) {
+  return esDemo ? <BoletinDemo {...props} /> : <BoletinReal {...props} />;
+}
+function BoletinDemo({ administrar = false }) {
   const [params, setParams] = useSearchParams();
   const [borradores, setBorradores] = useState([]), [edicion, setEdicion] = useState(null), [error, setError] = useState(''), [cargando, setCargando] = useState(true), [ocupado, setOcupado] = useState(false);
   // En la app real, el editor lo abren Comunicaciones (permiso edita_comunicaciones,

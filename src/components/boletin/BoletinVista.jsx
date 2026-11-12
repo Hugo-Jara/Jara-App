@@ -18,7 +18,7 @@ export function useComposicion(edicion) {
   }, [edicion]);
   return estado;
 }
-const tamanoSeccion = { auto: 26, pequeno: 23, mediano: 26, grande: 29 };
+const tamanoSeccion = { auto: 32, pequeno: 30, mediano: 32, grande: 36 };
 const tamanoIntroduccion = { auto: 17, pequeno: 16, mediano: 17, grande: 19 };
 function Pagina({ canvas, numero }) {
   const ref = useRef();
@@ -28,11 +28,11 @@ function Pagina({ canvas, numero }) {
 export function FotosNota({ fotos, tipo = 'breve', disposicion = 'abajo', indiceInicial = 0, cantidadTotal = fotos.length }) {
   return <div className="noticias-fotos-lectura">{fotos.map((f, i) => <figure key={f.id}><div className="noticias-foto-marco" style={{ aspectRatio: relacionFoto(tipo, disposicion, i + indiceInicial, cantidadTotal) }}>{f.src ? <img src={f.src} alt={f.pie || 'Fotografía de la noticia'} style={{ width: '100%', height: '100%', objectFit: f.mostrarCompleta ? 'contain' : 'cover', objectPosition: `${f.x}% ${f.y}%`, transform: `scale(${f.mostrarCompleta ? 1 : f.zoom})`, transformOrigin: `${f.x}% ${f.y}%` }} /> : <div className="noticias-ilustracion">Cancha de ejemplo · Ilustración demo</div>}</div>{f.pie && <figcaption>{f.pie}</figcaption>}</figure>)}</div>;
 }
-export default function BoletinVista({ edicion, local = false, todas = false, alAplicar, alMarcar, alDeshacer, alVolverEditar, puedeDeshacer = false }) {
+export default function BoletinVista({ edicion, local = false, todas = false, alAplicar, alMarcar, alDeshacer, alVolverEditar, puedeDeshacer = false, soloLectura = false }) {
   const [propuesta, setPropuesta] = useState(null), [ajustando, setAjustando] = useState(false), [avisoAjuste, setAvisoAjuste] = useState('');
   const edicionVisible = propuesta?.edicion || edicion;
   const { paginas, error, cargando } = useComposicion(edicionVisible);
-  const [movil, setMovil] = useState(false), [actual, setActual] = useState(0), [zoom, setZoom] = useState(1), [exportando, setExportando] = useState(false), [fallo, setFallo] = useState('');
+  const [movil, setMovil] = useState(soloLectura), [actual, setActual] = useState(0), [zoom, setZoom] = useState(1), [exportando, setExportando] = useState(false), [fallo, setFallo] = useState('');
   const toque = useRef(null), visorRef = useRef(null), yaEnfocado = useRef(false);
   useEffect(() => { if (local && !cargando && !yaEnfocado.current && paginas.length) { yaEnfocado.current = true; requestAnimationFrame(() => visorRef.current?.scrollIntoView({ block: 'start' })); } }, [local, cargando, paginas.length]);
   const indice = Math.min(actual, Math.max(0, paginas.length - 1));
@@ -57,9 +57,9 @@ export default function BoletinVista({ edicion, local = false, todas = false, al
     finally { setExportando(false); }
   };
   return <section className="noticias-boletin">
-    <p className="noticias-etiqueta">{local ? 'VISTA PREVIA LOCAL · NO PUBLICADA' : 'CATÁLOGO DEMO · CONTENIDO FICTICIO'}</p>
+    <p className="noticias-etiqueta">{local ? 'VISTA PREVIA LOCAL · NO PUBLICADA' : esDemo ? 'CATÁLOGO DEMO · CONTENIDO FICTICIO' : 'EL PERIÓDICO DEL CLUB'}</p>
     <h2>{nombreEdicion(edicion)}</h2><p>{edicion.periodo}</p><p>{edicion.resumen}</p>
-    <div className="noticias-herramientas"><button className="btn secundario" aria-pressed={!movil} disabled={ajustando} onClick={() => setMovil(false)}>Vista periódico</button><button className="btn secundario" aria-pressed={movil} disabled={!!propuesta || ajustando} onClick={() => setMovil(true)}>Lectura móvil</button></div>
+    <div className="noticias-herramientas" hidden={soloLectura}><button className="btn secundario" aria-pressed={!movil} disabled={ajustando} onClick={() => setMovil(false)}>Vista periódico</button><button className="btn secundario" aria-pressed={movil} disabled={!!propuesta || ajustando} onClick={() => setMovil(true)}>Lectura móvil</button></div>
     {paginas.avisos?.map((aviso, i) => <p className="noticias-aviso-distribucion" role="status" key={i}>{aviso}</p>)}
     {local && !propuesta && desactualizadas.length > 0 && !cargando && <p role="status" className="noticias-aviso-distribucion">Revisa nuevamente las páginas marcadas como listas: {desactualizadas.join(', ')}. Su contenido cambió.</p>}
     {avisoAjuste && <p role="status" className="noticias-aviso-distribucion">{avisoAjuste}</p>}

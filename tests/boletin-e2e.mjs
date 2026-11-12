@@ -45,7 +45,7 @@ const env = { ...process.env, VITE_SUPABASE_URL: '', VITE_SUPABASE_KEY: '', VITE
 const servidor = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--port', String(PUERTO), '--strictPort'], { env, stdio: ['ignore', 'pipe', 'pipe'] });
 await new Promise((ok, mal) => { const t = setTimeout(() => mal(new Error('Vite no partió en 30 s')), 30000); servidor.stdout.on('data', d => { if (String(d).includes('localhost')) { clearTimeout(t); ok(); } }); });
 
-const navegador = await chromium.launch();
+const navegador = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH, args: ['--no-sandbox'] } : {});
 const CELULARES = { 'iphone-13': devices['iPhone 13'], 'pixel-7': devices['Pixel 7'] };
 try {
   for (const [nombreEquipo, equipo] of Object.entries(CELULARES)) {
