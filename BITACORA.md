@@ -4,6 +4,15 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-11 · Auditoría antes del lanzamiento: cerrar `perfiles` y `dorsales` (0051)
+
+- Migración `0051_cerrar_dorsales_y_perfiles.sql`: quita a las cuentas los permisos por defecto sobre las tablas `perfiles` y `dorsales`, las únicas que no los tenían quitados. Ya estaban protegidas por la seguridad por fila; esto las deja igual que el resto. La app no cambia.
+- Se puede correr más de una vez.
+
+**Comprobado:** `npm run test:db` y `npm run build` pasan. La base de pruebas en memoria no da esos permisos por defecto, así que el cambio se comprueba en Supabase con la consulta que acompaña al PR.
+
+---
+
 ## 2026-11-11 · Auditoría antes del lanzamiento: detalles
 
 **Para qué:** segunda tanda de la auditoría, cosas chicas que se notan en el celular. Sin migración.
