@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-13 · Nombre, Apellido paterno y Apellido materno
+
+- La planilla común cambia "Nombre completo" por tres columnas: Nombre, Apellido paterno y Apellido materno. La importación las lee y, si vienen, la planilla manda en el nombre (la vista previa muestra "Nombre en la app: antes → después"). Una pestaña vieja con "Nombre completo" sigue funcionando y no toca el nombre.
+- Migración `0053_nombre_y_apellidos.sql`: `personas` guarda las tres partes y un trigger arma `personas.nombre` = "Nombre Apellido paterno". Como toda la app muestra `personas.nombre` (y el apodo en chico con `NombreConApodo`), estadísticas, planteles y perfiles quedan homologados sin tocar otras funciones. Con partes, el nombre ya no se cambia a mano: se corrige en la planilla y se vuelve a importar.
+- `tes_importar_planilla` ya no carga el apodo (lo elige cada uno). `tes_ver` devuelve las partes y la ficha del jugador las muestra.
+
+**Comprobado:** `npm run build` y `npm run test:db` (incluye 11 pruebas nuevas de nombre por partes en `test:importar`).
+
+---
+
 ## 2026-11-13 · Importar planilla: el apodo no viene de la planilla
 
 - La importación ya no trae la columna Apodo: el apodo es opcional, lo elige cada uno en su perfil y ahora Inicio saluda con él. Solo cambia el navegador (`src/lib/planilla.js`); la función de la base no cambia, sin migración.
