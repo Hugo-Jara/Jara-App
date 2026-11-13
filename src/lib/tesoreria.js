@@ -256,14 +256,16 @@ function importarDemo(d, { filas, plan, aporte, bajas, archivo, confirmar }) {
   const sin = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
   const pagadoDe = (id) => d.pagos.filter((g) => g.persona === id && g.medio === 'planilla' && !g.anulado).reduce((t, g) => t + g.monto, 0);
   const res = filas.map((f) => {
-    const j = d.jugadores.find((x) => sin(x.nombre) === sin(f.nombre));
+    const corto = f.apellido_paterno ? `${f.nombres} ${f.apellido_paterno}` : null;
+    const j = d.jugadores.find((x) => sin(x.nombre) === sin(f.nombre) || (corto && sin(x.nombre) === sin(corto)));
     const estado = j ? 'calza' : f.rut ? 'nuevo' : 'sin_rut';
     const cambios = [];
     if (estado === 'nuevo') cambios.push('Se suma a la nómina y al plantel');
+    if (j && corto && j.nombre !== corto) cambios.push(`Nombre en la app: ${j.nombre} → ${corto}`);
     if (j && (j.tipo !== f.tipo || Number(j.descuento_pct) !== Number(f.descuento_pct))) cambios.push('Condición');
     const antes = j ? pagadoDe(j.id) : 0;
     if (estado !== 'sin_rut' && antes !== f.pagado) cambios.push(`Pagado: $${antes.toLocaleString('es-CL')} → $${f.pagado.toLocaleString('es-CL')}`);
-    return { f, j, estado, cambios, avisos: estado === 'sin_rut' ? ['Sin RUT y no calza con nadie de la app: no se importa'] : [] };
+    return { f, j, corto, estado, cambios, avisos: estado === 'sin_rut' ? ['Sin RUT y no calza con nadie de la app: no se importa'] : [] };
   });
   const fuera = d.jugadores.filter((j) => j.activo && !res.some((r) => r.j?.id === j.id)).map((j) => ({ id: j.id, nombre: j.nombre }));
   const planCambia = !!plan && JSON.stringify(plan) !== JSON.stringify(d.cuotas);
@@ -274,7 +276,7 @@ function importarDemo(d, { filas, plan, aporte, bajas, archivo, confirmar }) {
     plan_cambia: planCambia, aporte_cambia: aporte != null && aporte !== Number(d.aporte_pct),
   };
   if (confirmar) {
-    for (const { f, j: existe, estado } of res) {
+    for (const { f, j: existe, corto, estado } of res) {
       if (estado === 'sin_rut') continue;
       let j = existe;
       if (!j) {
@@ -284,7 +286,8 @@ function importarDemo(d, { filas, plan, aporte, bajas, archivo, confirmar }) {
       Object.assign(j, {
         activo: true, tipo: f.tipo, descuento_pct: f.descuento_pct, monto_especial: f.monto_especial, deuda_anterior: f.deuda_anterior,
         telefono: f.telefono, correo: f.correo, comentario: f.comentario,
-        apodo: j.apodo ?? f.apodo, rut: j.rut ?? f.rut, nacimiento: j.nacimiento ?? f.nacimiento,
+        ...(corto ? { nombre: corto, nombres: f.nombres, apellido_paterno: f.apellido_paterno, apellido_materno: f.apellido_materno } : {}),
+        apodo: j.apodo, rut: j.rut ?? f.rut, nacimiento: j.nacimiento ?? f.nacimiento,
       });
       if (pagadoDe(j.id) !== f.pagado) {
         d.pagos.forEach((g) => { if (g.persona === j.id && g.medio === 'planilla') g.anulado = true; });

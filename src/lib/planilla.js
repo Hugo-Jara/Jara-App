@@ -133,8 +133,11 @@ export function pestanaDe(hojas, plantel) {
   return hojas.find((h) => normal(h) === p) ?? hojas.find((h) => normal(h).includes(p) || (normal(h) && p.includes(normal(h)))) ?? null;
 }
 
+// Encabezado -> campo (por cómo empieza, sin tildes). "Nombre" sirve para la
+// planilla nueva (Nombre, Apellido paterno, Apellido materno) y para la vieja
+// ("Nombre completo").
 const COLUMNAS = {
-  nombre: 'nombre', apodo: 'apodo', rut: 'rut', nacimiento: 'fecha', telefono: 'celular', correo: 'correo',
+  nombre: 'nombre', paterno: 'apellido paterno', materno: 'apellido materno', rut: 'rut', nacimiento: 'fecha', telefono: 'celular', correo: 'correo',
   tipo: 'condici', descuento_pct: 'descuento', monto_especial: 'monto especial', deuda_anterior: 'deuda',
   pagado: 'pagado', comentario: 'comentario',
 };
@@ -180,7 +183,9 @@ export function filasDePestana(filas) {
     const i = enc.findIndex((e) => e.startsWith(prefijo));
     if (i >= 0) col[k] = i;
   }
-  if (col.nombre === undefined) throw new Error('La pestaña no tiene la columna "Nombre completo" en la primera fila');
+  if (col.nombre === undefined) throw new Error('La pestaña no tiene la columna "Nombre" en la primera fila');
+  // Planilla nueva: el nombre viene en tres columnas.
+  const porPartes = col.paterno !== undefined;
   const faltan = ['rut', 'tipo', 'pagado'].filter((k) => col[k] === undefined);
   if (faltan.length) {
     const nombres = { rut: 'RUT', tipo: 'Condición', pagado: 'Pagado' };
@@ -189,13 +194,22 @@ export function filasDePestana(filas) {
   const salida = [];
   filas.slice(1).forEach((r, i) => {
     const g = (k) => (col[k] === undefined ? null : r[col[k]] ?? null);
-    const nombre = texto(g('nombre'));
+    const limpio = (k) => texto(g(k)).replace(/\s+/g, ' ');
+    const nombres = limpio('nombre');
+    const paterno = porPartes ? limpio('paterno') : '';
+    const materno = porPartes ? limpio('materno') : '';
+    const nombre = [nombres, paterno, materno].filter(Boolean).join(' ');
     if (!nombre || /^ej(emplo)?[.:\s]/i.test(nombre)) return;
     const tipoTxt = normal(g('tipo')) || 'normal';
     salida.push({
       fila: i + 2,
       nombre,
-      apodo: texto(g('apodo')) || null,
+      // Con la planilla nueva la app muestra "Nombre Apellido paterno" (migración 0053).
+      nombres: porPartes ? nombres || null : null,
+      apellido_paterno: porPartes ? paterno || null : null,
+      apellido_materno: porPartes ? materno || null : null,
+      // El apodo no se trae de la planilla: lo elige cada uno en su perfil (y la app lo usa para saludar).
+      apodo: null,
       rut: texto(g('rut')) || null,
       nacimiento: fecha(g('nacimiento')),
       telefono: texto(g('telefono')) || null,
