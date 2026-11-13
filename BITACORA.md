@@ -4,6 +4,14 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-13 · Importar planilla: el apodo no viene de la planilla
+
+- La importación ya no trae la columna Apodo: el apodo es opcional, lo elige cada uno en su perfil y ahora Inicio saluda con él. Solo cambia el navegador (`src/lib/planilla.js`); la función de la base no cambia, sin migración.
+
+**Comprobado:** `npm run build` y `npm run test:importar` (39 pruebas).
+
+---
+
 ## 2026-11-13 · Importar planilla: solo la pestaña del plantel elegido
 
 - Se saca el selector de pestaña. La app usa solo la pestaña con el nombre del plantel elegido arriba en Tesorería y lo muestra ("Pestaña X → tesorería de Y"). Si no la encuentra, pide elegir otro plantel arriba. Antes se podía elegir la pestaña de otro plantel y sus jugadores quedaban en el plantel equivocado. Sin migración.

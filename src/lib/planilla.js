@@ -134,7 +134,7 @@ export function pestanaDe(hojas, plantel) {
 }
 
 const COLUMNAS = {
-  nombre: 'nombre', apodo: 'apodo', rut: 'rut', nacimiento: 'fecha', telefono: 'celular', correo: 'correo',
+  nombre: 'nombre', rut: 'rut', nacimiento: 'fecha', telefono: 'celular', correo: 'correo',
   tipo: 'condici', descuento_pct: 'descuento', monto_especial: 'monto especial', deuda_anterior: 'deuda',
   pagado: 'pagado', comentario: 'comentario',
 };
@@ -195,7 +195,8 @@ export function filasDePestana(filas) {
     salida.push({
       fila: i + 2,
       nombre,
-      apodo: texto(g('apodo')) || null,
+      // El apodo no se trae de la planilla: lo elige cada uno en su perfil (y la app lo usa para saludar).
+      apodo: null,
       rut: texto(g('rut')) || null,
       nacimiento: fecha(g('nacimiento')),
       telefono: texto(g('telefono')) || null,

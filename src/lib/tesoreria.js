@@ -284,7 +284,7 @@ function importarDemo(d, { filas, plan, aporte, bajas, archivo, confirmar }) {
       Object.assign(j, {
         activo: true, tipo: f.tipo, descuento_pct: f.descuento_pct, monto_especial: f.monto_especial, deuda_anterior: f.deuda_anterior,
         telefono: f.telefono, correo: f.correo, comentario: f.comentario,
-        apodo: j.apodo ?? f.apodo, rut: j.rut ?? f.rut, nacimiento: j.nacimiento ?? f.nacimiento,
+        apodo: j.apodo, rut: j.rut ?? f.rut, nacimiento: j.nacimiento ?? f.nacimiento,
       });
       if (pagadoDe(j.id) !== f.pagado) {
         d.pagos.forEach((g) => { if (g.persona === j.id && g.medio === 'planilla') g.anulado = true; });
