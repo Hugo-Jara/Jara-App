@@ -72,7 +72,8 @@ export default function ImportarPlanilla({ plantel, acciones }) {
       setLibro(lib);
       const p = pestanaDe(l.hojas, plantel);
       if (!p) {
-        setError(`No encontré la pestaña "${plantel}". Elige cuál es.`);
+        setError(`La planilla no tiene una pestaña llamada "${plantel}". Para importar a otro plantel, elígelo arriba en Tesorería. `
+          + `Pestañas del archivo: ${l.hojas.join(', ')}.`);
         setOcupado(false);
         return;
       }
@@ -132,12 +133,11 @@ export default function ImportarPlanilla({ plantel, acciones }) {
       {libro && (
         <>
           <p className="item-meta">{libro.archivo}</p>
-          <label htmlFor="tes-imp-pestana">Pestaña del plantel</label>
-          <select id="tes-imp-pestana" value={pestana} disabled={ocupado}
-                  onChange={(e) => { setPestana(e.target.value); if (e.target.value) revisar(libro, e.target.value); }}>
-            <option value="">Elige la pestaña</option>
-            {libro.hojas.filter((h) => !/c[oó]mo llenar|^cuotas$/i.test(h)).map((h) => <option key={h} value={h}>{h}</option>)}
-          </select>
+          {/* Solo la pestaña con el nombre del plantel elegido arriba: así una pestaña
+              de otro plantel nunca se guarda en este. */}
+          {pestana && (
+            <p className="tes-imp-destino">Pestaña «{pestana}» → tesorería de <strong>{plantel}</strong></p>
+          )}
         </>
       )}
       {ocupado && <p className="item-meta">Revisando…</p>}

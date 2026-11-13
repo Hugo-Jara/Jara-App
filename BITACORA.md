@@ -4,6 +4,14 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-13 · Importar planilla: solo la pestaña del plantel elegido
+
+- Se saca el selector de pestaña. La app usa solo la pestaña con el nombre del plantel elegido arriba en Tesorería y lo muestra ("Pestaña X → tesorería de Y"). Si no la encuentra, pide elegir otro plantel arriba. Antes se podía elegir la pestaña de otro plantel y sus jugadores quedaban en el plantel equivocado. Sin migración.
+
+**Comprobado:** `npm run build` y recorrido demo en iPhone 13 emulado.
+
+---
+
 ## 2026-11-12 · Tesorería: importar la planilla común con un botón (0052)
 
 **Para qué:** los tesoreros prefieren seguir llevando su plantel en la planilla común. La planilla pasa a mandar y la app la importa cuando el tesorero quiere.
