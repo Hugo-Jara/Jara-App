@@ -813,3 +813,4 @@ label.btn.tes-imp-archivo { display: flex; align-items: center; justify-content:
 label.tes-imp-check { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 14px; color: var(--text); min-height: 36px; }
 .tes-imp-viene { margin-top: 0; }
 .tes-imp-check input[type='checkbox'] { width: 20px; height: 20px; flex: none; margin: 0; padding: 0; min-height: 0; }
+.tes-imp-destino { font-size: 14px; margin: 10px 0 0; }
