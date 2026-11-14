@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-14 · Voto MVP de una sola vez (0054)
+
+**Pedido del administrador:** el voto del jugador del partido se podía cambiar mientras la votación estaba abierta, y eso se presta para presiones después o para corregir votos a medias. Ahora es un solo voto y definitivo.
+
+- **App:** al tocar un nombre aparece "¿Confirmas tu voto por …?" con "Sí, confirmo" y "Elegir a otro". Una vez confirmado, la tarjeta muestra "Votaste por …" y ya no ofrece la lista. Igual para quienes jugaron y para el cuerpo técnico (0033). El modo demostración sigue la misma regla.
+- **Base (0054):** `mvp_votar` rechaza un segundo voto ("Ya votaste en este partido y el voto no se puede cambiar"). Un trigger en `partido_votos` impide cambiar o borrar un voto guardado; solo deja pasar el borrado en cadena (se borra el partido o la persona) y una corrección manual del administrador con `select set_config('jara.corregir_votos', 'si', true);` en la misma transacción (por ejemplo, al juntar repetidos).
+- **Pruebas:** `charla.mjs` con 7 pruebas nuevas; `npm run test:db` completo pasa. Probado en iPhone 13 y Pixel 7 emulados.
+
+---
+
 ## 2026-11-13 · Importar planilla: el apodo no viene de la planilla
 
 - La importación ya no trae la columna Apodo: el apodo es opcional, lo elige cada uno en su perfil y ahora Inicio saluda con él. Solo cambia el navegador (`src/lib/planilla.js`); la función de la base no cambia, sin migración.

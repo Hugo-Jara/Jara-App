@@ -70,12 +70,14 @@ function BarrasVotos({ conteo, miVoto, titulo }) {
 export function JugadorDelPartido({ partido, yo, mvp, votar }) {
   const [error, setError] = useState('');
   const [ocupado, setOcupado] = useState(false);
+  // A quién eligió y todavía no confirma. El voto es uno solo y no se cambia (0054).
+  const [porConfirmar, setPorConfirmar] = useState(null);
   if (!mvp || (!mvp.abierta && !mvp.cerrada)) return null;
   // Cierra a las 23:59 del sexto día después del partido (0034).
   const cierre = `el ${diaSemana(correrDias(partido.fecha, 6))} a las 23:59`;
-  const elegir = async (id) => {
+  const confirmar = async () => {
     setError(''); setOcupado(true);
-    try { await votar(id); } catch (x) { setError(x.message); }
+    try { await votar(porConfirmar.id); setPorConfirmar(null); } catch (x) { setError(x.message); }
     setOcupado(false);
   };
   const votado = mvp.candidatos.find((c) => c.id === mvp.miVoto);
@@ -106,20 +108,32 @@ export function JugadorDelPartido({ partido, yo, mvp, votar }) {
   return (
     <div className="card mvp">
       <div className="sobretitulo">Jugador del partido</div>
-      {mvp.puedoVotar ? (
+      {mvp.puedoVotar && votado ? (
+        <p className="mvp-voto-listo">
+          <span className="mvp-estrella" aria-hidden="true">★</span>
+          <span>Votaste por <strong>{votado.nombre}</strong>. Tu voto quedó guardado y no se puede cambiar. El MVP se conoce {cierre}, o antes si ya votaron todos.</span>
+        </p>
+      ) : mvp.puedoVotar && porConfirmar ? (
+        <div className="mvp-confirmar" role="group" aria-label="Confirmar voto">
+          <p className="mvp-pregunta">¿Confirmas tu voto por <strong>{porConfirmar.nombre}</strong>?</p>
+          <p className="ayuda">Es un solo voto: una vez confirmado no se puede cambiar.</p>
+          <div className="mvp-confirmar-botones">
+            <button type="button" className="btn" disabled={ocupado} onClick={confirmar}>{ocupado ? 'Guardando…' : 'Sí, confirmo'}</button>
+            <button type="button" className="btn secundario" disabled={ocupado} onClick={() => { setPorConfirmar(null); setError(''); }}>Elegir a otro</button>
+          </div>
+        </div>
+      ) : mvp.puedoVotar ? (
         <>
           <p className="mvp-pregunta">¿Quién fue el mejor del partido?</p>
-          <div className="mvp-candidatos" role="radiogroup" aria-label="Jugador del partido">
+          <div className="mvp-candidatos" role="group" aria-label="Jugador del partido">
             {mvp.candidatos.filter((c) => c.id !== yo.id).map((c) => (
-              <button key={c.id} type="button" role="radio" aria-checked={mvp.miVoto === c.id} disabled={ocupado}
-                      className={`chip ${mvp.miVoto === c.id ? 'activo' : ''}`} onClick={() => elegir(c.id)}>
+              <button key={c.id} type="button"
+                      className="chip" onClick={() => { setError(''); setPorConfirmar(c); }}>
                 <NombreConApodo id={c.id} nombre={c.nombre} />
               </button>
             ))}
           </div>
-          <p className="ayuda abajo">
-            {votado ? <>Votaste por <strong>{votado.nombre}</strong>. Puedes cambiarlo hasta {cierre}, o hasta que voten todos.</> : `Votan los que jugaron y el cuerpo técnico, y nadie por sí mismo. Cierra ${cierre}, o antes si ya votaron todos.`}
-          </p>
+          <p className="ayuda abajo">Votan los que jugaron y el cuerpo técnico, y nadie por sí mismo. Es un solo voto y no se puede cambiar. Cierra {cierre}, o antes si ya votaron todos.</p>
         </>
       ) : (
         <p className="vacio">Votan los que jugaron este partido y el cuerpo técnico. El MVP se conoce {cierre}, o antes si ya votaron todos.</p>
