@@ -6,7 +6,6 @@ import { usePlantelesTesoreria } from '../lib/tesoreria.js';
 import Icono from '../components/Icono.jsx';
 import VerComo from '../components/VerComo.jsx';
 import MiPerfil from '../components/MiPerfil.jsx';
-import MiClave from '../components/MiClave.jsx';
 
 // Lo administrativo del club vive acá, fuera de la pantalla de inicio.
 export default function Mas() {
@@ -56,7 +55,14 @@ export default function Mas() {
           </Link>
         ))}
       </div>
-      <MiClave />
+      <Link to="/ajustes" className="card fila" style={{ padding: '14px 20px' }}>
+        <div className="modulo-icono"><Icono nombre="ajustes" /></div>
+        <div className="modulo-cuerpo">
+          <div className="modulo-nombre">Ajustes</div>
+          <div className="modulo-desc">Contraseña, tema claro u oscuro, tamaño de letra y cerrar sesión</div>
+        </div>
+        <Icono nombre="flecha" size={18} />
+      </Link>
     </>
   );
 }

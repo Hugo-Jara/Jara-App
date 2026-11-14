@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import Icono from './Icono.jsx';
 import { ESCUDO } from '../lib/base.js';
@@ -13,7 +13,7 @@ const NAV = [
 ];
 
 export default function Marco({ children }) {
-  const { persona, esDemo, salir } = useSesion();
+  const { persona, esDemo } = useSesion();
   return (
     <>
       {persona.prueba && (
@@ -29,7 +29,7 @@ export default function Marco({ children }) {
             <div className="barra-nombre display">Jara App</div>
             <div className="barra-sub">{persona.club?.nombre}</div>
           </div>
-          {!esDemo && <button className="btn-salir" onClick={salir}>Salir</button>}
+          <Link to="/ajustes" className="btn-ajustes" aria-label="Ajustes"><Icono nombre="ajustes" /></Link>
         </header>
         {esDemo && (
           <div className="aviso-demo">
