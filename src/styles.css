@@ -38,8 +38,8 @@ button { font-family: inherit; }
 .barra-texto { flex: 1; min-width: 0; }
 .barra-nombre { font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--red); }
 .barra-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.btn-salir { background: none; border: 1px solid var(--border); color: var(--text-dim); font-size: 12px; padding: 11px 14px; border-radius: 100px; cursor: pointer; }
-.btn-salir:active { background: var(--bg-card-alt); }
+.btn-ajustes { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--border); color: var(--text-dim); border-radius: 50%; }
+.btn-ajustes:active { background: var(--bg-card-alt); }
 
 /* Cuenta de prueba (Ver como) */
 .barra-prueba { position: sticky; top: 0; z-index: 30; background: var(--gold); color: #1f1f1f; font-size: 12.5px; text-align: center; padding: calc(7px + env(safe-area-inset-top)) 16px 7px; }
@@ -814,3 +814,57 @@ label.tes-imp-check { display: flex; align-items: center; gap: 10px; margin: 0; 
 .tes-imp-viene { margin-top: 0; }
 .tes-imp-check input[type='checkbox'] { width: 20px; height: 20px; flex: none; margin: 0; padding: 0; min-height: 0; }
 .tes-imp-destino { font-size: 14px; margin: 10px 0 0; }
+
+/* Ajustes: cuenta, tema, tamaño de letra, notificaciones y cerrar sesión */
+.ajustes-correo { font-size: 12px; color: var(--text-dim); margin: -6px 4px 0; overflow-wrap: anywhere; }
+.ajustes-rotulo { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+.ajustes-ayuda { font-size: 12px; color: var(--text-dim); margin: 8px 2px 0; line-height: 1.4; }
+.ajustes-opciones { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--fondo-campo); border: 1px solid var(--border); }
+.ajustes-opciones button { min-height: 42px; padding: 6px 4px; border: none; border-radius: 10px; background: transparent; color: var(--text-dim); font-size: 13px; font-weight: 600; cursor: pointer; line-height: 1.2; }
+.ajustes-opciones button.activa { background: var(--red); color: #fff; }
+.ajustes-aviso { display: flex; align-items: center; gap: 14px; margin: 0; padding: 12px 0; border-top: 1px solid var(--border); color: var(--text); font-size: inherit; opacity: 0.6; }
+.ajustes-aviso .modulo-cuerpo { display: flex; flex-direction: column; }
+.ajustes-avisos .aviso-demo { margin-bottom: 6px; }
+.interruptor { appearance: none; -webkit-appearance: none; flex: none; width: 46px !important; height: 28px; padding: 0 !important; margin: 0; border-radius: 14px; background: var(--fondo-campo); border: 1px solid var(--border); position: relative; }
+.interruptor::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--text-dim); }
+.ajustes-salir { color: var(--red); }
+
+/* Tamaño de letra (Ajustes): agranda toda la app, también botones y fotos. */
+:root[data-letra='grande'] body { zoom: 1.12; }
+:root[data-letra='muy-grande'] body { zoom: 1.25; }
+
+/* Tema claro (Ajustes). El oscuro es el de siempre; aquí solo se cambia lo que no sirve sobre fondo claro.
+   El boletín y sus editores conservan sus propios colores. */
+:root { --fondo-campo: #171110; --fondo-nav: rgba(18, 14, 13, 0.94); color-scheme: dark; }
+:root[data-tema='claro'] {
+  color-scheme: light;
+  --bg: #f6f1eb;
+  --bg-card: #fffdfa;
+  --bg-card-alt: #f8f0e8;
+  --gold: #8a6a2c;
+  --gold-dim: #b89a5f;
+  --red: #b8322a;
+  --red-dim: #8c2620;
+  --green: #3f6e4f;
+  --rose: #b5512c;
+  --text: #2a1d1a;
+  --text-dim: #6e5f58;
+  --border: rgba(184, 50, 42, 0.22);
+  --fondo-campo: #fff;
+  --fondo-nav: rgba(255, 252, 248, 0.95);
+}
+:root[data-tema='claro'] body { background: radial-gradient(1200px 600px at 10% -10%, #f3dfd6 0%, transparent 60%), var(--bg); }
+:root[data-tema='claro'] input, :root[data-tema='claro'] select, :root[data-tema='claro'] textarea { background: var(--fondo-campo); }
+:root[data-tema='claro'] .nav { background: var(--fondo-nav); }
+:root[data-tema='claro'] .card { box-shadow: 0 6px 20px rgba(80, 40, 30, 0.08); }
+:root[data-tema='claro'] .btn:not(.secundario):not(.claro) { color: #fff; }
+:root[data-tema='claro'] .btn.claro { border: 1px solid var(--border); }
+:root[data-tema='claro'] .barra-prueba, :root[data-tema='claro'] .filtro-cuenta { color: #fff; }
+:root[data-tema='claro'] .accion.destacada { background: linear-gradient(160deg, #fbe6e1, var(--bg-card-alt)); }
+:root[data-tema='claro'] .ingreso .escudo { mix-blend-mode: normal; border-radius: 28px; }
+:root[data-tema='claro'] .jugado-corto-marcador.G { color: #2f5a3d; }
+:root[data-tema='claro'] .jugado-corto-marcador.P { color: #9a2a22; }
+:root[data-tema='claro'] .charla-escribir textarea { background: var(--fondo-campo); }
+:root[data-tema='claro'] .noticias-error { color: #9a2a22; }
+:root[data-tema='claro'] .noticias-aviso-distribucion { color: #7a5a1c; }
+:root[data-tema='claro'] .noticias-campo-etiqueta { color: var(--text-dim); }

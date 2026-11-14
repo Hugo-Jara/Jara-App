@@ -4,6 +4,18 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-14 · Sección de Ajustes
+
+- Pantalla nueva `/ajustes` (`src/pages/Ajustes.jsx`), con un engranaje arriba a la derecha en todas las pantallas (reemplaza el botón "Salir") y una fila al final de Más.
+- Trae: Mi perfil, el correo con que se entró, contraseña (la tarjeta sale de Más; si la cuenta entra solo con Google, explica que no la necesita y ofrece crear una), tema Oscuro / Claro / Como el teléfono, tamaño de letra Normal / Grande / Muy grande, y cerrar sesión con confirmación.
+- Tema y letra se guardan en el navegador de cada teléfono (`src/lib/ajustes.js`), sin base de datos. El tema claro cambia las variables de color y unas pocas reglas al final de `styles.css`; el boletín conserva sus colores.
+- Notificaciones: bloque "Muy pronto" con cuatro avisos apagados (inscribirse al partido, fotos nuevas, la liga, boletín). Se conectan cuando existan las notificaciones al teléfono.
+- Sin migración.
+
+**Comprobado:** `npm run build` y recorrido demo en iPhone 13 y Pixel 7 emulados (Ajustes en oscuro y claro, Inicio, La liga, Jugadores, Más, Perfil, Entrenar, Compras, Noticias e Ingreso en claro, letra muy grande sin desborde horizontal).
+
+---
+
 ## 2026-11-13 · Importar planilla: el apodo no viene de la planilla
 
 - La importación ya no trae la columna Apodo: el apodo es opcional, lo elige cada uno en su perfil y ahora Inicio saluda con él. Solo cambia el navegador (`src/lib/planilla.js`); la función de la base no cambia, sin migración.
