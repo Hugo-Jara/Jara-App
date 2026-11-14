@@ -4,7 +4,7 @@ import { correrDias, hoyIso } from './fechas.js';
 
 // Lo que pasa después del partido (migración 0027): el jugador del partido
 // (MVP), los comentarios en cadena y las reacciones con emoji.
-//   · MVP: votan solo los que jugaron, no a sí mismos. Abre al anotar el
+//   · MVP: votan solo los que jugaron, no a sí mismos, y un solo voto que no se cambia (0054). Abre al anotar el
 //     resultado y cierra a las 23:59 del sexto día después (0034). El conteo lo ve quien ya
 //     votó o no puede votar, y todos al cerrar (0035).
 //   · Comentarios: todo el club; cada uno borra los suyos, y los moderan
@@ -110,6 +110,7 @@ const enDemo = {
     };
   },
   votar: async (partido, yo, elegido) => {
+    if (de(partido.id).votos[yo.id]) throw new Error('Ya votaste en este partido y el voto no se puede cambiar');
     if (elegido === yo.id) throw new Error('No puedes votar por ti mismo');
     de(partido.id).votos[yo.id] = elegido;
   },
