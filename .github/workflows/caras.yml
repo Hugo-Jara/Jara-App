@@ -1,7 +1,9 @@
 # Buscarme en las fotos (migración 0042): compara la cara de quienes lo
 # activaron con las fotos de la liga y guarda dónde aparece cada uno.
 # Corre sola cada 3 horas y también a mano (Actions > Buscar caras > Run workflow).
-# Necesita el secreto SUPABASE_SECRET (Settings > Secrets and variables > Actions).
+# Necesita el secreto SUPABASE_SECRET guardado en el entorno "produccion"
+# (Settings > Environments > produccion), que solo se abre desde main: así una
+# rama de prueba no puede leer la llave maestra de la base.
 # El repo es público: el script no imprime datos de personas.
 name: Buscar caras
 
@@ -20,6 +22,7 @@ concurrency:
 jobs:
   buscar:
     runs-on: ubuntu-latest
+    environment: produccion
     timeout-minutes: 300
     env:
       SUPABASE_URL: https://pzzkrbnzguqtjrlwgtiy.supabase.co
