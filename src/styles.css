@@ -606,6 +606,11 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .mvp-pregunta { margin: 4px 0 10px; font-weight: 700; }
 .mvp-candidatos { display: flex; flex-wrap: wrap; gap: 8px; }
 .mvp-candidatos .chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mvp-confirmar { border: 1px solid var(--border); border-radius: 14px; padding: 12px; background: var(--bg-card-alt); }
+.mvp-confirmar .mvp-pregunta { margin-top: 0; overflow-wrap: anywhere; }
+.mvp-confirmar-botones { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+.mvp-voto-listo { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 0; line-height: 1.4; }
+.mvp-voto-listo .mvp-estrella { flex: none; }
 .mvp-conteo { margin: 10px 0 0; font-size: 13px; color: var(--text-dim); }
 .mvp-ganadores { list-style: none; margin: 6px 0 0; padding: 0; }
 .mvp-ganadores li { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
