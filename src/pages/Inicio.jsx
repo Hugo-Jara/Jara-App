@@ -180,6 +180,8 @@ function UltimoPartido({ partido }) {
 }
 
 function Noticias({ noticias }) {
+  // Con la base real las noticias son el boletín, que tiene su propia tarjeta arriba.
+  if (!esDemo && noticias.length === 0) return null;
   return (
     <>
       <div className="seccion-fila">

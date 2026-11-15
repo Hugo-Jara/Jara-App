@@ -74,7 +74,8 @@ export default function App() {
         <Route path="/ajustes" element={<Ajustes />} />
         <Route path="/cuota" element={<Cuota />} />
         <Route path="/compras" element={<Compras />} />
-        <Route path="/tablero" element={<Tablero />} />
+        {/* El tablero es de datos de ejemplo: con la base real no se muestra (la tesorería de verdad está en /tesoreria). */}
+        <Route path="/tablero" element={esDemo ? <Tablero /> : <Navigate to="/tesoreria" replace />} />
         <Route path="/tesoreria" element={<Tesoreria />} />
         <Route path="/fondo" element={<Fondo />} />
         {/* La página del club (asambleas y ministerios) vuelve cuando esté lista: src/pages/Club.jsx. */}
