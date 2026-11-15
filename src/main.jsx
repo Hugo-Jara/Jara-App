@@ -6,6 +6,11 @@ import App from './App.jsx';
 import RedDeErrores from './components/RedDeErrores.jsx';
 import { BASE } from './lib/base.js';
 import './styles.css';
+import { aplicarAjustes, seguirAlSistema } from './lib/ajustes.js';
+
+// Tema y tamaño de letra elegidos en Ajustes, antes de dibujar la app.
+aplicarAjustes();
+seguirAlSistema();
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>

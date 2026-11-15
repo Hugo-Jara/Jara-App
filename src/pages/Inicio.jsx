@@ -15,6 +15,7 @@ import { plural } from '../lib/texto.js';
 import Icono from '../components/Icono.jsx';
 import { useHonorariosPorPagar, desglose, nombreMes } from '../lib/fondo.js';
 import Bienvenida from '../components/Bienvenida.jsx';
+import { useApodos } from '../lib/apodos.js';
 
 const TEXTO_RESPUESTA = { voy: 'Confirmaste que vas.', duda: 'Quedaste en duda.', baja: 'Avisaste que no vas.' };
 
@@ -38,7 +39,8 @@ function ProximoPartido({ partido, destacado, responder }) {
       ) : (
         <div className="botones">
           <button className="btn" onClick={() => rapido({ estado: 'voy', asado: !!partido.tercerTiempo })}>Voy</button>
-          <button className="btn secundario" onClick={() => rapido({ estado: 'baja' })}>No puedo</button>
+          <button className="btn secundario" onClick={() => rapido({ estado: 'duda' })}>Duda</button>
+          <button className="btn secundario" onClick={() => rapido({ estado: 'baja' })}>No voy</button>
         </div>
       )}
       {error && <p className="error" role="alert">{error}</p>}
@@ -213,7 +215,11 @@ export default function Inicio() {
   const { persona } = useSesion();
   const { ultimoPartido: ejemplo } = useInicio();
   const noticias = useNoticias().publicaciones.slice(0, 3);
-  const nombre = persona.nombre.split(' ')[0];
+  // Si la persona eligió un apodo en su perfil, la saludamos con él; si no,
+  // con su nombre. En el resto de la app se muestra Nombre + Apellido.
+  // "el Checho" saluda "Hola, Checho": sin el artículo suena natural.
+  const apodo = useApodos()[persona.id]?.replace(/^(el|la)\s+/i, '').trim();
+  const nombre = apodo || persona.nombre.split(' ')[0];
   const partidos = usePartidos(persona);
   const entreno = useEntrenamiento(persona);
   // Los partidos del Jara se crean solos desde las fechas de la liga (0038):

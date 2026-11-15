@@ -27,6 +27,7 @@ import Tesoreria from './pages/Tesoreria.jsx';
 import Perfil from './pages/Perfil.jsx';
 import Planteles from './pages/Planteles.jsx';
 import FotosDrive from './pages/FotosDrive.jsx';
+import Ajustes from './pages/Ajustes.jsx';
 
 export default function App() {
   const { cargando, sesion, persona, sinConexion, esDemo, ofrecerClave } = useSesion();
@@ -70,6 +71,7 @@ export default function App() {
         <Route path="/noticias/nueva" element={<Publicar />} />
         <Route path="/noticias/:id" element={<Publicacion />} />
         <Route path="/mas" element={<Mas />} />
+        <Route path="/ajustes" element={<Ajustes />} />
         <Route path="/cuota" element={<Cuota />} />
         <Route path="/compras" element={<Compras />} />
         <Route path="/tablero" element={<Tablero />} />

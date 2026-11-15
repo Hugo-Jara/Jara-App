@@ -102,11 +102,19 @@ r = await votar('a', P.hoy, 'a');
 ok('No se puede votar por uno mismo', /No puedes votar por ti mismo/.test(r.error ?? ''), r.error);
 r = await votar('a', P.hoy, 'd');
 ok('Solo se vota por alguien que jugó', /alguien que jugó/.test(r.error ?? ''), r.error);
-r = await votar('a', P.hoy, 'b');
-ok('Un jugador vota', !r.error, r.error);
 r = await votar('a', P.hoy, 'c');
+ok('Un jugador vota', !r.error, r.error);
+r = await votar('a', P.hoy, 'b');
 x = await charla('a', P.hoy);
-ok('…y puede cambiar su voto mientras está abierta', !r.error && x.mvp.mi_voto === PER.c && x.mvp.votaron === 1, r.error);
+ok('…y no puede cambiar su voto, aunque siga abierta (0054)', /Ya votaste en este partido/.test(r.error ?? '') && x.mvp.mi_voto === PER.c && x.mvp.votaron === 1, r.error);
+r = await votar('a', P.hoy, 'c');
+ok('…ni repetirlo por el mismo', /Ya votaste en este partido/.test(r.error ?? ''), r.error);
+r = await como('a', `update partido_votos set elegido_id = '${PER.b}' where partido_id = '${P.hoy}'`);
+ok('…ni tocar la tabla directo', !!r.error, r.error);
+r = await db.query(`update partido_votos set elegido_id = '${PER.b}' where partido_id = '${P.hoy}' and votante_id = '${PER.a}'`).then(() => null, (e) => e.message);
+ok('La base tampoco deja cambiar un voto por SQL', /no se puede cambiar/.test(r ?? ''), r);
+r = await db.query(`delete from partido_votos where partido_id = '${P.hoy}' and votante_id = '${PER.a}'`).then(() => null, (e) => e.message);
+ok('…ni borrarlo', /no se puede borrar/.test(r ?? ''), r);
 ok('Mientras está abierta no se ve el conteo', x.mvp.ganadores.length === 0);
 r = await votar('b', P.sin, 'a');
 ok('Sin resultado no se vota', /cuando se anota el resultado/.test(r.error ?? ''), r.error);
@@ -143,7 +151,7 @@ r = await votar('d', P.hoy, 'b');
 x = await charla('d', P.hoy);
 ok('…y la base le acepta el voto', !r.error && x.mvp.mi_voto === PER.b, r.error);
 ok('…pero no pasa a ser candidato', !x.mvp.candidatos.some((c) => c.persona_id === PER.d));
-r = await votar('a', P.hoy, 'd');
+r = await votar('b', P.hoy, 'd');
 ok('…ni se puede votar por él', /alguien que jugó/.test(r.error ?? ''), r.error);
 x = await charla('d', OTRO_HOY);
 r = await votar('d', OTRO_HOY, 'a');
@@ -289,6 +297,26 @@ await db.exec('set role anon');
 r = await db.query('select arquero_cifras($1)', [PER.a]).then(() => null, (e) => e.message);
 await db.exec('reset role');
 ok('Sin sesión no se puede', !!r);
+
+console.log('\nVoto definitivo: excepciones (0054)');
+await db.exec(`
+  insert into partidos (id, club_id, equipo_id, rival, fecha, goles_favor, goles_contra) values
+    ('50000000-0000-0000-0000-0000000000f1', '${CLUB}', '${PLANTEL}', 'Rival Inventado', hoy() - 30, 1, 1);
+  insert into partido_jugadores (partido_id, persona_id) values
+    ('50000000-0000-0000-0000-0000000000f1', '${PER.a}'), ('50000000-0000-0000-0000-0000000000f1', '${PER.b}');
+  insert into partido_votos (partido_id, votante_id, elegido_id) values
+    ('50000000-0000-0000-0000-0000000000f1', '${PER.a}', '${PER.b}');
+`);
+r = await db.exec(`begin; select set_config('jara.corregir_votos', 'si', true);
+  update partido_votos set elegido_id = '${PER.a}', votante_id = '${PER.b}' where partido_id = '50000000-0000-0000-0000-0000000000f1'; commit;`)
+  .then(() => null, async (e) => { await db.exec('rollback'); return e.message; });
+x = (await db.query(`select votante_id from partido_votos where partido_id = '50000000-0000-0000-0000-0000000000f1'`)).rows;
+ok('El administrador puede corregir un voto por SQL si lo dice explícitamente', !r && x[0]?.votante_id === PER.b, r);
+r = await db.query(`update partido_votos set elegido_id = '${PER.b}', votante_id = '${PER.a}' where partido_id = '50000000-0000-0000-0000-0000000000f1'`).then(() => null, (e) => e.message);
+ok('…y fuera de esa transacción vuelve a quedar bloqueado', /no se puede cambiar/.test(r ?? ''), r);
+r = await db.query(`delete from partidos where id = '50000000-0000-0000-0000-0000000000f1'`).then(() => null, (e) => e.message);
+x = (await db.query(`select 1 from partido_votos where partido_id = '50000000-0000-0000-0000-0000000000f1'`)).rows;
+ok('Al borrar un partido sus votos se van con él', !r && x.length === 0, r);
 
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);
