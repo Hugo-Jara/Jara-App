@@ -4,6 +4,18 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-15 · Socio que no juega e invitado
+
+- **Socio que no juega:** en "No aparezco en la lista" ahora se elige "Juego en un plantel" (y se marcan los planteles) o "No juego, soy socio del club". El socio queda en la nómina sin plantel. Los textos del ingreso dicen que el pase lo da Tesorería (0057).
+- **Migración `0058_socio_sin_plantel.sql`:** el socio sin plantel se inscribe a los entrenamientos con precio senior (antes le salía precio de invitado). Solo cambia `entrenamiento_precio`; ningún permiso. Las inscripciones ya hechas no cambian.
+- **Pantallas del socio:** Inicio le explica que no tiene partidos por confirmar; Más no le muestra "Mi cuota" (no paga cuota de plantel). No vota MVP ni aprueba pases (ya era así).
+- **Invitado (sin cuenta):** página pública `/conoce-el-club` (`src/pages/ConoceElClub.jsx`) con planteles, entrenamientos, cómo ser parte y el link a Privacidad. Es solo texto escrito en el archivo: no consulta la base, así que no muestra nombres, fotos, boletín ni tesorería. Se abre desde la pantalla de entrada y desde "¿Quién eres?".
+- Se apila sobre el PR de Tesorería aprueba ingresos (0057).
+
+**Comprobado:** `npm run test:db` (8 pruebas nuevas en club) y `npm run build` pasan. Probado en iPhone 13 y Pixel 7 emulados contra una base en memoria con todas las migraciones: pedir pase como socio, pantalla de espera, Inicio, Entrenar ($4.000 senior) y Más del socio, y la página pública sin cuenta.
+
+---
+
 ## 2026-11-15 · Los pases de ingreso los aprueba Tesorería
 
 - **Qué pidió el club:** quienes aprueban el ingreso de un socio nuevo son las personas de Tesorería, que tienen la planilla con el correo y el RUT de cada uno. Hasta ahora solo podían el encargado del plantel y los administradores.

@@ -693,5 +693,35 @@ await db.query(`update personas set aprueba_ingresos = false where id = $1`, [P.
 r = await como('teso', 'select ingreso_resolver($1, true)', [(await uno('admin', 'select ingreso_pendientes()')).find((q) => q.nombre === 'Octavo Nuevo Inventado').id]);
 ok('Al quitarle el permiso deja de aprobar', /No puedes resolver/.test(r.error ?? ''), r.error);
 
+// ---------------------------------------------------------------------------
+// Socio que no juega (0058)
+console.log('\nSocio sin plantel');
+Object.assign(U, { nuevo9: '00000000-0000-0000-0000-000000000019' });
+await db.query(`insert into auth.users (id, email) values ('${U.nuevo9}', '${correo('nuevo9')}')`);
+r = await como('nuevo9', `select ingreso_solicitar(null, 'Noveno Socio Inventado', '{}'::uuid[])`);
+ok('Un socio que no juega pide entrar sin marcar planteles', !r.error, r.error);
+await db.query(`update personas set aprueba_ingresos = true where id = $1`, [P.teso]);
+x = await uno('teso', 'select ingreso_pendientes()');
+const pase9 = x.find((q) => q.nombre === 'Noveno Socio Inventado');
+ok('Tesorería ve el pase del socio sin plantel', !!pase9 && pase9.equipos.length === 0, JSON.stringify(x));
+r = await como('teso', 'select ingreso_resolver($1, true)', [pase9?.id]);
+x = await uno('nuevo9', 'select mi_persona()');
+ok('Tesorería lo aprueba y queda como socio, sin plantel', !r.error && x?.equipos.length === 0, r.error || JSON.stringify(x));
+await db.query(`update personas set aprueba_ingresos = false where id = $1`, [P.teso]);
+const precio = async (persona) => (await db.query(
+  `select entrenamiento_precio(e, $1) as p, e.precio_senior, e.precio_invitado from entrenamientos e order by fecha limit 1`, [persona])).rows[0];
+const yo9 = (await db.query(`select id from personas where user_id = $1`, [U.nuevo9])).rows[0].id;
+x = await precio(yo9);
+ok('El socio sin plantel entrena con precio senior, no de invitado', x.p === x.precio_senior && x.p !== x.precio_invitado, JSON.stringify(x));
+x = await precio(null);
+ok('Quien no es de la nómina sigue con precio de invitado', x.p === x.precio_invitado, JSON.stringify(x));
+await db.query(`update personas set estado = 'inactivo' where id = $1`, [yo9]);
+x = await precio(yo9);
+ok('Un socio dado de baja no conserva el precio de socio', x.p === x.precio_invitado, JSON.stringify(x));
+await db.query(`update personas set estado = 'activo' where id = $1`, [yo9]);
+r = await como('nuevo9', 'select ingreso_pendientes()');
+x = await uno('nuevo9', 'select ingreso_puedo_aprobar()');
+ok('Ni aprueba pases', x === false && (r.rows[0]?.ingreso_pendientes ?? []).length === 0, JSON.stringify(r.rows));
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

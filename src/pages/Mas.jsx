@@ -22,6 +22,8 @@ export default function Mas() {
     { a: '/compras', icono: 'compras', nombre: 'Compras', desc: 'Pedir una compra con su cotización' },
     // Asambleas y los ministerios vuelven a este menú cuando su pantalla exista (hoy /club está en construcción).
   ];
+  // Un socio que no juega no paga cuota de plantel: no se le muestra "Mi cuota".
+  if (!persona.equipos?.length) FILAS.splice(FILAS.findIndex((f) => f.a === '/cuota'), 1);
   // Solo para encargados y administradores.
   if (persona.esEncargado) {
     FILAS.unshift({ a: '/fotos-partidos', icono: 'noticias', nombre: 'Fotos de los partidos', desc: 'Enlazar cada partido con su carpeta del Drive' });

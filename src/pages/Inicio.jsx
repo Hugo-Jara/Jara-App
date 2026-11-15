@@ -70,7 +70,7 @@ function SinPartido({ equipos }) {
       <p className="vacio">
         {equipos.length
           ? `Todavía no hay un partido programado para ${equipos.map((e) => e.nombre).join(' ni ')}.`
-          : 'No estás en ningún plantel, así que no tienes partidos por confirmar.'}{' '}
+          : 'Eres socio del club sin plantel, así que no tienes partidos por confirmar. Igual puedes inscribirte a los entrenamientos y seguir al club.'}{' '}
         <Link className="enlace" to="/partidos">Ver los partidos del club</Link>
       </p>
     </section>
