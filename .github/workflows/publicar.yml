@@ -1,7 +1,7 @@
-# Desde el cambio a app.hugojara.cl, la app la publica Netlify (ver netlify.toml).
+# Desde el cambio a hugojara.cl, la app la publica Netlify (ver netlify.toml).
 # GitHub Pages (hugo-jara.github.io/Jara-App) queda solo como puente: manda a
-# la misma pantalla en app.hugojara.cl con la sesión abierta (ver puente/LEEME.md).
-name: Publicar puente a app.hugojara.cl
+# la misma pantalla en hugojara.cl con la sesión abierta (ver puente/LEEME.md).
+name: Publicar puente a hugojara.cl
 
 on:
   push:
