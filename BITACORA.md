@@ -4,6 +4,14 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-15 · Seguridad antes del lanzamiento
+
+- Revisión completa: todas las tablas con RLS y sin acceso directo desde el navegador; las 220 funciones probadas como cuenta desconocida y como socio raso (ninguna entrega datos ni deja hacer cosas que no corresponden); RUT, teléfono y correo solo para la propia persona, su tesorero y Hacienda; sin claves en el repo; sin puntos de inyección de código en la app.
+- `caras.yml` usa ahora el entorno `produccion` de GitHub: la llave maestra de la base (`SUPABASE_SECRET`) queda en ese entorno, que solo se abre desde main, y una rama de prueba ya no puede leerla. El administrador mueve el secreto de "Repository secrets" al entorno.
+- Sin migración.
+
+---
+
 ## 2026-11-14 · Sección de Ajustes
 
 - Pantalla nueva `/ajustes` (`src/pages/Ajustes.jsx`), con un engranaje arriba a la derecha en todas las pantallas (reemplaza el botón "Salir") y una fila al final de Más.
