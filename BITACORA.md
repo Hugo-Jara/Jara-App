@@ -11,6 +11,13 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 - Sin migración.
 
 **Comprobado:** `npm run test:db`, `npm run test:pedidos`, `npm run test:boletin` y `npm run build` pasan. Recorrido completo en iPhone 13 y Pixel 7 emulados contra una base en memoria con todas las migraciones (primer ingreso, partido, voto MVP, entrenamiento, perfil, ajustes con tema claro y letra muy grande, tesorería, fondo): sin errores.
+## 2026-11-15 · La liga no atocha la app cuando entra mucha gente (0055)
+
+**Por qué:** en el lanzamiento entran unas 70 personas casi al mismo tiempo. Cada Inicio le pide a la base revisar la liga de cada plantel; si justo "tocaba" (pasaron 3 horas), todas iban a la página de la liga a la vez, cada una ocupando una conexión de la base varios segundos. Y si la página de la liga estaba caída, cada apertura volvía a intentarlo.
+
+- **Base (0055):** `liga_refrescar` pasa a ser la puerta de entrada y la lectura de siempre queda en `liga_refrescar_leer` (sin cambios, solo la llama la base). La revisión automática la hace una persona a la vez por plantel (las demás siguen de largo) y, si falla, se anota en `liga_torneos.fallo_en` y no se reintenta por 15 minutos, sin mostrar error. El botón "Actualizar desde la liga" funciona igual que antes.
+- **Ojo:** los cambios futuros a cómo se lee la liga van en `liga_refrescar_leer`.
+- **Pruebas:** `liga.mjs` con 6 pruebas nuevas; `npm run test:db` completo pasa.
 
 ---
 
