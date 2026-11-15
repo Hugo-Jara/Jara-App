@@ -6,7 +6,7 @@ Jara App es la aplicación interna del Club Deportivo Hugo Jara (Santiago, Chile
 
 ## Quién es el responsable
 
-El responsable de tus datos es el Club Deportivo Hugo Jara, RUT [confirmar RUT del club], con domicilio en Santiago. Para cualquier tema de datos personales, escríbenos a contacto@hugojara.cl.
+El responsable de tus datos es el Club Deportivo Hugo Jara, RUT 65.260.911-2, con domicilio en Santiago. Para cualquier tema de datos personales, escríbenos a contacto@hugojara.cl.
 
 ## Qué datos guardamos
 
