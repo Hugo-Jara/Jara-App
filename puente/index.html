@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#120E0D" />
+  <title>Jara App se cambió a hugojara.cl</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #120E0D; color: #F5EFE6;
+      font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; padding: 24px; box-sizing: border-box; }
+    main { max-width: 26rem; text-align: center; }
+    h1 { font-size: 1.4rem; margin: 0 0 .5rem; }
+    p { margin: .5rem 0; color: #D9CFC2; }
+    a.boton { display: inline-block; margin: 1rem 0; padding: .9rem 1.4rem; border-radius: 12px; background: #C8102E;
+      color: #fff; font-weight: 600; text-decoration: none; }
+    ol { text-align: left; color: #D9CFC2; padding-left: 1.2rem; }
+    [hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Jara App se cambió de casa</h1>
+    <p>Ahora está en <strong>hugojara.cl</strong>.</p>
+    <a class="boton" id="seguir" href="https://hugojara.cl/">Abrir Jara App</a>
+    <div id="instalada" hidden>
+      <p>Tienes la app instalada con la dirección antigua. Para dejarla al día:</p>
+      <ol>
+        <li>Toca <strong>Abrir Jara App</strong>.</li>
+        <li>Agrégala a tu pantalla de inicio desde ahí (en iPhone: Compartir → Agregar a inicio).</li>
+        <li>Borra este ícono viejo.</li>
+      </ol>
+    </div>
+  </main>
+  <script>
+    // Puente de la dirección vieja (hugo-jara.github.io/Jara-App) a hugojara.cl.
+    // Manda a la misma pantalla y pasa la sesión y los ajustes en la parte del
+    // link que va después de #, que el navegador nunca envía a ningún servidor.
+    (function () {
+      var NUEVA = 'https://hugojara.cl';
+      var BASE = '/Jara-App';
+      var SESION = 'sb-pzzkrbnzguqtjrlwgtiy-auth-token';
+      var LLAVES = ['jara-ajustes', 'jara-entra-con-clave', 'jara-bienvenida-vista', 'pedido-nombre'];
+
+      var ruta = location.pathname;
+      if (ruta.indexOf(BASE) === 0) ruta = ruta.slice(BASE.length);
+      if (!ruta || ruta.charAt(0) !== '/') ruta = '/' + ruta;
+      var destino = NUEVA + ruta + location.search;
+
+      // Un link de ingreso que llegó a la dirección vieja (correos ya enviados)
+      // se pasa tal cual: la app nueva lo entiende.
+      var h = location.hash;
+      var traspasoHecho = false;
+      if (/access_token=|error_description=|[?&#]code=/.test(h)) {
+        destino += h;
+      } else {
+        try {
+          var paquete = { extras: {} };
+          LLAVES.forEach(function (k) {
+            var v = localStorage.getItem(k);
+            if (v !== null) paquete.extras[k] = v;
+          });
+          var s = JSON.parse(localStorage.getItem(SESION) || 'null');
+          if (s && s.access_token && s.refresh_token) { paquete.at = s.access_token; paquete.rt = s.refresh_token; }
+          destino += '#jara-traspaso=' + encodeURIComponent(JSON.stringify(paquete));
+          traspasoHecho = !!paquete.rt;
+        } catch (e) { /* sin almacenamiento: entra de nuevo allá */ }
+      }
+
+      // La sesión vieja se borra al irse, para que no se use dos veces.
+      function soltar() {
+        if (!traspasoHecho) return;
+        try { localStorage.removeItem(SESION); } catch (e) { /* nada */ }
+      }
+
+      var boton = document.getElementById('seguir');
+      boton.href = destino;
+      boton.addEventListener('click', soltar);
+
+      var instalada = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+      if (instalada) {
+        document.getElementById('instalada').hidden = false;
+      } else {
+        soltar();
+        location.replace(destino);
+      }
+    })();
+  </script>
+</body>
+</html>

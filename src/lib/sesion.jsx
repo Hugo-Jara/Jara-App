@@ -3,6 +3,7 @@ import { supabase, esDemo, llamar } from './supabase.js';
 import { vaciarPartidos } from './partidos.js';
 import { vaciarEntrenamiento } from './entrenamiento.js';
 import { vaciarSolicitudes } from './ingreso.js';
+import { recibirTraspaso } from './traspaso.js';
 
 const Contexto = createContext(null);
 export const useSesion = () => useContext(Contexto);
@@ -93,7 +94,10 @@ export function ProveedorSesion({ children }) {
       if (s) await cargarPersona();
       if (vigente) setCargando(false);
     };
-    supabase.auth.getSession().then(({ data }) => aplicar(data.session));
+    // Si viene desde la dirección vieja con su sesión, se abre aquí antes de mirar.
+    recibirTraspaso(supabase)
+      .then(() => supabase.auth.getSession())
+      .then(({ data }) => aplicar(data.session));
     const { data: sub } = supabase.auth.onAuthStateChange((evento, s) => {
       if (evento === 'SIGNED_IN' || evento === 'SIGNED_OUT') aplicar(s);
     });
