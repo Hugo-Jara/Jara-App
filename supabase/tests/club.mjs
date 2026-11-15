@@ -664,5 +664,34 @@ console.log('\n0049 · Archivos a una lista de compras cerrada');
   ok('A una lista abierta se sigue subiendo sin cuenta', !!abierta && !(await subirA('anon', 'pedidos', 'carpeta-abierta/q.pdf')));
 }
 
+// ---------------------------------------------------------------------------
+// Tesorería aprueba los pases de ingreso (0056)
+console.log('\nTesorería aprueba ingresos');
+Object.assign(U, { nuevo7: '00000000-0000-0000-0000-000000000017', nuevo8: '00000000-0000-0000-0000-000000000018' });
+await db.query(`insert into auth.users (id, email) values ${['nuevo7', 'nuevo8'].map((k) => `('${U[k]}', '${correo(k)}')`).join(', ')}`);
+r = await como('nuevo7', `select ingreso_solicitar(null, 'Séptimo Nuevo Inventado', $1::uuid[])`, [[EQ.jueves, EQ.junior]]);
+ok('Alguien nuevo pide entrar a dos planteles', !r.error, r.error);
+ok('Sin el permiso, la tesorera no ve la pantalla de pases', (await uno('teso', 'select ingreso_puedo_aprobar()')) === false);
+ok('…ni ve la solicitud', (await uno('teso', 'select ingreso_pendientes()')).length === 0);
+ok('Un jugador tampoco', (await uno('junior', 'select ingreso_puedo_aprobar()')) === false);
+ok('El encargado y el administrador sí ven la pantalla', (await uno('capi', 'select ingreso_puedo_aprobar()')) === true && (await uno('admin', 'select ingreso_puedo_aprobar()')) === true);
+await db.query(`update personas set aprueba_ingresos = true where id = $1`, [P.teso]);
+ok('Con el permiso, la tesorera ve la pantalla de pases', (await uno('teso', 'select ingreso_puedo_aprobar()')) === true);
+x = await uno('teso', 'select ingreso_pendientes()');
+ok('…y ve la solicitud aunque no sea de su plantel', x.some((q) => q.nombre === 'Séptimo Nuevo Inventado'), JSON.stringify(x));
+x = await uno('nuevo7', 'select ingreso_mi_estado()');
+ok('A quien espera se le nombra a Tesorería', x.aprueban.includes('Tina Tesorera Inventada'), JSON.stringify(x.aprueban));
+r = await como('teso', 'select ingreso_resolver($1, true)', [(await uno('teso', 'select ingreso_pendientes()')).find((q) => q.nombre === 'Séptimo Nuevo Inventado').id]);
+x = await uno('nuevo7', 'select mi_persona()');
+ok('Tesorería aprueba y la persona queda en los dos planteles que pidió', !r.error && x?.equipos.length === 2, r.error || JSON.stringify(x?.equipos));
+r = await guardarPartido('teso', EQ.jueves, 'Rival', await dia(9));
+ok('El permiso no da nada más: no programa partidos', /Solo el encargado/.test(r.error ?? ''), r.error);
+r = await como('teso', 'select apruebo_ingresos()');
+ok('La función interna no se llama desde la app', /permission denied/.test(r.error ?? ''), r.error);
+r = await como('nuevo8', `select ingreso_solicitar(null, 'Octavo Nuevo Inventado', $1::uuid[])`, [[EQ.sabado]]);
+await db.query(`update personas set aprueba_ingresos = false where id = $1`, [P.teso]);
+r = await como('teso', 'select ingreso_resolver($1, true)', [(await uno('admin', 'select ingreso_pendientes()')).find((q) => q.nombre === 'Octavo Nuevo Inventado').id]);
+ok('Al quitarle el permiso deja de aprobar', /No puedes resolver/.test(r.error ?? ''), r.error);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

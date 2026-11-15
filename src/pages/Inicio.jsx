@@ -7,7 +7,7 @@ import { useInicio } from '../lib/inicio.js';
 import { usePartidos, porEstado, sinResponder, tieneResultado } from '../lib/partidos.js';
 import { revisarLiga } from '../lib/liga.js';
 import { useEntrenamiento, horario } from '../lib/entrenamiento.js';
-import { useSolicitudes } from '../lib/ingreso.js';
+import { useSolicitudes, usePuedeAprobarIngresos } from '../lib/ingreso.js';
 import { useNoticias, TIPOS } from '../lib/noticias.js';
 import { fechaLarga } from '../lib/fechas.js';
 import { pesos } from '../lib/pedido.js';
@@ -113,7 +113,7 @@ function Entrenamiento({ e, miInscripcion, libres, inscribirme }) {
   );
 }
 
-// Solo para encargados: gente que pidió entrar y espera su pase.
+// Solo para quien aprueba pases (Tesorería, encargados y administradores): gente que pidió entrar.
 function PasesPendientes() {
   const { solicitudes } = useSolicitudes();
   if (!solicitudes.length) return null;
@@ -215,6 +215,7 @@ const siguientes = (mios) => {
 
 export default function Inicio() {
   const { persona } = useSesion();
+  const apruebaIngresos = usePuedeAprobarIngresos(persona);
   const { ultimoPartido: ejemplo } = useInicio();
   const noticias = useNoticias().publicaciones.slice(0, 3);
   // Si la persona eligió un apodo en su perfil, la saludamos con él; si no,
@@ -239,7 +240,7 @@ export default function Inicio() {
       <h1 className="titulo display">Hola, {nombre}</h1>
       <p className="subtitulo">Esto es lo que viene en el Jara.</p>
       <Bienvenida />
-      {persona.esEncargado && <PasesPendientes />}
+      {apruebaIngresos && <PasesPendientes />}
       <HonorariosPorPagar persona={persona} />
       {!esDemo && <UltimoBoletin />}
       {partidos.cargando
