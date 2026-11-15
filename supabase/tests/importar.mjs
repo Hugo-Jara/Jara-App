@@ -201,5 +201,38 @@ ok('El mismo RUT en otro plantel no crea otra persona', !r.error && r.rows[0].v.
    && (await sql(`select count(*)::int n from personas where nombre like 'Persona Nueva%'`))[0].n === 1, r.error ?? JSON.stringify(r.rows[0]?.v.filas));
 ok('…y queda en los dos planteles', (await sql(`select count(*)::int n from persona_equipos where persona_id = $1 and rol = 'jugador'`, [nueva.id]))[0].n === 2);
 
+// Nombre, Apellido paterno y Apellido materno (0053)
+console.log('\nNombre por partes (0053)');
+const partes = (n, nombres, paterno, materno, extra = {}) =>
+  fila(n, [nombres, paterno, materno].filter(Boolean).join(' '), { nombres, apellido_paterno: paterno, apellido_materno: materno, ...extra });
+r = await importar('tesorero', SENIOR, [partes(2, 'Persona', 'Nueva', 'Inventada', { rut: '15000001-7' })]);
+v = r.rows[0].v;
+ok('La vista previa muestra el nombre que cambia', !r.error && v.filas[0].cambios.some((c) => c === 'Nombre en la app: Persona Nueva Inventada → Persona Nueva'),
+   r.error ?? JSON.stringify(v.filas[0]));
+await importar('tesorero', SENIOR, [partes(2, 'Persona', 'Nueva', 'Inventada', { rut: '15000001-7' })], { confirmar: true });
+let pn = (await sql(`select nombre, nombres, apellido_paterno, apellido_materno from personas where id = $1`, [nueva.id]))[0];
+ok('La app muestra Nombre Apellido paterno y guarda las tres partes',
+   pn.nombre === 'Persona Nueva' && pn.nombres === 'Persona' && pn.apellido_paterno === 'Nueva' && pn.apellido_materno === 'Inventada', JSON.stringify(pn));
+r = await importar('tesorero', SENIOR, [partes(2, 'Persona', 'Nueva', 'Inventada', { rut: '15000001-7' })]);
+ok('Importar lo mismo otra vez no cambia el nombre', !r.rows[0].v.filas[0].cambios.some((c) => /^Nombre/.test(c)), JSON.stringify(r.rows[0].v.filas[0]));
+r = await importar('tesorero', SENIOR, [partes(2, 'Persona', 'Nueva', null, { rut: '15000001-7', fila: 2 }), partes(3, 'Nuevo', 'Por Partes', 'Inventado', { rut: '15000004-1' })], { confirmar: true });
+pn = (await sql(`select nombre, apellido_materno from personas where id = $1`, [nueva.id]))[0];
+ok('Si la planilla borra el materno, se borra', !r.error && pn.nombre === 'Persona Nueva' && pn.apellido_materno === null, r.error ?? JSON.stringify(pn));
+ok('Un nuevo entra con el nombre corto', (await sql(`select 1 from personas where nombre = 'Nuevo Por Partes' and apellido_materno = 'Inventado'`)).length === 1);
+r = await importar('tesorero', SENIOR, [partes(2, 'Persona', null, null, { rut: '15000001-7' })]);
+ok('Sin apellido paterno, avisa y no toca el nombre', r.rows[0].v.filas[0].avisos.some((a) => /Apellido paterno/.test(a))
+   && !r.rows[0].v.filas[0].cambios.some((c) => /^Nombre/.test(c)), JSON.stringify(r.rows[0].v.filas[0]));
+r = await importar('tesorero', SENIOR, [fila(2, 'Persona Nueva Inventada', { rut: '15000001-7' })]);
+ok('La pestaña vieja (Nombre completo) no toca el nombre', !r.error && !r.rows[0].v.filas[0].cambios.some((c) => /^Nombre/.test(c)), r.error ?? JSON.stringify(r.rows[0].v.filas[0]));
+r = await como('tesorero', `select tes_guardar_jugador($1, $2, $3, '{"nombre": "Otro Nombre"}'::jsonb)`, [SENIOR, T, nueva.id]);
+ok('Con partes, el nombre no se cambia a mano', /viene de la planilla/.test(r.error ?? ''), r.error);
+r = await como('tesorero', `select tes_guardar_jugador($1, $2, $3, '{"nombre": "Persona Nueva"}'::jsonb)`, [SENIOR, T, nueva.id]);
+ok('…pero guardar la ficha sin cambiarlo funciona', !r.error, r.error);
+r = await como('tesorero', 'select tes_ver($1, $2) as v', [SENIOR, T]);
+const enFicha = r.rows[0]?.v.jugadores.find((j) => j.id === nueva.id);
+ok('La ficha trae las partes', enFicha?.nombres === 'Persona' && enFicha?.apellido_paterno === 'Nueva', r.error ?? JSON.stringify(enFicha));
+r = await importar('tesorero', SENIOR, [partes(2, 'Persona', 'Nueva', null, { rut: '15000001-7', apodo: 'Pulga' })], { confirmar: true });
+ok('El apodo nunca viene de la planilla', (await sql(`select apodo from personas where id = $1`, [nueva.id]))[0].apodo === null);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

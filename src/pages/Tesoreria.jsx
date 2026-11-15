@@ -380,8 +380,28 @@ function Condicion({ j, editar, acciones }) {
       <h2 className="seccion">Condición y contacto</h2>
       <form className="card" onSubmit={guardar}>
         <fieldset disabled={!editar} style={{ border: 0, padding: 0, margin: 0 }}>
-          <label htmlFor="c-nombre">Nombre completo</label>
-          <input id="c-nombre" required maxLength={80} value={d.nombre} onChange={set('nombre')} />
+          {j.apellido_paterno ? (
+            <>
+              {/* Viene de la planilla (migración 0053): se cambia ahí y se vuelve a importar. */}
+              <label htmlFor="c-nombres">Nombre</label>
+              <input id="c-nombres" readOnly value={j.nombres ?? ''} />
+              <div className="tes-dos">
+                <div>
+                  <label htmlFor="c-paterno">Apellido paterno</label>
+                  <input id="c-paterno" readOnly value={j.apellido_paterno ?? ''} />
+                </div>
+                <div>
+                  <label htmlFor="c-materno">Apellido materno</label>
+                  <input id="c-materno" readOnly value={j.apellido_materno ?? ''} />
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <label htmlFor="c-nombre">Nombre completo</label>
+              <input id="c-nombre" required maxLength={80} value={d.nombre} onChange={set('nombre')} />
+            </>
+          )}
           <label htmlFor="c-apodo">Apodo (opcional)</label>
           <input id="c-apodo" maxLength={20} placeholder="Ej: el Checho" value={d.apodo} onChange={set('apodo')} />
           <label htmlFor="c-tipo">Condición</label>
@@ -419,6 +439,7 @@ function Condicion({ j, editar, acciones }) {
           {editar && <button className="btn secundario" style={{ marginTop: 16 }} disabled={a.ocupado}>Guardar</button>}
         </fieldset>
         <p className="nota">
+          {j.apellido_paterno && 'El nombre viene de la planilla común: para cambiarlo, corrígelo ahí y vuelve a importar. '}
           Nombre, RUT, celular y correo quedan en el perfil de {j.nombre.split(' ')[0]}; él no los puede cambiar.
           La fecha de nacimiento la puede corregir él; el club ve solo el día y el mes.{' '}
           {j.correo_perfil
