@@ -873,3 +873,5 @@ label.tes-imp-check { display: flex; align-items: center; gap: 10px; margin: 0; 
 :root[data-tema='claro'] .noticias-error { color: #9a2a22; }
 :root[data-tema='claro'] .noticias-aviso-distribucion { color: #7a5a1c; }
 :root[data-tema='claro'] .noticias-campo-etiqueta { color: var(--text-dim); }
+.ingreso .pie-ingreso { margin-top: 28px; font-size: 13px; text-align: center; }
+.ingreso .pie-ingreso a { color: inherit; text-decoration: underline; }

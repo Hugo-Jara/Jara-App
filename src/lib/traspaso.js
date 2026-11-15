@@ -1,4 +1,4 @@
-// Cambio de casa: la app pasó de hugo-jara.github.io/Jara-App a app.hugojara.cl.
+// Cambio de casa: la app pasó de hugo-jara.github.io/Jara-App a hugojara.cl.
 // La dirección vieja quedó como un "puente" (carpeta puente/) que manda a la
 // persona a la misma pantalla en la dirección nueva y le pasa, en la parte
 // del link que nunca llega a ningún servidor (#), su sesión y sus ajustes.
