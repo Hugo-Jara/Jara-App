@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useSesion } from '../../lib/sesion.jsx';
 import { edicionNueva, validarEdicion } from '../../lib/boletinDatos.js';
 import * as api from '../../lib/boletin.js';
+import { marcarLeida } from '../../lib/boletinLeido.js';
 import BoletinEditor from './BoletinEditor.jsx';
 import BoletinVista from './BoletinVista.jsx';
 
@@ -23,7 +24,7 @@ function Lector({ id }) {
     const e = await api.obtenerEdicion(id);
     const urls = await Promise.all(Array.from({ length: e.paginas }, (_, i) => api.urlArchivo(api.paginaRuta(e.carpeta, i + 1))));
     const contenido = e.contenido_publicado ? await api.contenidoEditable({ contenido: e.contenido_publicado }) : null;
-    if (vigente) { setDatos({ ...e, contenido }); setPaginas(urls); }
+    if (vigente) { setDatos({ ...e, contenido }); setPaginas(urls); marcarLeida(e.id); }
   })().catch(e => { if (vigente) setError(e.message); }); return () => { vigente = false; }; }, [id]);
   if (error) return <p role="alert">{error}</p>;
   if (!datos) return <p role="status">Cargando edición…</p>;
