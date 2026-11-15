@@ -4,6 +4,14 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-15 · Seguridad antes del lanzamiento
+
+- Revisión completa: todas las tablas con RLS y sin acceso directo desde el navegador; las 220 funciones probadas como cuenta desconocida y como socio raso (ninguna entrega datos ni deja hacer cosas que no corresponden); RUT, teléfono y correo solo para la propia persona, su tesorero y Hacienda; sin claves en el repo; sin puntos de inyección de código en la app.
+- `caras.yml` usa ahora el entorno `produccion` de GitHub: la llave maestra de la base (`SUPABASE_SECRET`) queda en ese entorno, que solo se abre desde main, y una rama de prueba ya no puede leerla. El administrador mueve el secreto de "Repository secrets" al entorno.
+- Sin migración.
+
+---
+
 ## 2026-11-15 · Socio que no juega e invitado
 
 - **Socio que no juega:** en "No aparezco en la lista" ahora se elige "Juego en un plantel" (y se marcan los planteles) o "No juego, soy socio del club". El socio queda en la nómina sin plantel. Los textos del ingreso dicen que el pase lo da Tesorería (0057).
@@ -27,20 +35,6 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
-## 2026-11-15 · Limpieza antes del lanzamiento: fuera lo de ejemplo
-
-- **Tablero de ejemplo:** con la base real, `/tablero` ya no muestra montos inventados; lleva a Tesorería. La fila "Tablero de tesorería · Datos de ejemplo" de Más queda solo para el modo demostración.
-- **Inicio:** se quita el aviso "Se viene El Jara Informa…", que quedaba viejo después del lanzamiento. La última edición publicada del boletín ya tiene su tarjeta en Inicio.
-- Sin migración.
-
-**Comprobado:** `npm run test:db`, `npm run test:pedidos`, `npm run test:boletin` y `npm run build` pasan. Recorrido completo en iPhone 13 y Pixel 7 emulados contra una base en memoria con todas las migraciones (primer ingreso, partido, voto MVP, entrenamiento, perfil, ajustes con tema claro y letra muy grande, tesorería, fondo): sin errores.
-## 2026-11-15 · La liga no atocha la app cuando entra mucha gente (0055)
-
-**Por qué:** en el lanzamiento entran unas 70 personas casi al mismo tiempo. Cada Inicio le pide a la base revisar la liga de cada plantel; si justo "tocaba" (pasaron 3 horas), todas iban a la página de la liga a la vez, cada una ocupando una conexión de la base varios segundos. Y si la página de la liga estaba caída, cada apertura volvía a intentarlo.
-
-- **Base (0055):** `liga_refrescar` pasa a ser la puerta de entrada y la lectura de siempre queda en `liga_refrescar_leer` (sin cambios, solo la llama la base). La revisión automática la hace una persona a la vez por plantel (las demás siguen de largo) y, si falla, se anota en `liga_torneos.fallo_en` y no se reintenta por 15 minutos, sin mostrar error. El botón "Actualizar desde la liga" funciona igual que antes.
-- **Ojo:** los cambios futuros a cómo se lee la liga van en `liga_refrescar_leer`.
-- **Pruebas:** `liga.mjs` con 6 pruebas nuevas; `npm run test:db` completo pasa.
 ## 2026-11-15 · El boletín baja en Inicio después de leerlo (0056)
 
 **Pedido del administrador:** la edición nueva de El Jara Informa ocupaba siempre lo primero de Inicio. Ahora va arriba solo hasta que la persona la lee; después baja, bajo sus partidos, su entrenamiento y su último partido. Cada edición nueva vuelve a subir hasta que se lee.
@@ -52,11 +46,25 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 **Comprobado:** `npm run test:boletin-db` (52 pruebas, 8 nuevas), `npm run build` y recorrido con datos inventados en iPhone 13 y Pixel 7 emulados: sin leer va arriba, después de leerla baja, en otro dispositivo sin nada guardado también va abajo, y una edición nueva vuelve arriba.
 
-## 2026-11-15 · Seguridad antes del lanzamiento
+---
 
-- Revisión completa: todas las tablas con RLS y sin acceso directo desde el navegador; las 220 funciones probadas como cuenta desconocida y como socio raso (ninguna entrega datos ni deja hacer cosas que no corresponden); RUT, teléfono y correo solo para la propia persona, su tesorero y Hacienda; sin claves en el repo; sin puntos de inyección de código en la app.
-- `caras.yml` usa ahora el entorno `produccion` de GitHub: la llave maestra de la base (`SUPABASE_SECRET`) queda en ese entorno, que solo se abre desde main, y una rama de prueba ya no puede leerla. El administrador mueve el secreto de "Repository secrets" al entorno.
+## 2026-11-15 · La liga no atocha la app cuando entra mucha gente (0055)
+
+**Por qué:** en el lanzamiento entran unas 70 personas casi al mismo tiempo. Cada Inicio le pide a la base revisar la liga de cada plantel; si justo "tocaba" (pasaron 3 horas), todas iban a la página de la liga a la vez, cada una ocupando una conexión de la base varios segundos. Y si la página de la liga estaba caída, cada apertura volvía a intentarlo.
+
+- **Base (0055):** `liga_refrescar` pasa a ser la puerta de entrada y la lectura de siempre queda en `liga_refrescar_leer` (sin cambios, solo la llama la base). La revisión automática la hace una persona a la vez por plantel (las demás siguen de largo) y, si falla, se anota en `liga_torneos.fallo_en` y no se reintenta por 15 minutos, sin mostrar error. El botón "Actualizar desde la liga" funciona igual que antes.
+- **Ojo:** los cambios futuros a cómo se lee la liga van en `liga_refrescar_leer`.
+- **Pruebas:** `liga.mjs` con 6 pruebas nuevas; `npm run test:db` completo pasa.
+
+---
+
+## 2026-11-15 · Limpieza antes del lanzamiento: fuera lo de ejemplo
+
+- **Tablero de ejemplo:** con la base real, `/tablero` ya no muestra montos inventados; lleva a Tesorería. La fila "Tablero de tesorería · Datos de ejemplo" de Más queda solo para el modo demostración.
+- **Inicio:** se quita el aviso "Se viene El Jara Informa…", que quedaba viejo después del lanzamiento. La última edición publicada del boletín ya tiene su tarjeta en Inicio.
 - Sin migración.
+
+**Comprobado:** `npm run test:db`, `npm run test:pedidos`, `npm run test:boletin` y `npm run build` pasan. Recorrido completo en iPhone 13 y Pixel 7 emulados contra una base en memoria con todas las migraciones (primer ingreso, partido, voto MVP, entrenamiento, perfil, ajustes con tema claro y letra muy grande, tesorería, fondo): sin errores.
 
 ---
 
