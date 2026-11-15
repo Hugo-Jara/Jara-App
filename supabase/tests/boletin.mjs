@@ -182,5 +182,18 @@ ok('Queda en el historial del socio', (await catalogo('socio')).some((e) => e.nu
 r = await guardar('com', H1, 1);
 ok('Una edición anterior no se edita como borrador', /no se edita/.test(r.error ?? ''), r.error);
 
+// --- Leída (0056): arriba en Inicio hasta que se lee ----------------------------------
+ok('Al principio el socio no la ha leído', (await uno('socio', 'select boletin_leida($1)', [H1])).v === false);
+r = await uno('socio', 'select boletin_marcar_leida($1)', [H1]);
+ok('El socio la marca como leída', r.v === true, r.error);
+ok('… y queda leída para él', (await uno('socio', 'select boletin_leida($1)', [H1])).v === true);
+ok('Marcarla otra vez no falla', (await uno('socio', 'select boletin_marcar_leida($1)', [H1])).v === true);
+ok('Para otro socio sigue sin leer', (await uno('com', 'select boletin_leida($1)', [H1])).v === false);
+ok('Otro club no puede marcarla', (await uno('ajeno', 'select boletin_marcar_leida($1)', [H1])).v === false);
+r = await guardar('com', E5, 5);
+ok('Un borrador no se marca como leído', (await uno('socio', 'select boletin_marcar_leida($1)', [E5])).v === false);
+r = await como('socio', 'select * from boletin_lecturas');
+ok('Las lecturas no se leen directo desde la app', /permission denied/.test(r.error ?? ''), r.error);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

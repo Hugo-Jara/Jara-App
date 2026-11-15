@@ -18,6 +18,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 - **Base (0055):** `liga_refrescar` pasa a ser la puerta de entrada y la lectura de siempre queda en `liga_refrescar_leer` (sin cambios, solo la llama la base). La revisión automática la hace una persona a la vez por plantel (las demás siguen de largo) y, si falla, se anota en `liga_torneos.fallo_en` y no se reintenta por 15 minutos, sin mostrar error. El botón "Actualizar desde la liga" funciona igual que antes.
 - **Ojo:** los cambios futuros a cómo se lee la liga van en `liga_refrescar_leer`.
 - **Pruebas:** `liga.mjs` con 6 pruebas nuevas; `npm run test:db` completo pasa.
+## 2026-11-15 · El boletín baja en Inicio después de leerlo (0056)
+
+**Pedido del administrador:** la edición nueva de El Jara Informa ocupaba siempre lo primero de Inicio. Ahora va arriba solo hasta que la persona la lee; después baja, bajo sus partidos, su entrenamiento y su último partido. Cada edición nueva vuelve a subir hasta que se lee.
+
+- Migración `0056_boletin_leido.sql`: tabla `boletin_lecturas` (persona, edición, cuándo) sin acceso directo, y dos funciones: `boletin_leida(id)` y `boletin_marcar_leida(id)` (solo ediciones publicadas del propio club; repetirla no hace nada). No cambia la 0050.
+- `src/lib/boletinLeido.js`: guarda "leída" en la base (vale en todos los dispositivos) y en el navegador (cambio inmediato). Si la base falla, la edición se muestra arriba: lo nuevo nunca se esconde.
+- Queda leída al tocar "Leer edición" en Inicio o al abrir la edición desde Noticias (una línea en el lector de `BoletinReal.jsx`).
+- `Inicio.jsx` ya no usa `UltimoBoletin`; arma la tarjeta con `TarjetaReal` y la ubica según leída o no.
+
+**Comprobado:** `npm run test:boletin-db` (52 pruebas, 8 nuevas), `npm run build` y recorrido con datos inventados en iPhone 13 y Pixel 7 emulados: sin leer va arriba, después de leerla baja, en otro dispositivo sin nada guardado también va abajo, y una edición nueva vuelve arriba.
 
 ---
 
