@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-15 · Limpieza antes del lanzamiento: fuera lo de ejemplo
+
+- **Tablero de ejemplo:** con la base real, `/tablero` ya no muestra montos inventados; lleva a Tesorería. La fila "Tablero de tesorería · Datos de ejemplo" de Más queda solo para el modo demostración.
+- **Inicio:** se quita el aviso "Se viene El Jara Informa…", que quedaba viejo después del lanzamiento. La última edición publicada del boletín ya tiene su tarjeta en Inicio.
+- Sin migración.
+
+**Comprobado:** `npm run test:db`, `npm run test:pedidos`, `npm run test:boletin` y `npm run build` pasan. Recorrido completo en iPhone 13 y Pixel 7 emulados contra una base en memoria con todas las migraciones (primer ingreso, partido, voto MVP, entrenamiento, perfil, ajustes con tema claro y letra muy grande, tesorería, fondo): sin errores.
+
+---
+
 ## 2026-11-14 · Sección de Ajustes
 
 - Pantalla nueva `/ajustes` (`src/pages/Ajustes.jsx`), con un engranaje arriba a la derecha en todas las pantallas (reemplaza el botón "Salir") y una fila al final de Más.
