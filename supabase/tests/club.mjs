@@ -665,7 +665,7 @@ console.log('\n0049 · Archivos a una lista de compras cerrada');
 }
 
 // ---------------------------------------------------------------------------
-// Tesorería aprueba los pases de ingreso (0056)
+// Tesorería aprueba los pases de ingreso (0057)
 console.log('\nTesorería aprueba ingresos');
 Object.assign(U, { nuevo7: '00000000-0000-0000-0000-000000000017', nuevo8: '00000000-0000-0000-0000-000000000018' });
 await db.query(`insert into auth.users (id, email) values ${['nuevo7', 'nuevo8'].map((k) => `('${U[k]}', '${correo(k)}')`).join(', ')}`);

@@ -25,7 +25,7 @@ const almacen = crearAlmacen(cargar);
 export const vaciarSolicitudes = () => { permiso = null; almacen.vaciar(); };
 
 // ¿Me toca aprobar pases? Los encargados ya lo saben por su sesión; al resto se
-// le pregunta a la base una sola vez (permiso personal de Tesorería, 0056).
+// le pregunta a la base una sola vez (permiso personal de Tesorería, 0057).
 let permiso = null;
 export function usePuedeAprobarIngresos(persona) {
   const sabido = !!persona?.esEncargado;

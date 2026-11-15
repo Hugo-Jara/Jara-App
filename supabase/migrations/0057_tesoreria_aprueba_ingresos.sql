@@ -1,4 +1,4 @@
--- 0056 · Los pases de ingreso los aprueba Tesorería
+-- 0057 · Los pases de ingreso los aprueba Tesorería
 --
 -- Hasta ahora un pase lo aprobaba el encargado del plantel o un administrador.
 -- El club definió que los responsables de aprobar ingresos son las personas de

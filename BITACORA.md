@@ -7,7 +7,7 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 ## 2026-11-15 · Los pases de ingreso los aprueba Tesorería
 
 - **Qué pidió el club:** quienes aprueban el ingreso de un socio nuevo son las personas de Tesorería, que tienen la planilla con el correo y el RUT de cada uno. Hasta ahora solo podían el encargado del plantel y los administradores.
-- **Migración `0056_tesoreria_aprueba_ingresos.sql`:** permiso personal `personas.aprueba_ingresos`. Quien lo tiene ve y resuelve los pases de todos los planteles, y aparece nombrado en la pantalla de espera de quien pidió el pase. Los encargados (solo su plantel) y los administradores siguen pudiendo aprobar como antes. El permiso se da por SQL aparte, fuera del repo, porque lleva nombres.
+- **Migración `0057_tesoreria_aprueba_ingresos.sql`:** permiso personal `personas.aprueba_ingresos`. Quien lo tiene ve y resuelve los pases de todos los planteles, y aparece nombrado en la pantalla de espera de quien pidió el pase. Los encargados (solo su plantel) y los administradores siguen pudiendo aprobar como antes. El permiso se da por SQL aparte, fuera del repo, porque lleva nombres.
 - **Pantallas:** la tarjeta "Te toca aprobar" de Inicio y la fila "Pases de ingreso" de Más ahora salen para quien puede aprobar, no solo para encargados. El permiso no da nada más: no programa partidos ni ve tesorería ajena.
 - Toca permisos: lo revisa el administrador de la app antes de correr la migración y mergear.
 

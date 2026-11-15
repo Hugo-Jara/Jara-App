@@ -26,7 +26,7 @@ export default function Mas() {
   if (persona.esEncargado) {
     FILAS.unshift({ a: '/fotos-partidos', icono: 'noticias', nombre: 'Fotos de los partidos', desc: 'Enlazar cada partido con su carpeta del Drive' });
   }
-  // Tesorería, encargados y administradores (migración 0056).
+  // Tesorería, encargados y administradores (migración 0057).
   if (apruebaIngresos) {
     FILAS.unshift({ a: '/ingresos', icono: 'club', nombre: 'Pases de ingreso', desc: 'Aprobar a quienes pidieron entrar a la app' });
   }
