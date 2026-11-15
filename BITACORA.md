@@ -4,15 +4,17 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
-## 2026-11-15 · Cambio a hugojara.cl
+## 2026-11-15 · Cambio a app.hugojara.cl
 
-- `netlify.toml`: Netlify publica la app en la raíz de hugojara.cl. Corre las mismas pruebas que GitHub Pages (`test:db`, `test:pedidos`, `test:fotos-drive`) antes del build; si fallan, queda la versión anterior. `www` lleva a la raíz, `/assets` se guarda un año y `sw.js` e `index.html` se revisan siempre.
-- `puente/`: lo que publicará GitHub Pages en la dirección vieja cuando hugojara.cl esté andando (PR aparte). Manda a la misma pantalla en hugojara.cl y pasa la sesión y los ajustes por el `#` del link, y reemplaza el service worker viejo para que la app instalada no se quede pegada.
+- hugojara.cl sigue siendo la web institucional del club (con su política de privacidad); la app va en el subdominio `app`.
+
+- `netlify.toml`: Netlify publica la app en la raíz de app.hugojara.cl. Corre las mismas pruebas que GitHub Pages (`test:db`, `test:pedidos`, `test:fotos-drive`) antes del build; si fallan, queda la versión anterior. `/assets` se guarda un año y `sw.js` e `index.html` se revisan siempre.
+- `puente/`: lo que publicará GitHub Pages en la dirección vieja cuando app.hugojara.cl esté andando (PR aparte). Manda a la misma pantalla en app.hugojara.cl y pasa la sesión y los ajustes por el `#` del link, y reemplaza el service worker viejo para que la app instalada no se quede pegada.
 - `src/lib/traspaso.js`: la app recibe ese paquete solo si viene de la dirección vieja y si no hay otra sesión abierta; limpia el link al tiro. `sesion.jsx` lo espera antes de mirar la sesión.
 - Supabase Auth y Google quedan con direcciones exactas, sin comodines: el correo y Google vuelven siempre a la raíz de la app (`aDondeVolver` en `sesion.jsx`) y la pantalla donde estaba la persona se recuerda una hora en el navegador (`jara-volver-a`); al entrar, la app la abre.
 - Sin migración. Lo manual (Netlify, DNS, Supabase Auth, Google) está en el hilo del proyecto.
 
-**Comprobado:** pruebas y build con `VITE_BASE=/`; Playwright simulando las dos direcciones: entrar a `/Jara-App/partidos?x=1` con sesión abierta termina en `hugojara.cl/partidos?x=1` con la sesión y el tema traspasados y el link limpio; un link armado sin venir de la dirección vieja se ignora.
+**Comprobado:** pruebas y build con `VITE_BASE=/`; Playwright simulando las dos direcciones: entrar a `/Jara-App/partidos?x=1` con sesión abierta termina en `app.hugojara.cl/partidos?x=1` con la sesión y el tema traspasados y el link limpio; un link armado sin venir de la dirección vieja se ignora.
 
 ---
 

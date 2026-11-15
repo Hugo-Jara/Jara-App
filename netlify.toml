@@ -1,4 +1,4 @@
-# Jara App en hugojara.cl (Netlify). Cada cambio en main corre las pruebas y,
+# Jara App en app.hugojara.cl (Netlify). Cada cambio en main corre las pruebas y,
 # si pasan, publica. Si una prueba falla, queda publicada la versión anterior.
 [build]
   command = "npm run test:db && npm run test:pedidos && npm run test:fotos-drive && npm run build"
@@ -37,10 +37,3 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "DENY"
-
-# www.hugojara.cl lleva a hugojara.cl.
-[[redirects]]
-  from = "https://www.hugojara.cl/*"
-  to = "https://hugojara.cl/:splat"
-  status = 301
-  force = true
