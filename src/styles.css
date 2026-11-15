@@ -207,6 +207,8 @@ textarea { resize: vertical; line-height: 1.45; }
 .segmento.activo.baja { background: rgba(198, 54, 43, 0.22); border-color: var(--red); }
 .casilla { display: flex; align-items: center; gap: 10px; font-size: 15px; color: var(--text); margin: 16px 0 2px; }
 .casilla input { width: 22px; height: 22px; flex: none; accent-color: var(--red); padding: 0; }
+.sangria { margin-left: 32px; }
+.sangria .casilla { margin-top: 10px; }
 .respuesta.sin-margen { margin-top: 0; }
 .grupo { margin-top: 20px; }
 .grupo:first-child { margin-top: 0; }
@@ -873,3 +875,11 @@ label.tes-imp-check { display: flex; align-items: center; gap: 10px; margin: 0; 
 :root[data-tema='claro'] .noticias-error { color: #9a2a22; }
 :root[data-tema='claro'] .noticias-aviso-distribucion { color: #7a5a1c; }
 :root[data-tema='claro'] .noticias-campo-etiqueta { color: var(--text-dim); }
+
+/* Conoce el club: página pública para quien no es del club */
+.publica .card { text-align: left; margin-bottom: 14px; }
+.publica-lista { list-style: none; padding: 0; margin: 10px 0 0; }
+.publica-lista li { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-top: 1px solid var(--border); }
+.publica-lista li:first-child { border-top: 0; padding-top: 4px; }
+.publica-lista span { color: var(--text-dim); font-size: 14px; }
+.publica-texto { margin: 10px 0 0; line-height: 1.5; }
