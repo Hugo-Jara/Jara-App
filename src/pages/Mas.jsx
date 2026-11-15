@@ -7,12 +7,14 @@ import { usePlantelesTesoreria } from '../lib/tesoreria.js';
 import Icono from '../components/Icono.jsx';
 import VerComo from '../components/VerComo.jsx';
 import MiPerfil from '../components/MiPerfil.jsx';
+import { usePuedeAprobarIngresos } from '../lib/ingreso.js';
 
 // Lo administrativo del club vive acá, fuera de la pantalla de inicio.
 export default function Mas() {
   const { persona } = useSesion();
   const veFondo = useAccesoFondo();
   const tesoreria = usePlantelesTesoreria();
+  const apruebaIngresos = usePuedeAprobarIngresos(persona);
   const FILAS = [
     { a: '/noticias', icono: 'noticias', nombre: 'Noticias', desc: 'Fotos, novedades y el boletín del club' },
     { a: '/cuota', icono: 'cuota', nombre: 'Mi cuota', desc: 'Tu estado de pago y las fechas que vienen' },
@@ -23,6 +25,9 @@ export default function Mas() {
   // Solo para encargados y administradores.
   if (persona.esEncargado) {
     FILAS.unshift({ a: '/fotos-partidos', icono: 'noticias', nombre: 'Fotos de los partidos', desc: 'Enlazar cada partido con su carpeta del Drive' });
+  }
+  // Tesorería, encargados y administradores (migración 0057).
+  if (apruebaIngresos) {
     FILAS.unshift({ a: '/ingresos', icono: 'club', nombre: 'Pases de ingreso', desc: 'Aprobar a quienes pidieron entrar a la app' });
   }
   // El tablero de ejemplo se ve solo en modo demostración.
