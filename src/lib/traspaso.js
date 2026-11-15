@@ -20,7 +20,8 @@ export function leerTraspaso() {
     // El link se limpia altiro para que la sesión no quede en el historial.
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
     // Solo se acepta si la persona viene de la dirección vieja.
-    if (!document.referrer.startsWith(ORIGEN_VIEJO)) return;
+    // Se compara el origen completo: "hugo-jara.github.io.otro.com" no pasa.
+    if (!document.referrer || new URL(document.referrer).origin !== ORIGEN_VIEJO) return;
     const p = JSON.parse(decodeURIComponent(h.slice(MARCA.length)));
     for (const k of LLAVES) {
       if (typeof p?.extras?.[k] === 'string') localStorage.setItem(k, p.extras[k]);
