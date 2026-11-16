@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { BASE, ESCUDO } from '../lib/base.js';
 import { supabase } from '../lib/supabase.js';
@@ -156,7 +157,10 @@ export default function Ingreso() {
 
       <p className="nota">
         ¿Primera vez? Entra con Google o pide un link a tu correo. Después buscas tu nombre en la
-        nómina del club y un encargado de tu plantel te da el pase.
+        nómina del club y Tesorería te da el pase.
+      </p>
+      <p className="nota">
+        ¿No eres del club? <Link className="enlace" to="/conoce-el-club">Conoce el Club Hugo Jara</Link>
       </p>
 
       <p className="nota pie-ingreso">

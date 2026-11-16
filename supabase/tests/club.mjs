@@ -664,5 +664,64 @@ console.log('\n0049 · Archivos a una lista de compras cerrada');
   ok('A una lista abierta se sigue subiendo sin cuenta', !!abierta && !(await subirA('anon', 'pedidos', 'carpeta-abierta/q.pdf')));
 }
 
+// ---------------------------------------------------------------------------
+// Tesorería aprueba los pases de ingreso (0057)
+console.log('\nTesorería aprueba ingresos');
+Object.assign(U, { nuevo7: '00000000-0000-0000-0000-000000000017', nuevo8: '00000000-0000-0000-0000-000000000018' });
+await db.query(`insert into auth.users (id, email) values ${['nuevo7', 'nuevo8'].map((k) => `('${U[k]}', '${correo(k)}')`).join(', ')}`);
+r = await como('nuevo7', `select ingreso_solicitar(null, 'Séptimo Nuevo Inventado', $1::uuid[])`, [[EQ.jueves, EQ.junior]]);
+ok('Alguien nuevo pide entrar a dos planteles', !r.error, r.error);
+ok('Sin el permiso, la tesorera no ve la pantalla de pases', (await uno('teso', 'select ingreso_puedo_aprobar()')) === false);
+ok('…ni ve la solicitud', (await uno('teso', 'select ingreso_pendientes()')).length === 0);
+ok('Un jugador tampoco', (await uno('junior', 'select ingreso_puedo_aprobar()')) === false);
+ok('El encargado y el administrador sí ven la pantalla', (await uno('capi', 'select ingreso_puedo_aprobar()')) === true && (await uno('admin', 'select ingreso_puedo_aprobar()')) === true);
+await db.query(`update personas set aprueba_ingresos = true where id = $1`, [P.teso]);
+ok('Con el permiso, la tesorera ve la pantalla de pases', (await uno('teso', 'select ingreso_puedo_aprobar()')) === true);
+x = await uno('teso', 'select ingreso_pendientes()');
+ok('…y ve la solicitud aunque no sea de su plantel', x.some((q) => q.nombre === 'Séptimo Nuevo Inventado'), JSON.stringify(x));
+x = await uno('nuevo7', 'select ingreso_mi_estado()');
+ok('A quien espera se le nombra a Tesorería', x.aprueban.includes('Tina Tesorera Inventada'), JSON.stringify(x.aprueban));
+r = await como('teso', 'select ingreso_resolver($1, true)', [(await uno('teso', 'select ingreso_pendientes()')).find((q) => q.nombre === 'Séptimo Nuevo Inventado').id]);
+x = await uno('nuevo7', 'select mi_persona()');
+ok('Tesorería aprueba y la persona queda en los dos planteles que pidió', !r.error && x?.equipos.length === 2, r.error || JSON.stringify(x?.equipos));
+r = await guardarPartido('teso', EQ.jueves, 'Rival', await dia(9));
+ok('El permiso no da nada más: no programa partidos', /Solo el encargado/.test(r.error ?? ''), r.error);
+r = await como('teso', 'select apruebo_ingresos()');
+ok('La función interna no se llama desde la app', /permission denied/.test(r.error ?? ''), r.error);
+r = await como('nuevo8', `select ingreso_solicitar(null, 'Octavo Nuevo Inventado', $1::uuid[])`, [[EQ.sabado]]);
+await db.query(`update personas set aprueba_ingresos = false where id = $1`, [P.teso]);
+r = await como('teso', 'select ingreso_resolver($1, true)', [(await uno('admin', 'select ingreso_pendientes()')).find((q) => q.nombre === 'Octavo Nuevo Inventado').id]);
+ok('Al quitarle el permiso deja de aprobar', /No puedes resolver/.test(r.error ?? ''), r.error);
+
+// ---------------------------------------------------------------------------
+// Socio que no juega (0058)
+console.log('\nSocio sin plantel');
+Object.assign(U, { nuevo9: '00000000-0000-0000-0000-000000000019' });
+await db.query(`insert into auth.users (id, email) values ('${U.nuevo9}', '${correo('nuevo9')}')`);
+r = await como('nuevo9', `select ingreso_solicitar(null, 'Noveno Socio Inventado', '{}'::uuid[])`);
+ok('Un socio que no juega pide entrar sin marcar planteles', !r.error, r.error);
+await db.query(`update personas set aprueba_ingresos = true where id = $1`, [P.teso]);
+x = await uno('teso', 'select ingreso_pendientes()');
+const pase9 = x.find((q) => q.nombre === 'Noveno Socio Inventado');
+ok('Tesorería ve el pase del socio sin plantel', !!pase9 && pase9.equipos.length === 0, JSON.stringify(x));
+r = await como('teso', 'select ingreso_resolver($1, true)', [pase9?.id]);
+x = await uno('nuevo9', 'select mi_persona()');
+ok('Tesorería lo aprueba y queda como socio, sin plantel', !r.error && x?.equipos.length === 0, r.error || JSON.stringify(x));
+await db.query(`update personas set aprueba_ingresos = false where id = $1`, [P.teso]);
+const precio = async (persona) => (await db.query(
+  `select entrenamiento_precio(e, $1) as p, e.precio_senior, e.precio_invitado from entrenamientos e order by fecha limit 1`, [persona])).rows[0];
+const yo9 = (await db.query(`select id from personas where user_id = $1`, [U.nuevo9])).rows[0].id;
+x = await precio(yo9);
+ok('El socio sin plantel entrena con precio senior, no de invitado', x.p === x.precio_senior && x.p !== x.precio_invitado, JSON.stringify(x));
+x = await precio(null);
+ok('Quien no es de la nómina sigue con precio de invitado', x.p === x.precio_invitado, JSON.stringify(x));
+await db.query(`update personas set estado = 'inactivo' where id = $1`, [yo9]);
+x = await precio(yo9);
+ok('Un socio dado de baja no conserva el precio de socio', x.p === x.precio_invitado, JSON.stringify(x));
+await db.query(`update personas set estado = 'activo' where id = $1`, [yo9]);
+r = await como('nuevo9', 'select ingreso_pendientes()');
+x = await uno('nuevo9', 'select ingreso_puedo_aprobar()');
+ok('Ni aprueba pases', x === false && (r.rows[0]?.ingreso_pendientes ?? []).length === 0, JSON.stringify(r.rows));
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);
