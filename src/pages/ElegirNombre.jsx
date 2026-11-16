@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { buscarEnNomina, pedirIngreso, miSolicitud, cancelarSolicitud } from '../lib/ingreso.js';
 import { equiposDelClub } from '../lib/partidos.js';
@@ -38,8 +39,8 @@ function Buscar({ alPedir }) {
       <div className="card">
         <div className="sobretitulo">¿Eres tú?</div>
         <h2 className="accion-titulo">{elegida.nombre}</h2>
-        <p className="accion-dato tenue">{elegida.equipos.join(' · ') || 'Sin plantel asignado'}</p>
-        <p className="ayuda abajo">Un encargado de tu plantel tiene que confirmar que eres tú antes de que puedas entrar.</p>
+        <p className="accion-dato tenue">{elegida.equipos.join(' · ') || 'Socio del club, sin plantel'}</p>
+        <p className="ayuda abajo">Tesorería del club tiene que confirmar que eres tú antes de que puedas entrar.</p>
         {error && <p className="error" role="alert">{error}</p>}
         <div className="botones">
           <button className="btn" disabled={ocupado} onClick={() => pedir({ personaId: elegida.id })}>
@@ -62,7 +63,7 @@ function Buscar({ alPedir }) {
             <li key={r.id}>
               <button className="opcion" onClick={() => setElegida(r)}>
                 <span className="opcion-nombre">{r.nombre}</span>
-                <span className="opcion-detalle">{r.equipos.join(' · ')}</span>
+                <span className="opcion-detalle">{r.equipos.join(' · ') || 'Socio del club'}</span>
               </button>
             </li>
           ))}
@@ -88,25 +89,53 @@ function FueraDeLaLista({ inicial, ocupado, error, onPedir, onVolver }) {
   const [nombre, setNombre] = useState(inicial);
   const [equipos, setEquipos] = useState([]);
   const [mios, setMios] = useState([]);
+  // 'juego': está en uno o más planteles. 'socio': socio del club que no juega
+  // (por ejemplo, solo va a los entrenamientos). Queda en la nómina sin plantel.
+  const [tipo, setTipo] = useState('');
+  const [aviso, setAviso] = useState('');
   useEffect(() => { equiposDelClub().then(setEquipos, () => {}); }, []);
-  const alternar = (id) => setMios(mios.includes(id) ? mios.filter((x) => x !== id) : [...mios, id]);
+  const alternar = (id) => { setAviso(''); setMios(mios.includes(id) ? mios.filter((x) => x !== id) : [...mios, id]); };
+
+  const enviar = (e) => {
+    e.preventDefault();
+    if (!tipo) { setAviso('Cuéntanos si juegas en un plantel o eres socio sin plantel.'); return; }
+    if (tipo === 'juego' && mios.length === 0) { setAviso('Marca en qué plantel juegas.'); return; }
+    onPedir({ nombre: nombre.trim(), equipos: tipo === 'juego' ? mios : [] });
+  };
 
   return (
-    <form className="card" onSubmit={(e) => { e.preventDefault(); onPedir({ nombre: nombre.trim(), equipos: mios }); }}>
+    <form className="card" onSubmit={enviar}>
       <div className="sobretitulo">No aparezco en la lista</div>
       <label htmlFor="nombre-nuevo">Tu nombre y apellido</label>
       <input id="nombre-nuevo" required minLength={3} value={nombre} onChange={(e) => setNombre(e.target.value)} autoComplete="name" />
       <fieldset className="bloque">
-        <legend>¿En qué plantel juegas?</legend>
-        <p className="ayuda">Marca todos los que correspondan. Si no juegas, déjalos sin marcar.</p>
-        {equipos.map((eq) => (
-          <label key={eq.id} className="casilla">
-            <input type="checkbox" checked={mios.includes(eq.id)} onChange={() => alternar(eq.id)} />
-            {eq.nombre}
-          </label>
-        ))}
+        <legend>¿Cómo participas en el club?</legend>
+        <label className="casilla">
+          <input type="radio" name="tipo" checked={tipo === 'juego'} onChange={() => { setTipo('juego'); setAviso(''); }} />
+          Juego en un plantel
+        </label>
+        {tipo === 'juego' && (
+          <div className="sangria">
+            <p className="ayuda">Marca todos los que correspondan.</p>
+            {equipos.map((eq) => (
+              <label key={eq.id} className="casilla">
+                <input type="checkbox" checked={mios.includes(eq.id)} onChange={() => alternar(eq.id)} />
+                {eq.nombre}
+              </label>
+            ))}
+          </div>
+        )}
+        <label className="casilla">
+          <input type="radio" name="tipo" checked={tipo === 'socio'} onChange={() => { setTipo('socio'); setMios([]); setAviso(''); }} />
+          No juego, soy socio del club
+        </label>
+        {tipo === 'socio' && (
+          <p className="ayuda sangria">Vas a poder inscribirte a los entrenamientos y seguir los partidos, el boletín y las noticias.</p>
+        )}
       </fieldset>
+      {aviso && <p className="error" role="alert">{aviso}</p>}
       {error && <p className="error" role="alert">{error}</p>}
+      <p className="ayuda">Tesorería del club revisa tu solicitud y te da el pase.</p>
       <div className="botones">
         <button className="btn" disabled={ocupado}>{ocupado ? 'Enviando…' : 'Pedir ingreso'}</button>
         <button type="button" className="btn secundario" disabled={ocupado} onClick={onVolver}>Volver a buscar</button>
@@ -147,7 +176,7 @@ function EnEspera({ solicitud, alCambiar }) {
     <div className="card">
       <div className="sobretitulo">Solicitud enviada</div>
       <h2 className="accion-titulo">{solicitud.nombre}</h2>
-      {solicitud.equipos.length > 0 && <p className="accion-dato tenue">{solicitud.equipos.join(' · ')}</p>}
+      <p className="accion-dato tenue">{solicitud.equipos.length > 0 ? solicitud.equipos.join(' · ') : 'Socio del club, sin plantel'}</p>
       <p className="respuesta" role="status">
         Falta que te den el pase.
         {solicitud.aprueban.length > 0 && <> Lo puede hacer {solicitud.aprueban.join(', ')}.</>}
@@ -208,7 +237,7 @@ export default function ElegirNombre() {
       </p>
       {rechazada && (
         <p className="item-comentario" role="status" style={{ marginBottom: 14 }}>
-          No aprobaron tu solicitud como {solicitud.nombre}. Si fue un error, vuelve a pedirla y avísale a tu encargado.
+          No aprobaron tu solicitud como {solicitud.nombre}. Si fue un error, vuelve a pedirla y avísale a Tesorería.
         </p>
       )}
       {errorCarga && <p className="error" role="alert">{errorCarga}</p>}
@@ -216,6 +245,11 @@ export default function ElegirNombre() {
         ? <EnEspera solicitud={solicitud} alCambiar={cargar} />
         : <Buscar alPedir={cargar} />}
       <button className="btn secundario" onClick={salir}>Entrar con otra cuenta</button>
+      {solicitud.estado !== 'pendiente' && (
+        <p className="nota">
+          ¿No eres del club y solo querías conocerlo? <Link className="enlace" to="/conoce-el-club">Conoce el Club Hugo Jara</Link>
+        </p>
+      )}
     </div>
   );
 }

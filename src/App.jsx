@@ -28,6 +28,7 @@ import Perfil from './pages/Perfil.jsx';
 import Planteles from './pages/Planteles.jsx';
 import FotosDrive from './pages/FotosDrive.jsx';
 import Ajustes from './pages/Ajustes.jsx';
+import ConoceElClub from './pages/ConoceElClub.jsx';
 
 export default function App() {
   const { cargando, sesion, persona, sinConexion, esDemo, ofrecerClave } = useSesion();
@@ -38,6 +39,8 @@ export default function App() {
   if (pathname.startsWith('/pedido/')) return <Pedido />;
   // Link público de un tópico de Compras: solo sirve para enviar una solicitud.
   if (pathname.startsWith('/solicitar/')) return <Solicitar />;
+  // Para quien no es del club: página pública, sin cuenta y sin datos de la base.
+  if (pathname === '/conoce-el-club') return <ConoceElClub />;
 
   // En modo demostración, /ingreso muestra la pantalla de entrada para revisarla.
   if (esDemo && pathname === '/ingreso') return <Ingreso />;
@@ -74,7 +77,8 @@ export default function App() {
         <Route path="/ajustes" element={<Ajustes />} />
         <Route path="/cuota" element={<Cuota />} />
         <Route path="/compras" element={<Compras />} />
-        <Route path="/tablero" element={<Tablero />} />
+        {/* El tablero es de datos de ejemplo: con la base real no se muestra (la tesorería de verdad está en /tesoreria). */}
+        <Route path="/tablero" element={esDemo ? <Tablero /> : <Navigate to="/tesoreria" replace />} />
         <Route path="/tesoreria" element={<Tesoreria />} />
         <Route path="/fondo" element={<Fondo />} />
         {/* La página del club (asambleas y ministerios) vuelve cuando esté lista: src/pages/Club.jsx. */}

@@ -4,6 +4,70 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-15 · Seguridad antes del lanzamiento
+
+- Revisión completa: todas las tablas con RLS y sin acceso directo desde el navegador; las 220 funciones probadas como cuenta desconocida y como socio raso (ninguna entrega datos ni deja hacer cosas que no corresponden); RUT, teléfono y correo solo para la propia persona, su tesorero y Hacienda; sin claves en el repo; sin puntos de inyección de código en la app.
+- `caras.yml` usa ahora el entorno `produccion` de GitHub: la llave maestra de la base (`SUPABASE_SECRET`) queda en ese entorno, que solo se abre desde main, y una rama de prueba ya no puede leerla. El administrador mueve el secreto de "Repository secrets" al entorno.
+- Sin migración.
+
+---
+
+## 2026-11-15 · Socio que no juega e invitado
+
+- **Socio que no juega:** en "No aparezco en la lista" ahora se elige "Juego en un plantel" (y se marcan los planteles) o "No juego, soy socio del club". El socio queda en la nómina sin plantel. Los textos del ingreso dicen que el pase lo da Tesorería (0057).
+- **Migración `0058_socio_sin_plantel.sql`:** el socio sin plantel se inscribe a los entrenamientos con precio senior (antes le salía precio de invitado). Solo cambia `entrenamiento_precio`; ningún permiso. Las inscripciones ya hechas no cambian.
+- **Pantallas del socio:** Inicio le explica que no tiene partidos por confirmar; Más no le muestra "Mi cuota" (no paga cuota de plantel). No vota MVP ni aprueba pases (ya era así).
+- **Invitado (sin cuenta):** página pública `/conoce-el-club` (`src/pages/ConoceElClub.jsx`) con planteles, entrenamientos, cómo ser parte y el link a Privacidad. Es solo texto escrito en el archivo: no consulta la base, así que no muestra nombres, fotos, boletín ni tesorería. Se abre desde la pantalla de entrada y desde "¿Quién eres?".
+- Se apila sobre el PR de Tesorería aprueba ingresos (0057).
+
+**Comprobado:** `npm run test:db` (8 pruebas nuevas en club) y `npm run build` pasan. Probado en iPhone 13 y Pixel 7 emulados contra una base en memoria con todas las migraciones: pedir pase como socio, pantalla de espera, Inicio, Entrenar ($4.000 senior) y Más del socio, y la página pública sin cuenta.
+
+---
+
+## 2026-11-15 · Los pases de ingreso los aprueba Tesorería
+
+- **Qué pidió el club:** quienes aprueban el ingreso de un socio nuevo son las personas de Tesorería, que tienen la planilla con el correo y el RUT de cada uno. Hasta ahora solo podían el encargado del plantel y los administradores.
+- **Migración `0057_tesoreria_aprueba_ingresos.sql`:** permiso personal `personas.aprueba_ingresos`. Quien lo tiene ve y resuelve los pases de todos los planteles, y aparece nombrado en la pantalla de espera de quien pidió el pase. Los encargados (solo su plantel) y los administradores siguen pudiendo aprobar como antes. El permiso se da por SQL aparte, fuera del repo, porque lleva nombres.
+- **Pantallas:** la tarjeta "Te toca aprobar" de Inicio y la fila "Pases de ingreso" de Más ahora salen para quien puede aprobar, no solo para encargados. El permiso no da nada más: no programa partidos ni ve tesorería ajena.
+- Toca permisos: lo revisa el administrador de la app antes de correr la migración y mergear.
+
+**Comprobado:** `npm run test:db` (12 pruebas nuevas) y `npm run build` pasan. Probado en iPhone 13 y Pixel 7 emulados contra una base en memoria: sin el permiso no aparece nada; con el permiso se ve el pase, se aprueba y la persona nueva entra sola.
+
+---
+
+## 2026-11-15 · El boletín baja en Inicio después de leerlo (0056)
+
+**Pedido del administrador:** la edición nueva de El Jara Informa ocupaba siempre lo primero de Inicio. Ahora va arriba solo hasta que la persona la lee; después baja, bajo sus partidos, su entrenamiento y su último partido. Cada edición nueva vuelve a subir hasta que se lee.
+
+- Migración `0056_boletin_leido.sql`: tabla `boletin_lecturas` (persona, edición, cuándo) sin acceso directo, y dos funciones: `boletin_leida(id)` y `boletin_marcar_leida(id)` (solo ediciones publicadas del propio club; repetirla no hace nada). No cambia la 0050.
+- `src/lib/boletinLeido.js`: guarda "leída" en la base (vale en todos los dispositivos) y en el navegador (cambio inmediato). Si la base falla, la edición se muestra arriba: lo nuevo nunca se esconde.
+- Queda leída al tocar "Leer edición" en Inicio o al abrir la edición desde Noticias (una línea en el lector de `BoletinReal.jsx`).
+- `Inicio.jsx` ya no usa `UltimoBoletin`; arma la tarjeta con `TarjetaReal` y la ubica según leída o no.
+
+**Comprobado:** `npm run test:boletin-db` (52 pruebas, 8 nuevas), `npm run build` y recorrido con datos inventados en iPhone 13 y Pixel 7 emulados: sin leer va arriba, después de leerla baja, en otro dispositivo sin nada guardado también va abajo, y una edición nueva vuelve arriba.
+
+---
+
+## 2026-11-15 · La liga no atocha la app cuando entra mucha gente (0055)
+
+**Por qué:** en el lanzamiento entran unas 70 personas casi al mismo tiempo. Cada Inicio le pide a la base revisar la liga de cada plantel; si justo "tocaba" (pasaron 3 horas), todas iban a la página de la liga a la vez, cada una ocupando una conexión de la base varios segundos. Y si la página de la liga estaba caída, cada apertura volvía a intentarlo.
+
+- **Base (0055):** `liga_refrescar` pasa a ser la puerta de entrada y la lectura de siempre queda en `liga_refrescar_leer` (sin cambios, solo la llama la base). La revisión automática la hace una persona a la vez por plantel (las demás siguen de largo) y, si falla, se anota en `liga_torneos.fallo_en` y no se reintenta por 15 minutos, sin mostrar error. El botón "Actualizar desde la liga" funciona igual que antes.
+- **Ojo:** los cambios futuros a cómo se lee la liga van en `liga_refrescar_leer`.
+- **Pruebas:** `liga.mjs` con 6 pruebas nuevas; `npm run test:db` completo pasa.
+
+---
+
+## 2026-11-15 · Limpieza antes del lanzamiento: fuera lo de ejemplo
+
+- **Tablero de ejemplo:** con la base real, `/tablero` ya no muestra montos inventados; lleva a Tesorería. La fila "Tablero de tesorería · Datos de ejemplo" de Más queda solo para el modo demostración.
+- **Inicio:** se quita el aviso "Se viene El Jara Informa…", que quedaba viejo después del lanzamiento. La última edición publicada del boletín ya tiene su tarjeta en Inicio.
+- Sin migración.
+
+**Comprobado:** `npm run test:db`, `npm run test:pedidos`, `npm run test:boletin` y `npm run build` pasan. Recorrido completo en iPhone 13 y Pixel 7 emulados contra una base en memoria con todas las migraciones (primer ingreso, partido, voto MVP, entrenamiento, perfil, ajustes con tema claro y letra muy grande, tesorería, fondo): sin errores.
+
+---
+
 ## 2026-11-14 · Sección de Ajustes
 
 - Pantalla nueva `/ajustes` (`src/pages/Ajustes.jsx`), con un engranaje arriba a la derecha en todas las pantallas (reemplaza el botón "Salir") y una fila al final de Más.
