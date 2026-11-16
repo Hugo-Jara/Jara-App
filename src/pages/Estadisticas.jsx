@@ -18,17 +18,6 @@ const COLUMNAS = [
 ];
 const PRIMEROS = 10;
 
-// Categorías: planteles que comparten la primera palabra ("Senior Sábado" y
-// "Senior Jueves" son Senior). Solo se ofrece la categoría si junta dos o más.
-function categorias(equipos) {
-  const grupos = new Map();
-  equipos.forEach((e) => {
-    const cat = e.nombre.split(' ')[0];
-    grupos.set(cat, [...(grupos.get(cat) ?? []), e.id]);
-  });
-  return [...grupos.entries()].filter(([, ids]) => ids.length > 1).map(([nombre, ids]) => ({ clave: `cat:${nombre}`, nombre, ids }));
-}
-
 // "★3": las veces que fue elegido jugador del partido.
 const Mvp = ({ n }) => (n ? <span className="mvp-marca" title={`Jugador del partido ${n} ${n === 1 ? 'vez' : 'veces'}`}>★{n > 1 ? n : ''}</span> : null);
 
@@ -47,9 +36,8 @@ export default function Estadisticas() {
 
   // Cambia solo cuando cambia algún resultado: así la tabla se recarga después de anotar.
   const huella = todos.map((p) => `${p.id}:${p.golesFavor}:${(p.jugaron ?? []).join()}:${(p.estadisticas ?? []).map((g) => `${g.personaId}.${g.goles}.${g.asistencias}.${g.amarillas}.${g.rojas}`).join()}`).join('|');
-  const cats = categorias(equipos);
-  // Filtro: '' todo el club, 'cat:Senior' una categoría, o el id de un plantel.
-  const idsFiltro = !filtro ? [] : cats.find((c) => c.clave === filtro)?.ids ?? [filtro];
+  // Filtro: '' todo el club, o el id de un plantel.
+  const idsFiltro = filtro ? [filtro] : [];
   const claveIds = idsFiltro.join();
 
   // Los planteles del club, para filtrar.
@@ -93,7 +81,7 @@ export default function Estadisticas() {
       </div>
       {equipos.length > 1 && (
         <div className="chips" role="radiogroup" aria-label="Plantel">
-          {[{ id: '', nombre: 'Todo el club' }, ...cats.map((c) => ({ id: c.clave, nombre: `${c.nombre} (todos)` })), ...equipos].map((e) => (
+          {[{ id: '', nombre: 'Todo el club' }, ...equipos].map((e) => (
             <button key={e.id} role="radio" aria-checked={filtro === e.id} type="button"
                     className={`chip ${filtro === e.id ? 'activo' : ''}`} onClick={() => filtrar(e.id)}>{e.nombre}</button>
           ))}
