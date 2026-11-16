@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-16 · Estadísticas: fuera el filtro "Senior (todos)"
+
+- En Jugadores > Estadísticas, el selector de plantel armaba solo un filtro extra por categoría ("Senior (todos)") cuando dos planteles compartían la primera palabra. Nadie lo pidió y confundía: se quita. Quedan "Todo el club" y cada plantel.
+- El plantel de prueba que aparecía en el mismo selector no es de código: es un plantel creado en la base. Se saca con un SQL aparte, fuera del repo.
+- Sin migración.
+
+**Comprobado:** `npm run build` pasa. En iPhone 13 emulado contra una base en memoria, el selector muestra solo "Todo el club" y los planteles, y filtra bien.
+
+---
+
 ## 2026-11-15 · Seguridad antes del lanzamiento
 
 - Revisión completa: todas las tablas con RLS y sin acceso directo desde el navegador; las 220 funciones probadas como cuenta desconocida y como socio raso (ninguna entrega datos ni deja hacer cosas que no corresponden); RUT, teléfono y correo solo para la propia persona, su tesorero y Hacienda; sin claves en el repo; sin puntos de inyección de código en la app.
