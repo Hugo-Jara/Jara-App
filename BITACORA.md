@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-16 · Estadísticas: fuera el filtro "Senior (todos)"
+
+- En Jugadores > Estadísticas, el selector de plantel armaba solo un filtro extra por categoría ("Senior (todos)") cuando dos planteles compartían la primera palabra. Nadie lo pidió y confundía: se quita. Quedan "Todo el club" y cada plantel.
+- El plantel de prueba que aparecía en el mismo selector no es de código: es un plantel creado en la base. Se saca con un SQL aparte, fuera del repo.
+- Sin migración.
+
+**Comprobado:** `npm run build` pasa. En iPhone 13 emulado contra una base en memoria, el selector muestra solo "Todo el club" y los planteles, y filtra bien.
+
+---
+
 ## 2026-11-15 · Cambio a hugojara.cl
 
 - La app reemplaza la web institucional que había en hugojara.cl (se creó solo para que Google aprobara la suite). La política de privacidad queda en el repo (`privacidad/privacidad.md`) y el build la publica como página pública sin entrar en `/privacidad` y `/privacidad.html` (el link viejo); el service worker no la intercepta. La pantalla de ingreso enlaza a ella.
