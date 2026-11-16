@@ -318,5 +318,30 @@ ok('Si cof.cl no responde, se avisa', /no respondió/.test(r.error ?? ''), r.err
 x = await fechas('jugador');
 ok('Y lo que ya había sigue ahí', x.partidos.filter((p) => p.equipo_id === SENIOR).length === 36);
 
+console.log('\nMucha gente a la vez (0055)');
+// cof.cl sigue caído (503) y ya pasaron las 3 horas: la revisión automática
+// no le muestra error a nadie y no vuelve a insistir por 15 minutos.
+await db.query(`update liga_torneos set revisada_en = now() - interval '4 hours', fallo_en = null where equipo_id = $1`, [SENIOR]);
+antes = await pedidas();
+r = await refrescar('jugador');
+// (el pedido fallido se deshace junto con el error, así que se mira fallo_en)
+const falloEn = async () => (await db.query('select fallo_en from liga_torneos where equipo_id = $1', [SENIOR])).rows[0].fallo_en;
+ok('Si la liga no responde al abrir Inicio, no hay error para nadie', !r.error && r.rows[0].n === 0 && !!(await falloEn()), r.error);
+antes = await pedidas();
+r = await refrescar('encargado');
+ok('Y no se vuelve a intentar al tiro', !r.error && (await pedidas()) === antes, r.error ?? (await pedidas()) - antes);
+r = await refrescar('admin', true);
+ok('El botón Actualizar igual va y avisa', /no respondió/.test(r.error ?? ''), r.error);
+r = await como('jugador', 'select liga_refrescar_leer($1, false) as n', [SENIOR]);
+ok('La función de adentro no se llama desde la app', /permission denied/.test(r.error ?? ''), r.error);
+r = await como('jugador', 'select liga_refrescar($1) as n', [JUNIOR]);
+ok('Un plantel sin conectar sigue avisando', /no está conectado/.test(r.error ?? ''), r.error);
+await db.query(`update extensions.paginas set status = 200, content = $1 where patron like '%cof.cl%'`, [COF_HTML]);
+await db.query(`update liga_torneos set fallo_en = now() - interval '20 minutes' where equipo_id = $1`, [SENIOR]);
+antes = await pedidas();
+r = await refrescar('jugador');
+x = (await db.query('select revisada_en > now() - interval \'1 minute\' as al_dia from liga_torneos where equipo_id = $1', [SENIOR])).rows[0];
+ok('Pasados 15 minutos vuelve a intentar', !r.error && (await pedidas()) - antes === 1 && x.al_dia, r.error ?? (await pedidas()) - antes);
+
 console.log(`\n${pass} pruebas pasaron, ${fail} fallaron.`);
 process.exit(fail ? 1 : 0);

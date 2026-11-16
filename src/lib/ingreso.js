@@ -1,8 +1,9 @@
+import { useEffect, useState } from 'react';
 import { esDemo, llamar } from './supabase.js';
 import { crearAlmacen } from './almacen.js';
 
-// El ingreso de cada jugador: busca su nombre en la nómina, pide entrar y un
-// encargado de su plantel (o un administrador) lo aprueba.
+// El ingreso de cada jugador: busca su nombre en la nómina, pide entrar y lo
+// aprueba Tesorería, un encargado de su plantel o un administrador.
 
 export const buscarEnNomina = (texto) => llamar('nomina_buscar', { p_texto: texto });
 export const miSolicitud = () => llamar('ingreso_mi_estado');
@@ -20,7 +21,24 @@ const cargar = async () =>
     id: s.id, nombre: s.nombre, email: s.email, equipos: s.equipos, enNomina: s.en_nomina,
   }));
 const almacen = crearAlmacen(cargar);
-export const vaciarSolicitudes = almacen.vaciar;
+// Al cambiar de cuenta se olvida también el permiso de la anterior.
+export const vaciarSolicitudes = () => { permiso = null; almacen.vaciar(); };
+
+// ¿Me toca aprobar pases? Los encargados ya lo saben por su sesión; al resto se
+// le pregunta a la base una sola vez (permiso personal de Tesorería, 0057).
+let permiso = null;
+export function usePuedeAprobarIngresos(persona) {
+  const sabido = !!persona?.esEncargado;
+  const [puede, setPuede] = useState(false);
+  useEffect(() => {
+    if (sabido || esDemo) return undefined;
+    let vigente = true;
+    permiso ??= llamar('ingreso_puedo_aprobar').catch(() => false);
+    permiso.then((v) => { if (vigente) setPuede(v === true); });
+    return () => { vigente = false; };
+  }, [sabido]);
+  return sabido || puede;
+}
 
 export function useSolicitudes() {
   const { cargando, error, datos } = almacen.usar();

@@ -1,4 +1,6 @@
-import { UltimoBoletin } from '../components/boletin/BoletinReal.jsx';
+import { TarjetaReal } from '../components/boletin/BoletinReal.jsx';
+import { ultimaEdicion } from '../lib/boletin.js';
+import { yaLeida, marcarLeida } from '../lib/boletinLeido.js';
 import { esDemo } from '../lib/supabase.js';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -7,7 +9,7 @@ import { useInicio } from '../lib/inicio.js';
 import { usePartidos, porEstado, sinResponder, tieneResultado } from '../lib/partidos.js';
 import { revisarLiga } from '../lib/liga.js';
 import { useEntrenamiento, horario } from '../lib/entrenamiento.js';
-import { useSolicitudes } from '../lib/ingreso.js';
+import { useSolicitudes, usePuedeAprobarIngresos } from '../lib/ingreso.js';
 import { useNoticias, TIPOS } from '../lib/noticias.js';
 import { fechaLarga } from '../lib/fechas.js';
 import { pesos } from '../lib/pedido.js';
@@ -70,7 +72,7 @@ function SinPartido({ equipos }) {
       <p className="vacio">
         {equipos.length
           ? `Todavía no hay un partido programado para ${equipos.map((e) => e.nombre).join(' ni ')}.`
-          : 'No estás en ningún plantel, así que no tienes partidos por confirmar.'}{' '}
+          : 'Eres socio del club sin plantel, así que no tienes partidos por confirmar. Igual puedes inscribirte a los entrenamientos y seguir al club.'}{' '}
         <Link className="enlace" to="/partidos">Ver los partidos del club</Link>
       </p>
     </section>
@@ -113,7 +115,7 @@ function Entrenamiento({ e, miInscripcion, libres, inscribirme }) {
   );
 }
 
-// Solo para encargados: gente que pidió entrar y espera su pase.
+// Solo para quien aprueba pases (Tesorería, encargados y administradores): gente que pidió entrar.
 function PasesPendientes() {
   const { solicitudes } = useSolicitudes();
   if (!solicitudes.length) return null;
@@ -180,6 +182,8 @@ function UltimoPartido({ partido }) {
 }
 
 function Noticias({ noticias }) {
+  // Con la base real las noticias son el boletín, que tiene su propia tarjeta arriba.
+  if (!esDemo && noticias.length === 0) return null;
   return (
     <>
       <div className="seccion-fila">
@@ -211,8 +215,32 @@ const siguientes = (mios) => {
     .filter((p) => !vistos.has(p.equipoId) && vistos.add(p.equipoId));
 };
 
+// El Jara Informa: la edición nueva va arriba de todo hasta que la persona la
+// lee; después baja, bajo sus partidos y su entrenamiento (que son lo suyo).
+function useBoletinInicio() {
+  const [b, setB] = useState({ edicion: null, leida: false, error: '' });
+  const cargar = async () => {
+    try {
+      const edicion = await ultimaEdicion();
+      const leida = edicion ? await yaLeida(edicion.id) : false;
+      setB({ edicion, leida, error: '' });
+    } catch (e) { setB({ edicion: null, leida: false, error: e.message }); }
+  };
+  useEffect(() => { if (!esDemo) cargar(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  return { ...b, cargar };
+}
+
+function BoletinInicio({ b }) {
+  if (b.error) return <section className="card"><p role="alert">{b.error}</p><button className="btn secundario" onClick={b.cargar}>Reintentar boletín</button></section>;
+  if (!b.edicion) return null;
+  // Al tocar "Leer edición" queda leída (el lector también la marca).
+  const alAbrir = (ev) => { if (ev.target.closest('a')) marcarLeida(b.edicion.id); };
+  return <section className="card" onClickCapture={alAbrir}><TarjetaReal edicion={b.edicion} ultima /></section>;
+}
+
 export default function Inicio() {
   const { persona } = useSesion();
+  const apruebaIngresos = usePuedeAprobarIngresos(persona);
   const { ultimoPartido: ejemplo } = useInicio();
   const noticias = useNoticias().publicaciones.slice(0, 3);
   // Si la persona eligió un apodo en su perfil, la saludamos con él; si no,
@@ -222,6 +250,7 @@ export default function Inicio() {
   const nombre = apodo || persona.nombre.split(' ')[0];
   const partidos = usePartidos(persona);
   const entreno = useEntrenamiento(persona);
+  const boletin = useBoletinInicio();
   // Los partidos del Jara se crean solos desde las fechas de la liga (0038):
   // al abrir la app se revisa (la base decide si ya toca, cada 3 horas).
   useEffect(() => { revisarLiga(partidos.recargar); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -237,9 +266,9 @@ export default function Inicio() {
       <h1 className="titulo display">Hola, {nombre}</h1>
       <p className="subtitulo">Esto es lo que viene en el Jara.</p>
       <Bienvenida />
-      {persona.esEncargado && <PasesPendientes />}
+      {apruebaIngresos && <PasesPendientes />}
       <HonorariosPorPagar persona={persona} />
-      {!esDemo && <UltimoBoletin />}
+      {!boletin.leida && <BoletinInicio b={boletin} />}
       {partidos.cargando
         ? <section className="card accion"><p className="vacio">Cargando tus partidos…</p></section>
         : partidos.mios.length
@@ -252,6 +281,7 @@ export default function Inicio() {
         : <Entrenamiento e={entreno.entrenamiento} miInscripcion={entreno.miInscripcion} libres={entreno.libres} inscribirme={entreno.inscribirme} />
       )}
       <UltimoPartido partido={ultimoPartido} />
+      {boletin.leida && <BoletinInicio b={boletin} />}
       <Noticias noticias={noticias} />
     </>
   );
