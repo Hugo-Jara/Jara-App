@@ -98,7 +98,7 @@ def main():
     app = FaceAnalysis(name='buffalo_l', root=os.path.expanduser('~/.insightface'),
                        providers=['CPUExecutionProvider'])
 
-    # 1. Huellas nuevas: de la foto de perfil (la app la guarda a 600 px).
+    # 1. Huellas nuevas: de la selfie o la foto de perfil (la app las guarda a 600 px).
     nuevas = 0
     for p in personas:
         if p['sin_foto']:
@@ -111,7 +111,9 @@ def main():
         if not nuevas:
             app.prepare(ctx_id=-1, det_size=(640, 640), det_thresh=0.4)
         nuevas += 1
-        im = imagen(bajar(f"{URL}/storage/v1/object/authenticated/fotos-perfil/{p['foto_ruta']}", cabeceras()))
+        # La selfie para buscarse (0059) si la subió; si no, la foto de perfil.
+        bucket = p.get('bucket') or 'fotos-perfil'
+        im = imagen(bajar(f"{URL}/storage/v1/object/authenticated/{bucket}/{p['foto_ruta']}", cabeceras()))
         caras = []
         if im is not None:
             # Con un borde alrededor, una selfie de cerca también se detecta.

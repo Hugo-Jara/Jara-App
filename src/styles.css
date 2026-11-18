@@ -765,6 +765,10 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .caras-lista li + li { margin-top: 4px; }
 .caras-botones { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
 .caras-visor-dato { flex: 1; text-align: center; align-self: center; font-size: 13px; color: var(--text-dim); }
+.caras-selfie { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+.caras-selfie .item-meta { margin: 0; }
+.caras-selfie-foto { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex: none; }
+.caras-selfie-btn { display: block; margin-top: 10px; }
 
 /* Estadísticas en el perfil del jugador */
 .jugador-stats-cabeza { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }

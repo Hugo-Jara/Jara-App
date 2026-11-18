@@ -4,6 +4,17 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-18 · Buscarme en las fotos: más seguido, caras chicas y selfie
+
+- La tarea "Buscar caras" estaba programada cada 3 horas, pero GitHub se saltaba la mayoría de las corridas (en la práctica, 2 al día): quien activaba la búsqueda esperaba hasta 12 horas. Ahora se pide cada 30 minutos; si no hay nada nuevo termina en segundos.
+- La detección achicaba la foto a 1280 px; ahora busca a 2048 para encontrar caras más chicas (fotos del jueves bajadas de Facebook). El registro suma cuántas caras se detectaron y cuántas son chicas (solo cantidades).
+- Selfie solo para buscarse (migración 0059): quien tiene de foto de perfil una de espalda, de otro jugador o sin cara, sube una selfie en Mis fotos. Va a un bucket privado (`caras-selfie`) que solo ve uno mismo; si hay selfie la huella sale de ella, si no, de la foto de perfil. Cambiarla o quitarla vuelve a sacar la huella; "Apagar y borrar" la borra. Activar ya no exige foto de perfil.
+- Después de mergear: `delete from caras_archivos;` para que todas las fotos se revisen de nuevo con la detección nueva (no borra lo encontrado ni los "No soy yo").
+
+**Comprobado:** `npm run build` y `npm run test:db` pasan (`test:caras` con 10 pruebas nuevas de la selfie: no se usa la de otro, nadie más la ve, la tarea la usa con su bucket, al quitarla vuelve a la foto de perfil). En iPhone 13 y Pixel 7 emulados (modo demostración): activar sin foto, subir, encuadrar, ver, cambiar y quitar la selfie.
+
+---
+
 ## 2026-11-18 · Encuadrar la foto de perfil
 
 - Antes la foto se recortaba sola al centro y, en fotos verticales, se cortaba la frente. Ahora, al elegir la foto, se abre una ventana para moverla con el dedo y acercar o alejar (pellizcando, con la barra o con − y +). Lo que queda dentro del círculo es la foto.
