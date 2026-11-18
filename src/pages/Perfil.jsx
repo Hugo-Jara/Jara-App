@@ -141,7 +141,7 @@ export default function Perfil() {
       )}
 
       {/* Buscarme en las fotos (0042, 0045): las de otro jugador, solo si él eligió mostrarlas. */}
-      {perfil.propio ? <MisFotos tieneFoto={!!foto} /> : <FotosDelJugador personaId={perfil.id} />}
+      {perfil.propio ? <MisFotos tieneFoto={!!foto} personaId={perfil.id} /> : <FotosDelJugador personaId={perfil.id} />}
 
       {perfil.propio && (
         <div className="card">

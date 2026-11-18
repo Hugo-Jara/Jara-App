@@ -25,6 +25,7 @@ from insightface.app import FaceAnalysis
 
 UMBRAL = 0.40          # parecido mínimo (coseno ArcFace). En la prueba: la persona 0,62; los demás < 0,10.
 LOTE = 20              # fotos por guardado
+DETECCION = 2048       # tamaño al que se buscan caras (múltiplo de 32; antes 1280)
 URL = os.environ['SUPABASE_URL'].rstrip('/')
 SECRETA = os.environ['SUPABASE_SECRET']
 DRIVE = os.environ.get('DRIVE_URL', 'https://www.googleapis.com/drive/v3')  # se cambia solo para probar
@@ -97,7 +98,7 @@ def main():
     app = FaceAnalysis(name='buffalo_l', root=os.path.expanduser('~/.insightface'),
                        providers=['CPUExecutionProvider'])
 
-    # 1. Huellas nuevas: de la foto de perfil (la app la guarda a 600 px).
+    # 1. Huellas nuevas: de la selfie o la foto de perfil (la app las guarda a 600 px).
     nuevas = 0
     for p in personas:
         if p['sin_foto']:
@@ -110,7 +111,9 @@ def main():
         if not nuevas:
             app.prepare(ctx_id=-1, det_size=(640, 640), det_thresh=0.4)
         nuevas += 1
-        im = imagen(bajar(f"{URL}/storage/v1/object/authenticated/fotos-perfil/{p['foto_ruta']}", cabeceras()))
+        # La selfie para buscarse (0059) si la subió; si no, la foto de perfil.
+        bucket = p.get('bucket') or 'fotos-perfil'
+        im = imagen(bajar(f"{URL}/storage/v1/object/authenticated/{bucket}/{p['foto_ruta']}", cabeceras()))
         caras = []
         if im is not None:
             # Con un borde alrededor, una selfie de cerca también se detecta.
@@ -152,8 +155,12 @@ def main():
         rpc('caras_terminar', {'p_personas': [p['persona_id'] for p in listas if not p['completa']]})
         return
 
-    app.prepare(ctx_id=-1, det_size=(1280, 1280), det_thresh=0.4)
+    # Detección a tamaño completo (2048): a 1280 la foto se achicaba y las caras
+    # de los que salen más lejos (fotos de Facebook del jueves, fotos grupales)
+    # quedaban muy chicas y no se detectaban.
+    app.prepare(ctx_id=-1, det_size=(DETECCION, DETECCION), det_thresh=0.4)
     lote, encontradas, fallidas, t0, mejor = [], 0, 0, time.time(), -1.0
+    total_caras, chicas = 0, 0
     for i, (a, contra) in enumerate(trabajo, 1):
         im = imagen(foto_de_la_liga(a['archivo_id'], llaves[a['club_id']]))
         if im is None:
@@ -165,6 +172,8 @@ def main():
             f = 2000 / max(h, w)
             im = cv2.resize(im, (int(w * f), int(h * f)), interpolation=cv2.INTER_AREA)
         caras = app.get(im)
+        total_caras += len(caras)
+        chicas += sum(1 for c in caras if (c.bbox[3] - c.bbox[1]) < 48)
         hallazgos = []
         if caras:
             m = np.stack([c.normed_embedding for c in caras])
@@ -184,6 +193,7 @@ def main():
     rpc('caras_terminar', {'p_personas': [p['persona_id'] for p in listas if not p['completa']]})
     print(f'Listo: {len(trabajo)} fotos, {encontradas} encontradas, {fallidas} no se pudieron bajar, {time.time() - t0:.0f} s')
     print(f'Parecido más alto visto: {mejor:.2f} (se guarda desde {UMBRAL:.2f})')
+    print(f'Caras detectadas: {total_caras} ({chicas} de menos de 48 px de alto)')
     if FALLAS:
         print('Fallas al bajar:', ', '.join(f'{k}: {v}' for k, v in FALLAS.most_common()))
 

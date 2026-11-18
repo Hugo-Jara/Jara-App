@@ -89,7 +89,7 @@ export async function urlsDeFotos(rutas) {
 
 // Achica la foto a un cuadrado de 600 px en JPEG (unos 60-120 KB). Si viene
 // un recorte ({ sx, sy, lado }, elegido en EncuadrarFoto) usa ese; si no, el centro.
-async function achicar(archivo, recorte) {
+export async function achicar(archivo, recorte) {
   const LADO = 600;
   const bmp = await createImageBitmap(archivo).catch(() => {
     throw new Error('No pudimos abrir esa foto. Prueba con otra (JPG o PNG).');

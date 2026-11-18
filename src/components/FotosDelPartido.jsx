@@ -21,7 +21,7 @@ export const otraVez = (id, ancho) => (e) => {
 const PRIMERAS = 9;
 
 // La foto grande, con anterior y siguiente.
-export function Visor({ fotos, indice, cambiar, cerrar, extra }) {
+export function Visor({ fotos, indice, cambiar, cerrar, extra, acciones }) {
   const foto = fotos[indice];
   useEffect(() => {
     const tecla = (e) => {
@@ -49,6 +49,7 @@ export function Visor({ fotos, indice, cambiar, cerrar, extra }) {
         <button className="visor-cerrar" onClick={cerrar} aria-label="Cerrar">✕</button>
       </div>
       <img key={foto.id} className="visor-foto" src={fuente(foto.id, 1600)} onError={otraVez(foto.id, 1600)} alt={foto.nombre ?? `Foto ${indice + 1}`} />
+      {acciones && <div className="visor-acciones">{acciones(foto)}</div>}
       <div className="visor-flechas">
         <button className="btn secundario chico" disabled={indice === 0} onClick={() => cambiar(indice - 1)}>‹ Anterior</button>
         {extra?.(foto)}

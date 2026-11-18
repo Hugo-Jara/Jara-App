@@ -105,7 +105,8 @@ export default function FotosDrive() {
   const hoy = hoyIso();
   // Solo partidos ya jugados de planteles que yo puedo editar.
   const jugados = todos.filter((p) => p.fecha <= hoy && p.puedoEditar).sort((a, b) => b.fecha.localeCompare(a.fecha));
-  const sinPartido = (carpetas ?? []).filter((c) => !c.partidoId);
+  // La app parte en el Clausura: las carpetas sin partido del Apertura no se piden confirmar.
+  const sinPartido = (carpetas ?? []).filter((c) => !c.partidoId && !(c.ruta ?? []).some((r) => /apertura/i.test(r)));
   const { propuestas, sinPartido: sinPropuesta } = proponer(sinPartido, jugados, enlaces);
   const libres = jugados.filter((p) => !enlaces.some((e) => e.partidoId === p.id));
   const enlazados = enlaces
