@@ -7,6 +7,10 @@ import RedDeErrores from './components/RedDeErrores.jsx';
 import { BASE } from './lib/base.js';
 import './styles.css';
 import { aplicarAjustes, seguirAlSistema } from './lib/ajustes.js';
+import { leerTraspaso } from './lib/traspaso.js';
+
+// Quien llega desde la dirección vieja trae su sesión y sus ajustes.
+leerTraspaso();
 
 // Tema y tamaño de letra elegidos en Ajustes, antes de dibujar la app.
 aplicarAjustes();

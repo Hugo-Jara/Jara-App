@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
-import { ESCUDO } from '../lib/base.js';
+import { BASE, ESCUDO } from '../lib/base.js';
 import { supabase } from '../lib/supabase.js';
 import { entraConClave, recordarClave } from '../lib/entrada.js';
 
@@ -161,6 +161,11 @@ export default function Ingreso() {
       </p>
       <p className="nota">
         ¿No eres del club? <Link className="enlace" to="/conoce-el-club">Conoce el Club Hugo Jara</Link>
+      </p>
+
+      <p className="nota pie-ingreso">
+        Jara App es la aplicación de los socios del Club Deportivo Hugo Jara, club de fútbol amateur de
+        Santiago. <a href={`${BASE}privacidad`}>Política de privacidad</a> · <a href="mailto:contacto@hugojara.cl">contacto@hugojara.cl</a>
       </p>
     </div>
   );

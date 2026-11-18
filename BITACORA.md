@@ -14,6 +14,20 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-15 · Cambio a hugojara.cl
+
+- La app reemplaza la web institucional que había en hugojara.cl (se creó solo para que Google aprobara la suite). La política de privacidad queda en el repo (`privacidad/privacidad.md`) y el build la publica como página pública sin entrar en `/privacidad` y `/privacidad.html` (el link viejo); el service worker no la intercepta. La pantalla de ingreso enlaza a ella.
+
+- `netlify.toml`: Netlify publica la app en la raíz de hugojara.cl. Corre las mismas pruebas que GitHub Pages (`test:db`, `test:pedidos`, `test:fotos-drive`) antes del build; si fallan, queda la versión anterior. `www` lleva a la raíz, `/assets` se guarda un año y `sw.js` e `index.html` se revisan siempre.
+- `puente/`: lo que publicará GitHub Pages en la dirección vieja cuando hugojara.cl esté andando (PR aparte). Manda a la misma pantalla en hugojara.cl y pasa la sesión y los ajustes por el `#` del link, y reemplaza el service worker viejo para que la app instalada no se quede pegada.
+- `src/lib/traspaso.js`: la app recibe ese paquete solo si viene de la dirección vieja y si no hay otra sesión abierta; limpia el link al tiro. `sesion.jsx` lo espera antes de mirar la sesión.
+- Supabase Auth y Google quedan con direcciones exactas, sin comodines: el correo y Google vuelven siempre a la raíz de la app (`aDondeVolver` en `sesion.jsx`) y la pantalla donde estaba la persona se recuerda una hora en el navegador (`jara-volver-a`); al entrar, la app la abre.
+- Sin migración. Lo manual (Netlify, DNS, Supabase Auth, Google) está en el hilo del proyecto.
+
+**Comprobado:** pruebas y build con `VITE_BASE=/`; Playwright simulando las dos direcciones: entrar a `/Jara-App/partidos?x=1` con sesión abierta termina en `hugojara.cl/partidos?x=1` con la sesión y el tema traspasados y el link limpio; un link armado sin venir de la dirección vieja se ignora.
+
+---
+
 ## 2026-11-15 · Seguridad antes del lanzamiento
 
 - Revisión completa: todas las tablas con RLS y sin acceso directo desde el navegador; las 220 funciones probadas como cuenta desconocida y como socio raso (ninguna entrega datos ni deja hacer cosas que no corresponden); RUT, teléfono y correo solo para la propia persona, su tesorero y Hacienda; sin claves en el repo; sin puntos de inyección de código en la app.

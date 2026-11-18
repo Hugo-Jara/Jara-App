@@ -7,7 +7,7 @@ App del Club Deportivo Hugo Jara. El plan vigente está en `PLAN-JARA-APP.md` y 
 - Supabase (Postgres): toda lectura y escritura pasa por funciones SQL (RPC) con `llamar()` de `src/lib/supabase.js`; nunca se consultan tablas desde el navegador.
 - Sin credenciales corre en modo demostración (`esDemo`), con datos inventados en memoria.
 - Un solo archivo de estilos: `src/styles.css`.
-- Se publica sola en GitHub Pages al llegar a `main`, tras pasar las pruebas y el build.
+- Se publica sola en Netlify (hugojara.cl, ver `netlify.toml`) al llegar a `main`, tras pasar las pruebas y el build. La dirección vieja de GitHub Pages queda como puente (`puente/`).
 
 ## Comandos
 - `npm run dev`: servidor de desarrollo.

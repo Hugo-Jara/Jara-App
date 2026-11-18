@@ -1,15 +1,36 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { BASE } from './base.js';
 import { supabase, esDemo, llamar } from './supabase.js';
 import { vaciarPartidos } from './partidos.js';
 import { vaciarEntrenamiento } from './entrenamiento.js';
 import { vaciarSolicitudes } from './ingreso.js';
+import { recibirTraspaso } from './traspaso.js';
 
 const Contexto = createContext(null);
 export const useSesion = () => useContext(Contexto);
 
 // Quien llega desde un link del grupo (por ejemplo /partidos) vuelve a esa
-// misma pantalla después de entrar.
-const aDondeVolver = () => `${window.location.origin}${window.location.pathname}`;
+// misma pantalla después de entrar. Supabase solo devuelve a direcciones
+// exactas (sin comodines), así que el correo y Google vuelven siempre a la
+// raíz de la app y la pantalla se recuerda aquí por una hora.
+const VOLVER_A = 'jara-volver-a';
+const UNA_HORA = 60 * 60 * 1000;
+const aDondeVolver = () => {
+  try {
+    const ruta = window.location.pathname.slice(BASE.length - 1) + window.location.search;
+    if (ruta && ruta !== '/') localStorage.setItem(VOLVER_A, JSON.stringify({ ruta, t: Date.now() }));
+    else localStorage.removeItem(VOLVER_A);
+  } catch { /* sin almacenamiento: vuelve al inicio */ }
+  return `${window.location.origin}${BASE}`;
+};
+const pantallaPendiente = () => {
+  try {
+    const v = JSON.parse(localStorage.getItem(VOLVER_A) || 'null');
+    localStorage.removeItem(VOLVER_A);
+    return v && Date.now() - v.t < UNA_HORA && v.ruta.startsWith('/') && !v.ruta.startsWith('//') ? v.ruta : null;
+  } catch { return null; }
+};
 
 // Quien pide un link o código queda marcado para que, al entrar, la app le
 // ofrezca dejar una contraseña. Así crear y recuperar la contraseña son el
@@ -51,6 +72,7 @@ const desdeFila = (f) => f && ({
 });
 
 export function ProveedorSesion({ children }) {
+  const irA = useNavigate();
   const [cargando, setCargando] = useState(!esDemo);
   const [sesion, setSesion] = useState(null);
   // persona: quién es en la nómina. undefined = todavía no se sabe; null = la
@@ -93,9 +115,17 @@ export function ProveedorSesion({ children }) {
       if (s) await cargarPersona();
       if (vigente) setCargando(false);
     };
-    supabase.auth.getSession().then(({ data }) => aplicar(data.session));
+    // Si viene desde la dirección vieja con su sesión, se abre aquí antes de mirar.
+    recibirTraspaso(supabase)
+      .then(() => supabase.auth.getSession())
+      .then(({ data }) => aplicar(data.session));
     const { data: sub } = supabase.auth.onAuthStateChange((evento, s) => {
       if (evento === 'SIGNED_IN' || evento === 'SIGNED_OUT') aplicar(s);
+      // Recién volvió del correo o de Google: a la pantalla donde estaba.
+      if (evento === 'SIGNED_IN') {
+        const ruta = pantallaPendiente();
+        if (ruta) irA(ruta, { replace: true });
+      }
     });
     return () => {
       vigente = false;

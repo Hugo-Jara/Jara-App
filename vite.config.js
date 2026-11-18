@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { privacidadPlugin } from './scripts/privacidad.mjs';
 
 // En GitHub Pages la app queda en /<repositorio>/; con dominio propio, en /.
 const base = process.env.VITE_BASE || '/';
@@ -9,8 +10,12 @@ export default defineConfig({
   base,
   plugins: [
     react(),
+    privacidadPlugin(),
     VitePWA({
       registerType: 'autoUpdate',
+      // La política de privacidad es una página aparte: el service worker no la
+      // reemplaza por la app.
+      workbox: { navigateFallbackDenylist: [/\/privacidad(\.html)?$/] },
       includeAssets: ['escudo.jpg', 'icon-192.png', 'icon-512.png'],
       manifest: {
         name: 'Jara App · Club Deportivo Hugo Jara',
