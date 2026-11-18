@@ -87,23 +87,28 @@ export async function urlsDeFotos(rutas) {
   return Object.fromEntries(rutas.filter(Boolean).map((r) => [r, urls.get(r)?.url]));
 }
 
-// Achica la foto a un cuadrado de 600 px en JPEG (unos 60-120 KB).
-async function achicar(archivo) {
+// Achica la foto a un cuadrado de 600 px en JPEG (unos 60-120 KB). Si viene
+// un recorte ({ sx, sy, lado }, elegido en EncuadrarFoto) usa ese; si no, el centro.
+async function achicar(archivo, recorte) {
   const LADO = 600;
   const bmp = await createImageBitmap(archivo).catch(() => {
     throw new Error('No pudimos abrir esa foto. Prueba con otra (JPG o PNG).');
   });
-  const lado = Math.min(bmp.width, bmp.height);
+  const lado = recorte?.lado > 0 ? Math.min(recorte.lado, bmp.width, bmp.height) : Math.min(bmp.width, bmp.height);
+  const sx = recorte ? Math.max(0, Math.min(bmp.width - lado, recorte.sx)) : (bmp.width - lado) / 2;
+  const sy = recorte ? Math.max(0, Math.min(bmp.height - lado, recorte.sy)) : (bmp.height - lado) / 2;
   const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = Math.min(LADO, lado);
-  canvas.getContext('2d').drawImage(bmp, (bmp.width - lado) / 2, (bmp.height - lado) / 2, lado, lado, 0, 0, canvas.width, canvas.height);
+  canvas.width = canvas.height = Math.max(1, Math.round(Math.min(LADO, lado)));
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bmp, sx, sy, lado, lado, 0, 0, canvas.width, canvas.height);
   bmp.close?.();
   return new Promise((ok, mal) => canvas.toBlob((b) => (b ? ok(b) : mal(new Error('No pudimos preparar la foto'))), 'image/jpeg', 0.85));
 }
 
 // Sube mi foto nueva y borra la anterior. Devuelve { ruta, url }.
-export async function subirMiFoto(personaId, archivo) {
-  const blob = await achicar(archivo);
+export async function subirMiFoto(personaId, archivo, recorte) {
+  const blob = await achicar(archivo, recorte);
   if (esDemo) {
     const url = URL.createObjectURL(blob);
     DEMO.demo.foto_ruta = url; urls.set(url, { url, vence: Infinity });
