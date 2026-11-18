@@ -4,6 +4,15 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-18 · La búsqueda de caras la despierta la base
+
+- GitHub se salta muchas de las corridas programadas de "Buscar caras", incluso pidiéndolas cada 30 minutos. Migración 0060: la base revisa cada 10 minutos (pg_cron) si hay algo que hacer y, solo si hay, le pide a GitHub la corrida con una llave que solo sirve para correr tareas de este repo. La programación y la llave se cargan por SQL aparte (no van al repo).
+- La corrida programada de GitHub sigue como respaldo.
+
+**Comprobado:** `npm run test:caras` (4 pruebas nuevas: sin llave no pide nada, no pide dos veces seguidas, la app no puede despertarla ni ver la llave).
+
+---
+
 ## 2026-11-18 · Buscarme en las fotos: más seguido, caras chicas, selfie y quitar del perfil
 
 - La tarea "Buscar caras" estaba programada cada 3 horas, pero GitHub se saltaba la mayoría de las corridas (en la práctica, 2 al día): quien activaba la búsqueda esperaba hasta 12 horas. Ahora se pide cada 30 minutos; si no hay nada nuevo termina en segundos.

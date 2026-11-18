@@ -181,6 +181,18 @@ ok('La tarea ve a quien activó, con su foto y la llave', !r.error && t.personas
    && t.personas[0].foto_ruta === `${PER.jugador}/a.jpg` && Object.values(t.llaves)[0] === 'llave-de-mentira-1234567890'
    && t.archivos.length >= 3 && t.archivos.every((a) => !a.revisada), r.error ?? JSON.stringify(t).slice(0, 300));
 
+// 0060: la base despierta la tarea si hay trabajo.
+x = (await db.query('select caras_hay_trabajo() as h, caras_despertar() as d')).rows[0];
+ok('Hay trabajo y, sin llave de GitHub, no pide nada', x.h === true && x.d === 'sin llave de GitHub', JSON.stringify(x));
+await db.exec(`update caras_github set token = 'llave-de-mentira', ultimo_aviso = now()`);
+x = (await db.query('select caras_despertar() as d')).rows[0];
+ok('No pide de nuevo si se pidió hace poco', x.d === 'ya se pidió hace poco', JSON.stringify(x));
+await db.exec(`update caras_github set token = null, ultimo_aviso = null`);
+r = await como('jugador', 'select caras_despertar()');
+ok('La app no puede despertar la tarea', /permission denied/.test(r.error ?? ''), r.error);
+r = await como('jugador', 'select * from caras_github');
+ok('La app no ve la llave de GitHub', /permission denied/.test(r.error ?? ''), r.error);
+
 r = await tarea('select caras_guardar_huella($1, $2, $3::real[], $4)', [PER.jugador, `${PER.jugador}/a.jpg`, huella(0), 'lista']);
 ok('La tarea guarda la huella', !r.error, r.error);
 r = await tarea('select caras_guardar($1::jsonb)', [JSON.stringify([
