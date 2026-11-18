@@ -1,4 +1,4 @@
--- Jara App · 0059 · Buscarme en las fotos con una selfie
+-- Jara App · 0059 · Buscarme en las fotos con una selfie, y armar mi perfil
 --
 -- Hasta ahora (0042) la búsqueda usaba siempre la foto de perfil. Hay quienes
 -- ponen una foto de espalda (por el número), de su jugador favorito o con más
@@ -16,10 +16,21 @@
 --   - caras_activar: ya no exige foto de perfil (quien no tiene, sube una
 --     selfie después de activar). Lo demás igual que en 0042.
 --
+-- Además, cada uno arma sus fotos a su pinta: "Quitar de mi perfil" saca una
+-- foto donde sí sale (pero no le gusta) de su perfil y de su grilla, sin
+-- decir "No soy yo". La puede volver a poner cuando quiera.
+--   - caras_hallazgos.fuera_perfil (false por defecto).
+--   - caras_en_perfil(p_archivo, p_si): la quita o la vuelve a poner.
+--   - caras_mis_fotos: devuelve también fuera_perfil.
+--   - caras_fotos_de: el resto del club no ve las quitadas.
+--   - caras_guardar_huella: al sacar la huella de nuevo, guarda también las
+--     quitadas (como los "No soy yo"), para que no vuelvan a aparecer.
+--
 -- Revisión: datos biométricos (siempre con el permiso de la persona). No toca
 -- plata. La revisa el administrador de la app.
 
 alter table public.caras_personas add column selfie_ruta text;
+alter table public.caras_hallazgos add column fuera_perfil boolean not null default false;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('caras-selfie', 'caras-selfie', false, 2097152, array['image/jpeg'])
@@ -130,11 +141,91 @@ begin
 end;
 $$;
 
-revoke all on function public.caras_selfie_guardar(text) from public, anon;
-grant execute on function public.caras_selfie_guardar(text) to authenticated;
+-- Quitar una foto de mi perfil (o volver a ponerla).
+create or replace function public.caras_en_perfil(p_archivo text, p_si boolean)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if public.mi_persona_id() is null then raise exception 'Tu cuenta no está en la nómina del club'; end if;
+  update public.caras_hallazgos set fuera_perfil = not coalesce(p_si, true)
+   where persona_id = public.mi_persona_id() and archivo_id = p_archivo;
+  if not found then raise exception 'Esa foto no está entre las tuyas'; end if;
+end;
+$$;
+
+-- Igual que en 0042, más fuera_perfil (cambia lo que devuelve: se recrea).
+drop function public.caras_mis_fotos();
+create function public.caras_mis_fotos()
+returns table (archivo_id text, nombre text, tomada timestamp, ancho int, alto int, parecido real,
+               carpeta_id text, carpeta_nombre text, dia date,
+               partido_id uuid, partido_fecha date, partido_rival text, equipo text, fuera_perfil boolean)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if public.mi_persona_id() is null then raise exception 'Tu cuenta no está en la nómina del club'; end if;
+  return query
+    select a.archivo_id, a.nombre, a.tomada, a.ancho, a.alto, h.parecido,
+           k.carpeta_id, k.nombre, k.dia,
+           p.id, p.fecha, p.rival, e.nombre, h.fuera_perfil
+      from public.caras_hallazgos h
+      join public.fotos_archivos a on a.archivo_id = h.archivo_id
+      join public.fotos_carpetas k on k.carpeta_id = a.carpeta_id and k.club_id = public.mi_club_id()
+      left join public.partido_fotos f on f.carpeta_id = k.carpeta_id
+      left join public.partidos p on p.id = f.partido_id
+      left join public.equipos e on e.id = p.equipo_id
+     where h.persona_id = public.mi_persona_id() and not h.oculta
+     order by coalesce(p.fecha, k.dia, a.tomada::date) desc nulls last, a.tomada, a.archivo_id;
+end;
+$$;
+
+-- Igual que en 0045, sin las quitadas del perfil.
+create or replace function public.caras_fotos_de(p_persona uuid)
+returns table (archivo_id text, nombre text, tomada timestamp, ancho int, alto int, parecido real,
+               carpeta_id text, carpeta_nombre text, dia date,
+               partido_id uuid, partido_fecha date, partido_rival text, equipo text)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if public.mi_persona_id() is null then raise exception 'Tu cuenta no está en la nómina del club'; end if;
+  if not exists (select 1 from public.caras_personas c
+                  where c.persona_id = p_persona and c.club_id = public.mi_club_id()
+                    and (c.muestra or c.persona_id = public.mi_persona_id())) then
+    return;
+  end if;
+  return query
+    select a.archivo_id, a.nombre, a.tomada, a.ancho, a.alto, h.parecido,
+           k.carpeta_id, k.nombre, k.dia,
+           p.id, p.fecha, p.rival, e.nombre
+      from public.caras_hallazgos h
+      join public.fotos_archivos a on a.archivo_id = h.archivo_id
+      join public.fotos_carpetas k on k.carpeta_id = a.carpeta_id and k.club_id = public.mi_club_id()
+      left join public.partido_fotos f on f.carpeta_id = k.carpeta_id
+      left join public.partidos p on p.id = f.partido_id
+      left join public.equipos e on e.id = p.equipo_id
+     where h.persona_id = p_persona and not h.oculta and not h.fuera_perfil
+     order by coalesce(p.fecha, k.dia, a.tomada::date) desc nulls last, a.tomada, a.archivo_id;
+end;
+$$;
+
+-- Igual que en 0042, pero guarda también las quitadas del perfil.
+create or replace function public.caras_guardar_huella(p_persona uuid, p_foto_ruta text, p_huella real[], p_estado text)
+returns void language plpgsql security definer set search_path = public as $$
+begin
+  if p_estado not in ('lista', 'sin_cara', 'sin_foto') then raise exception 'Estado no válido'; end if;
+  if p_estado = 'lista' and (p_huella is null or cardinality(p_huella) <> 512) then raise exception 'Huella no válida'; end if;
+  update public.caras_personas
+     set foto_ruta = p_foto_ruta,
+         huella = case when p_estado = 'lista' then p_huella end,
+         estado = p_estado,
+         revisada_en = null
+   where persona_id = p_persona;
+  delete from public.caras_hallazgos where persona_id = p_persona and not oculta and not fuera_perfil;
+end;
+$$;
+
+revoke all on function public.caras_selfie_guardar(text), public.caras_en_perfil(text, boolean), public.caras_mis_fotos() from public, anon;
+grant execute on function public.caras_selfie_guardar(text), public.caras_en_perfil(text, boolean), public.caras_mis_fotos() to authenticated;
+revoke all on function public.caras_guardar_huella(uuid, text, real[], text) from public, anon, authenticated;
 revoke all on function public.caras_trabajo() from public, anon, authenticated;
 do $$ begin
   if exists (select 1 from pg_roles where rolname = 'service_role') then
-    grant execute on function public.caras_trabajo() to service_role;
+    grant execute on function public.caras_trabajo(), public.caras_guardar_huella(uuid, text, real[], text) to service_role;
   end if;
 end $$;

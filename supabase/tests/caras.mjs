@@ -203,6 +203,21 @@ ok('Otro no ve las fotos del jugador', x.rows.length === 0, JSON.stringify(x.row
 x = await estado('jugador');
 ok('El estado cuenta las encontradas', x.estado === 'lista' && Number(x.encontradas) === 2, JSON.stringify(x));
 
+// 0059: quitar de mi perfil (sin decir "No soy yo").
+r = await como('jugador', 'select caras_en_perfil($1, false)', [fotosCobs[0]]);
+x = await como('jugador', 'select * from caras_mis_fotos()');
+ok('Quitar de mi perfil: la sigo viendo, marcada como quitada', !r.error && x.rows.length === 2
+   && x.rows.find((f) => f.archivo_id === fotosCobs[0])?.fuera_perfil === true, r.error ?? JSON.stringify(x.rows));
+await como('jugador', 'select caras_mostrar(true)');
+x = await como('capitan', 'select * from caras_fotos_de($1)', [PER.jugador]);
+ok('El club no ve la quitada', x.rows.length === 1 && x.rows[0].archivo_id === fotosCobs[1], JSON.stringify(x.rows));
+r = await como('capitan', 'select caras_en_perfil($1, false)', [fotosCobs[1]]);
+ok('No puedo quitar fotos de otro', /no está entre las tuyas/.test(r.error ?? ''), r.error);
+r = await como('jugador', 'select caras_en_perfil($1, true)', [fotosCobs[0]]);
+x = await como('capitan', 'select * from caras_fotos_de($1)', [PER.jugador]);
+ok('Volver a ponerla en el perfil', !r.error && x.rows.length === 2, r.error ?? JSON.stringify(x.rows));
+await como('jugador', 'select caras_mostrar(false)');
+
 r = await como('jugador', 'select caras_no_soy_yo($1)', [fotosCobs[1]]);
 x = await como('jugador', 'select * from caras_mis_fotos()');
 ok('"No soy yo" esconde la foto', !r.error && x.rows.length === 1, r.error ?? JSON.stringify(x.rows));
@@ -229,6 +244,7 @@ await vuelta('capitan', true);
 x = await como('jugador', 'select * from caras_mis_fotos()');
 ok('Al releer el Drive sigue lo encontrado y lo escondido', x.rows.length === 1, JSON.stringify(x.rows));
 
+await como('jugador', 'select caras_en_perfil($1, false)', [fotosCobs[0]]);
 // Cambia la foto de perfil: hay que sacar la huella de nuevo.
 await db.exec(`update perfiles set foto_ruta = '${PER.jugador}/b.jpg' where persona_id = '${PER.jugador}'`);
 t = (await tarea('select caras_trabajo() as t')).rows[0].t;
@@ -238,7 +254,7 @@ ok('La app sabe que cambió la foto', x.foto_cambio === true, JSON.stringify(x))
 await tarea('select caras_guardar_huella($1, $2, null, $3)', [PER.jugador, `${PER.jugador}/b.jpg`, 'sin_cara']);
 x = await estado('jugador');
 const quedan = (await db.query(`select count(*)::int n, count(*) filter (where oculta)::int o from caras_hallazgos`)).rows[0];
-ok('Si la foto nueva no tiene cara, avisa y borra lo encontrado (menos los "No soy yo")', x.estado === 'sin_cara' && quedan.n === 1 && quedan.o === 1, JSON.stringify([x, quedan]));
+ok('Si la foto nueva no tiene cara, avisa y borra lo encontrado (menos los "No soy yo" y las quitadas)', x.estado === 'sin_cara' && quedan.n === 2 && quedan.o === 1, JSON.stringify([x, quedan]));
 r = await tarea('select caras_guardar_huella($1, $2, null, $3)', [PER.jugador, 'x', 'lista']);
 ok('No acepta una huella vacía como lista', /Huella no válida/.test(r.error ?? ''), r.error);
 

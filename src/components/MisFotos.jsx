@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { esDemo } from '../lib/supabase.js';
-import { estadoCaras, activarCaras, apagarCaras, misFotos, noSoyYo, mostrarEnPerfil, subirSelfie, quitarSelfie, urlSelfie } from '../lib/caras.js';
+import { estadoCaras, activarCaras, apagarCaras, misFotos, noSoyYo, ponerEnPerfil, mostrarEnPerfil, subirSelfie, quitarSelfie, urlSelfie } from '../lib/caras.js';
 import EncuadrarFoto from './EncuadrarFoto.jsx';
 import { fuente, otraVez, Visor } from './FotosDelPartido.jsx';
 import { fechaLarga } from '../lib/fechas.js';
@@ -22,6 +22,7 @@ export default function MisFotos({ tieneFoto, personaId }) {
   const [mostrar, setMostrar] = useState(true);
   const [todas, setTodas] = useState(false);
   const [abierta, setAbierta] = useState(null);
+  const [verQuitadas, setVerQuitadas] = useState(false);
   const [porEncuadrar, setPorEncuadrar] = useState(null);
   const [selfieUrl, setSelfieUrl] = useState(null);
   const pedirSelfie = useRef(null);
@@ -84,6 +85,14 @@ export default function MisFotos({ tieneFoto, personaId }) {
       setFotos((f) => f.filter((x) => x.id !== foto.id));
     } catch (x) { setError(x.message); }
   };
+  // Quitar de mi perfil (sale, pero no le gusta) o volver a ponerla.
+  const alternarPerfil = async (foto) => {
+    try {
+      await ponerEnPerfil(foto.id, foto.fueraPerfil);
+      setAbierta(null);
+      setFotos((f) => f.map((x) => (x.id === foto.id ? { ...x, fueraPerfil: !x.fueraPerfil } : x)));
+    } catch (x) { setError(x.message); }
+  };
 
   if (!estado) {
     return (
@@ -137,7 +146,11 @@ export default function MisFotos({ tieneFoto, personaId }) {
     );
   }
 
-  const visibles = fotos ? (todas ? fotos : fotos.slice(0, PRIMERAS)) : [];
+  const puestas = fotos ? fotos.filter((f) => !f.fueraPerfil) : [];
+  const quitadas = fotos ? fotos.filter((f) => f.fueraPerfil) : [];
+  const visibles = todas ? puestas : puestas.slice(0, PRIMERAS);
+  // El visor recorre la lista que se abrió (las puestas o las quitadas).
+  const listaAbierta = abierta?.quitadas ? quitadas : puestas;
   const aviso = {
     pendiente: 'Te estamos buscando. La búsqueda corre sola cada media hora y la primera tarda unos 30 minutos: vuelve más tarde.',
     sin_cara: estado.con_selfie
@@ -148,7 +161,7 @@ export default function MisFotos({ tieneFoto, personaId }) {
 
   return (
     <div className="card perfil-fotos">
-      <div className="item-que">Mis fotos{fotos?.length ? ` · ${fotos.length}` : ''}</div>
+      <div className="item-que">Mis fotos{puestas.length ? ` · ${puestas.length}` : ''}</div>
       {aviso && <p className="item-meta">{aviso}</p>}
       {estado.foto_cambio && estado.estado === 'lista' && <p className="item-meta">{estado.con_selfie ? 'Subiste una selfie' : 'Cambiaste tu foto'}: en la próxima búsqueda te buscamos con la nueva.</p>}
       {estado.estado === 'lista' && fotos?.length === 0 && (
@@ -176,17 +189,35 @@ export default function MisFotos({ tieneFoto, personaId }) {
         <input ref={pedirSelfie} type="file" accept="image/jpeg,image/png,image/webp,image/heic" hidden onChange={elegirSelfie} />
       </div>
       {error && <p className="error" role="alert">{error}</p>}
-      {fotos?.length > 0 && (
+      {puestas.length > 0 && (
         <div className="fotos-grilla" style={{ marginTop: 12 }}>
           {visibles.map((f, i) => (
-            <button key={f.id} className="fotos-miniatura" onClick={() => setAbierta(i)} aria-label={`Ver foto ${i + 1}`}>
+            <button key={f.id} className="fotos-miniatura" onClick={() => setAbierta({ i })} aria-label={`Ver foto ${i + 1}`}>
               <img src={fuente(f.id, 400)} onError={otraVez(f.id, 400)} alt="" loading="lazy" />
             </button>
           ))}
         </div>
       )}
-      {fotos?.length > PRIMERAS && !todas && (
-        <button className="btn secundario" style={{ marginTop: 12 }} onClick={() => setTodas(true)}>Ver las {plural(fotos.length, 'foto', 'fotos')}</button>
+      {puestas.length > PRIMERAS && !todas && (
+        <button className="btn secundario" style={{ marginTop: 12 }} onClick={() => setTodas(true)}>Ver las {plural(puestas.length, 'foto', 'fotos')}</button>
+      )}
+      {puestas.length > 0 && quitadas.length === 0 && (
+        <p className="nota" style={{ textAlign: 'left' }}>¿Una foto no te gusta? Ábrela y toca "Quitar de mi perfil".</p>
+      )}
+      {quitadas.length > 0 && (
+        <p className="nota" style={{ textAlign: 'left' }}>
+          {plural(quitadas.length, 'foto quitada', 'fotos quitadas')} de tu perfil ·{' '}
+          <button type="button" className="enlace" onClick={() => setVerQuitadas((v) => !v)}>{verQuitadas ? 'Esconderlas' : 'Verlas'}</button>
+        </p>
+      )}
+      {verQuitadas && quitadas.length > 0 && (
+        <div className="fotos-grilla caras-quitadas">
+          {quitadas.map((f, i) => (
+            <button key={f.id} className="fotos-miniatura" onClick={() => setAbierta({ i, quitadas: true })} aria-label={`Ver foto quitada ${i + 1}`}>
+              <img src={fuente(f.id, 400)} onError={otraVez(f.id, 400)} alt="" loading="lazy" />
+            </button>
+          ))}
+        </div>
       )}
       <p className="nota" style={{ textAlign: 'left' }}>
         {estado.muestra ? 'Se ven en tu perfil para el resto del club' : 'Solo tú ves tus fotos'}
@@ -198,16 +229,21 @@ export default function MisFotos({ tieneFoto, personaId }) {
         Buscarme en las fotos está activado · <button type="button" className="enlace quitar" disabled={ocupado} onClick={apagar}>Apagar y borrar</button>
       </p>
       {porEncuadrar && <EncuadrarFoto archivo={porEncuadrar} onListo={subirEncuadrada} onCancelar={() => setPorEncuadrar(null)} />}
-      {abierta != null && fotos?.[abierta] && (
+      {abierta != null && listaAbierta[abierta.i] && (
         <Visor
-          fotos={fotos} indice={abierta} cambiar={setAbierta} cerrar={() => setAbierta(null)}
+          fotos={listaAbierta} indice={abierta.i} cambiar={(i) => setAbierta((a) => ({ ...a, i }))} cerrar={() => setAbierta(null)}
           extra={(f) => (
             <span className="caras-visor-dato">
               {f.partidoId
                 ? <Link className="enlace" to={`/partidos/${f.partidoId}`}>{f.equipo} vs {f.rival}{f.partidoFecha ? ` · ${fechaLarga(f.partidoFecha)}` : ''}</Link>
                 : <span>{f.carpetaNombre}</span>}
-              {' · '}<button type="button" className="enlace quitar" onClick={() => esconder(f)}>No soy yo</button>
             </span>
+          )}
+          acciones={(f) => (
+            <>
+              <button type="button" className="btn secundario chico" onClick={() => alternarPerfil(f)}>{f.fueraPerfil ? 'Volver a mi perfil' : 'Quitar de mi perfil'}</button>
+              <button type="button" className="btn secundario chico" onClick={() => esconder(f)}>No soy yo</button>
+            </>
           )}
         />
       )}

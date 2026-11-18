@@ -9,6 +9,7 @@ const fotoDesdeFila = (f) => ({
   id: f.archivo_id, nombre: f.nombre, tomada: f.tomada, ancho: f.ancho, alto: f.alto,
   carpetaId: f.carpeta_id, carpetaNombre: f.carpeta_nombre, dia: f.dia,
   partidoId: f.partido_id, partidoFecha: f.partido_fecha, rival: f.partido_rival, equipo: f.equipo,
+  fueraPerfil: !!f.fuera_perfil,
 });
 
 const base = {
@@ -17,6 +18,7 @@ const base = {
   apagar: () => llamar('caras_apagar'),
   misFotos: async () => (await llamar('caras_mis_fotos')).map(fotoDesdeFila),
   noSoyYo: (id) => llamar('caras_no_soy_yo', { p_archivo: id }),
+  enPerfil: (id, si) => llamar('caras_en_perfil', { p_archivo: id, p_si: !!si }),
   mostrar: (si) => llamar('caras_mostrar', { p_muestra: !!si }),
   fotosDe: async (persona) => (await llamar('caras_fotos_de', { p_persona: persona })).map(fotoDesdeFila),
   // Selfie solo para buscarse (0059): bucket privado, solo la ve uno mismo.
@@ -42,6 +44,7 @@ const base = {
 
 // --- Modo demostración: se activa y a los segundos "encuentra" fotos.
 let demo = { activa: false, aceptada: 0, ocultas: new Set(), muestra: false, selfie: null };
+const quitadasDemo = new Set();
 const DEMO_FOTOS = Array.from({ length: 5 }, (_, i) => ({
   id: `demo-${i}`, nombre: `Foto ${i + 1}`, ancho: 1600, alto: 1067,
   partidoId: i < 3 ? 'p4' : null, partidoFecha: null, rival: i < 3 ? 'Otro Rival Jugado' : null, equipo: i < 3 ? 'Senior Sábado' : null,
@@ -66,11 +69,12 @@ const enDemo = {
   },
   quitarSelfie: async () => { demo.selfie = null; },
   urlSelfie: async (ruta) => ruta,
-  misFotos: async () => (demoListo() ? DEMO_FOTOS.filter((f) => !demo.ocultas.has(f.id)) : []),
+  misFotos: async () => (demoListo() ? DEMO_FOTOS.filter((f) => !demo.ocultas.has(f.id)).map((f) => ({ ...f, fueraPerfil: quitadasDemo.has(f.id) })) : []),
+  enPerfil: async (id, si) => { if (si) quitadasDemo.delete(id); else quitadasDemo.add(id); },
   noSoyYo: async (id) => { demo.ocultas.add(id); },
   mostrar: async (si) => { if (!demo.activa) throw new Error('Primero activa "Buscarme en las fotos"'); demo.muestra = !!si; },
   // En demo, solo "Jugador Inventado" (d2) eligió mostrar sus fotos.
-  fotosDe: async (persona) => (persona === 'demo' ? (demo.muestra && demoListo() ? DEMO_FOTOS.filter((f) => !demo.ocultas.has(f.id)) : [])
+  fotosDe: async (persona) => (persona === 'demo' ? (demo.muestra && demoListo() ? DEMO_FOTOS.filter((f) => !demo.ocultas.has(f.id) && !quitadasDemo.has(f.id)) : [])
     : persona === 'd2' ? DEMO_FOTOS.slice(0, 2) : []),
 };
 
@@ -87,5 +91,6 @@ export const quitarSelfie = () => origen.quitarSelfie();
 export const urlSelfie = (ruta) => origen.urlSelfie(ruta);
 export const misFotos = () => origen.misFotos();
 export const noSoyYo = (id) => origen.noSoyYo(id);
+export const ponerEnPerfil = (id, si) => origen.enPerfil(id, si);
 export const mostrarEnPerfil = (si) => origen.mostrar(si);
 export const fotosDe = (persona) => origen.fotosDe(persona);
