@@ -885,3 +885,8 @@ label.tes-imp-check { display: flex; align-items: center; gap: 10px; margin: 0; 
 .publica-lista li:first-child { border-top: 0; padding-top: 4px; }
 .publica-lista span { color: var(--text-dim); font-size: 14px; }
 .publica-texto { margin: 10px 0 0; line-height: 1.5; }
+
+/* Botón flotante "Powered by Netlify" que Netlify agrega solo en el plan gratis:
+   tapa el menú de abajo (Más). Se esconde aquí. Si Netlify lo apaga desde su
+   ajuste (built_with_badge_enabled), esta regla queda sin efecto y no molesta. */
+#nl-badge { display: none !important; }
