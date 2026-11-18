@@ -19,6 +19,7 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 - En el plan gratis Netlify agrega un botón flotante abajo a la derecha (`#nl-badge`) que tapaba "Más" en el menú y abría un aviso de Netlify al tocarlo. Lo reportaron dirigentes probando la app.
 - Se esconde con una regla en `src/styles.css`. Sin migración.
+- Corrección: el botón real es un iframe `#nl-badge-frame` (o `#nl-hud-frame`) que crea un script de Netlify al cargar. Ahora el CSS apunta a esos ids y `src/lib/sinBotonNetlify.js` los saca si aparecen después.
 - Si se quiere apagar desde Netlify: el ajuste del proyecto es `built_with_badge_enabled` (API `updateSite`).
 
 ---
