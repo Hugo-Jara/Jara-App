@@ -8,6 +8,7 @@ import { BASE } from './lib/base.js';
 import './styles.css';
 import { aplicarAjustes, seguirAlSistema } from './lib/ajustes.js';
 import { leerTraspaso } from './lib/traspaso.js';
+import { sinBotonNetlify } from './lib/sinBotonNetlify.js';
 
 // Quien llega desde la dirección vieja trae su sesión y sus ajustes.
 leerTraspaso();
@@ -15,6 +16,9 @@ leerTraspaso();
 // Tema y tamaño de letra elegidos en Ajustes, antes de dibujar la app.
 aplicarAjustes();
 seguirAlSistema();
+
+// Fuera el botón flotante de Netlify, que tapa el menú.
+sinBotonNetlify();
 
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
