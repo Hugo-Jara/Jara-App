@@ -4,11 +4,24 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-18 · Encuadrar la foto de perfil
+
+- Antes la foto se recortaba sola al centro y, en fotos verticales, se cortaba la frente. Ahora, al elegir la foto, se abre una ventana para moverla con el dedo y acercar o alejar (pellizcando, con la barra o con − y +). Lo que queda dentro del círculo es la foto.
+- Parte un poco hacia arriba en fotos verticales, que es donde suele estar la cara.
+- `src/components/EncuadrarFoto.jsx` (nuevo) devuelve el recorte; `subirMiFoto` en `src/lib/perfil.js` lo usa al achicar a 600 px. Si no hay recorte, sigue recortando al centro.
+- Sin migración.
+
+**Comprobado:** `npm run build` pasa. En iPhone 13 y Pixel 7 emulados (modo demostración): abrir, arrastrar, acercar con la barra y pellizcando con dos dedos, tema claro, Cancelar y "Usar esta foto" (la foto final coincide con lo que se veía en el círculo).
+
+---
+
 ## 2026-11-18 · Fuera el botón "Powered by Netlify"
 
 - En el plan gratis Netlify agrega un botón flotante abajo a la derecha (`#nl-badge`) que tapaba "Más" en el menú y abría un aviso de Netlify al tocarlo. Lo reportaron dirigentes probando la app.
 - Se esconde con una regla en `src/styles.css`. Sin migración.
 - Si se quiere apagar desde Netlify: el ajuste del proyecto es `built_with_badge_enabled` (API `updateSite`).
+
+---
 
 ## 2026-11-16 · Estadísticas: fuera el filtro "Senior (todos)"
 

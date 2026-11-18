@@ -6,6 +6,7 @@ import {
   leerPerfil, guardarPerfil, urlsDeFotos, subirMiFoto, quitarMiFoto,
 } from '../lib/perfil.js';
 import FotoJugador from '../components/FotoJugador.jsx';
+import EncuadrarFoto from '../components/EncuadrarFoto.jsx';
 import MisFotos from '../components/MisFotos.jsx';
 import FotosDelJugador from '../components/FotosDelJugador.jsx';
 import EstadisticasJugador from '../components/EstadisticasJugador.jsx';
@@ -26,6 +27,7 @@ export default function Perfil() {
   const [editando, setEditando] = useState(false);
   const pedirFoto = useRef(null);
   const [fotoEstado, setFotoEstado] = useState({ ocupado: false, error: '' });
+  const [porEncuadrar, setPorEncuadrar] = useState(null);
 
   const cargar = async () => {
     setError('');
@@ -37,13 +39,18 @@ export default function Perfil() {
   };
   useEffect(() => { setPerfil(null); setEditando(false); cargar(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const elegirFoto = async (e) => {
+  // Primero se encuadra (mover y acercar) y recién ahí se sube.
+  const elegirFoto = (e) => {
     const archivo = e.target.files?.[0];
     e.target.value = '';
-    if (!archivo) return;
+    if (archivo) { setFotoEstado({ ocupado: false, error: '' }); setPorEncuadrar(archivo); }
+  };
+  const subirEncuadrada = async (recorte) => {
+    const archivo = porEncuadrar;
+    setPorEncuadrar(null);
     setFotoEstado({ ocupado: true, error: '' });
     try {
-      const { url } = await subirMiFoto(perfil.id, archivo);
+      const { url } = await subirMiFoto(perfil.id, archivo, recorte);
       setFoto(url);
       setFotoEstado({ ocupado: false, error: '' });
     } catch (err) { setFotoEstado({ ocupado: false, error: err.message }); }
@@ -105,6 +112,7 @@ export default function Perfil() {
         )}
         {fotoEstado.error && <p className="error" role="alert">{fotoEstado.error}</p>}
       </div>
+      {porEncuadrar && <EncuadrarFoto archivo={porEncuadrar} onListo={subirEncuadrada} onCancelar={() => setPorEncuadrar(null)} />}
 
       {!editando && (
         <div className="card">

@@ -581,6 +581,18 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .perfil-nombre { margin: 6px 0 0; }
 .perfil-apodo { margin: 0; font-size: 15px; }
 .perfil-planteles { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+/* Encuadrar la foto de perfil antes de subirla */
+.encuadre-fondo { z-index: 1000; }
+.encuadre { text-align: center; max-width: 380px; }
+.encuadre-titulo { margin: 0 0 6px; font-size: 20px; }
+.encuadre-ayuda { margin: 0 0 14px; font-size: 14px; line-height: 1.4; color: var(--text-dim); }
+.encuadre-lienzo { display: block; margin: 0 auto; border-radius: 12px; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.encuadre-lienzo:active { cursor: grabbing; }
+.encuadre-zoom { display: flex; align-items: center; gap: 10px; margin: 14px 0 4px; }
+.encuadre-zoom input[type=range] { flex: 1; padding: 0; border: 0; background: none; accent-color: var(--gold); }
+.encuadre-zoom .btn { width: 44px; min-width: 44px; padding: 0; font-size: 20px; }
+.encuadre-botones { display: flex; gap: 10px; margin-top: 14px; }
+.encuadre-botones .btn { flex: 1; }
 .perfil-foto-botones { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
 .perfil-datos { margin: 0; display: grid; gap: 0; }
 .perfil-datos > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
