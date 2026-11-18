@@ -4,6 +4,12 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-18 · Fuera el botón "Powered by Netlify"
+
+- En el plan gratis Netlify agrega un botón flotante abajo a la derecha (`#nl-badge`) que tapaba "Más" en el menú y abría un aviso de Netlify al tocarlo. Lo reportaron dirigentes probando la app.
+- Se esconde con una regla en `src/styles.css`. Sin migración.
+- Si se quiere apagar desde Netlify: el ajuste del proyecto es `built_with_badge_enabled` (API `updateSite`).
+
 ## 2026-11-16 · Estadísticas: fuera el filtro "Senior (todos)"
 
 - En Jugadores > Estadísticas, el selector de plantel armaba solo un filtro extra por categoría ("Senior (todos)") cuando dos planteles compartían la primera palabra. Nadie lo pidió y confundía: se quita. Quedan "Todo el club" y cada plantel.
