@@ -1,6 +1,9 @@
 # Buscarme en las fotos (migración 0042): compara la cara de quienes lo
 # activaron con las fotos de la liga y guarda dónde aparece cada uno.
-# Corre sola cada 3 horas y también a mano (Actions > Buscar caras > Run workflow).
+# Corre sola cada 30 minutos y también a mano (Actions > Buscar caras > Run workflow).
+# GitHub se salta muchas de las corridas programadas (con "cada 3 horas" corría
+# 2 veces al día), por eso se pide seguido: si no hay nada nuevo, termina en
+# unos segundos sin instalar nada.
 # Necesita el secreto SUPABASE_SECRET guardado en el entorno "produccion"
 # (Settings > Environments > produccion), que solo se abre desde main: así una
 # rama de prueba no puede leer la llave maestra de la base.
@@ -9,7 +12,7 @@ name: Buscar caras
 
 on:
   schedule:
-    - cron: '17 */3 * * *'
+    - cron: '7,37 * * * *'
   workflow_dispatch:
 
 permissions:
