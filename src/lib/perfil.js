@@ -36,7 +36,9 @@ const PLANTELES_DEMO = [
     { id: 'demo', nombre: 'Seba', posicion: 'volante', dorsal: 8 },
     { id: 'd2', nombre: 'Jugador Inventado', apodo: 'el Muro', posicion: 'defensa', dorsal: 4 },
     { id: 'd3', nombre: 'Arquero Inventado', posicion: 'arquero', dorsal: 1 },
-    { id: 'd-Profe', nombre: 'Profe Inventado', posicion: 'dt' },
+    // Dirige los dos planteles senior, como pasa en el club.
+    { id: 'd-Profe', nombre: 'Profe Inventado', posicion: 'dt',
+      dirige: [{ id: 'e-jueves', nombre: 'Senior Jueves' }, { id: 'e-sabado', nombre: 'Senior Sábado' }] },
   ] },
   { id: 'e-jueves', nombre: 'Senior Jueves', jugadores: [{ id: 'd4', nombre: 'Delantero Inventado', posicion: 'delantero', dorsal: 9 }] },
 ];
@@ -50,7 +52,7 @@ export async function leerPerfil(id = null) {
     const tecnico = POSICIONES_TECNICAS.includes(j.posicion);
     return { ...j, propio: false, puedo_cargar: true, cuerpo_tecnico: tecnico,
              planteles: [{ id: j.equipo.id, nombre: j.equipo.nombre, dorsal: j.dorsal }],
-             dirige: tecnico ? [{ id: j.equipo.id, nombre: j.equipo.nombre }] : [] };
+             dirige: tecnico ? (j.dirige ?? [{ id: j.equipo.id, nombre: j.equipo.nombre }]) : [] };
   }
   return llamar('perfil_ver', { p_persona: id });
 }

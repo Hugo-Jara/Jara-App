@@ -4,6 +4,18 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-19 · Como DT: Juntos, Jueves y Sábado
+
+- El cuerpo técnico que dirige dos planteles pidió ver sus números por separado para comparar qué equipo va mejor. En la ficha "Como DT" del perfil, si dirige más de un plantel, aparece un selector: Juntos · Sábado · Jueves (se sacan las palabras repetidas del nombre del plantel para que quepa).
+- En un plantel se ven partidos dirigidos, G/E/P, rendimiento, goles a favor y en contra, vallas invictas, goleador y los últimos 5 de ese plantel. El jugador del partido más repetido se queda en Juntos.
+- En Juntos, la lista "Por plantel" suma el rendimiento de cada uno (%), para comparar de un vistazo.
+- Sin migración: el récord por plantel ya venía exacto de `dt_cifras` (0048); goles, vallas y goleador del plantel se calculan con los partidos jugados que ya trae la app. Como la base manda los últimos 30 partidos del club, si falta alguno de ese plantel se muestran solo PJ, G/E/P y rendimiento, con un aviso.
+- Demostración: el DT inventado dirige Senior Jueves y Senior Sábado.
+
+**Comprobado:** `npm run build` pasa. En iPhone 13 y Pixel 7 emulados (modo demostración, Histórico): Juntos 12 PJ = Sábado 7 + Jueves 5; goles 20–12 = 13–6 + 7–6; vallas 4 = 2 + 2. Sin desborde horizontal ni errores en consola.
+
+---
+
 ## 2026-11-18 · Buscarme en las fotos: más seguido, caras chicas, selfie y quitar del perfil
 
 - La tarea "Buscar caras" estaba programada cada 3 horas, pero GitHub se saltaba la mayoría de las corridas (en la práctica, 2 al día): quien activaba la búsqueda esperaba hasta 12 horas. Ahora se pide cada 30 minutos; si no hay nada nuevo termina en segundos.
