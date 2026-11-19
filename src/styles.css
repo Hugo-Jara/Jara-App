@@ -777,6 +777,7 @@ input.fecha-clara::-webkit-calendar-picker-indicator { filter: invert(1) brightn
 .jugador-stats-cabeza .item-que { margin: 0; }
 .segmentos.chicos { gap: 6px; }
 .segmentos.chicos .segmento { padding: 6px 10px; font-size: 13px; min-height: 38px; }
+.dt-vista { margin: -4px 0 14px; }
 .jugador-kpis { margin-bottom: 10px; }
 .jugador-kpis .kpi { padding: 12px; }
 .jugador-kpis .kpi-valor { font-size: 26px; font-variant-numeric: tabular-nums; }

@@ -138,7 +138,11 @@ let demo = [{
 const ARQUEROS_DEMO = ['demo', 'd-Nico'];
 const arcoDemo = {};
 // En demostración, el DT de Senior Sábado y quién dirigió cada partido.
-const TECNICOS_DEMO = { 'e-sabado': [{ id: 'd-Profe', nombre: 'Profe Inventado' }] };
+// El mismo DT en los dos planteles senior, como pasa en el club.
+const TECNICOS_DEMO = {
+  'e-sabado': [{ id: 'd-Profe', nombre: 'Profe Inventado' }],
+  'e-jueves': [{ id: 'd-Profe', nombre: 'Profe Inventado' }],
+};
 const bancaDemo = {};
 const EQUIPOS_DEMO = [{ id: 'e-jueves', nombre: 'Senior Jueves' }, { id: 'e-sabado', nombre: 'Senior Sábado' }, { id: 'e-junior', nombre: 'Junior Sábado' }];
 const enDemo = {
