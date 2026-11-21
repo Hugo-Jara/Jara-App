@@ -8,6 +8,7 @@ import Icono from '../components/Icono.jsx';
 import VerComo from '../components/VerComo.jsx';
 import MiPerfil from '../components/MiPerfil.jsx';
 import { usePuedeAprobarIngresos } from '../lib/ingreso.js';
+import { MOSTRAR_MI_CUOTA } from '../lib/cuotaVisible.js';
 
 // Lo administrativo del club vive acá, fuera de la pantalla de inicio.
 export default function Mas() {
@@ -23,7 +24,8 @@ export default function Mas() {
     // Asambleas y los ministerios vuelven a este menú cuando su pantalla exista (hoy /club está en construcción).
   ];
   // Un socio que no juega no paga cuota de plantel: no se le muestra "Mi cuota".
-  if (!persona.equipos?.length) FILAS.splice(FILAS.findIndex((f) => f.a === '/cuota'), 1);
+  // Mientras las cuotas no estén al día, "Mi cuota" no se muestra a nadie (ver cuotaVisible.js).
+  if (!MOSTRAR_MI_CUOTA || !persona.equipos?.length) FILAS.splice(FILAS.findIndex((f) => f.a === '/cuota'), 1);
   // Solo para encargados y administradores.
   if (persona.esEncargado) {
     FILAS.unshift({ a: '/fotos-partidos', icono: 'noticias', nombre: 'Fotos de los partidos', desc: 'Enlazar cada partido con su carpeta del Drive' });

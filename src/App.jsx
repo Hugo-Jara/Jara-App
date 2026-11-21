@@ -13,6 +13,7 @@ import Estadisticas from './pages/Estadisticas.jsx';
 import EntrenamientoForm from './pages/EntrenamientoForm.jsx';
 import Ingresos from './pages/Ingresos.jsx';
 import Cuota from './pages/Cuota.jsx';
+import { MOSTRAR_MI_CUOTA } from './lib/cuotaVisible.js';
 import Compras from './pages/Compras.jsx';
 import Entrenar from './pages/Entrenar.jsx';
 import Noticias from './pages/Noticias.jsx';
@@ -75,7 +76,8 @@ export default function App() {
         <Route path="/noticias/:id" element={<Publicacion />} />
         <Route path="/mas" element={<Mas />} />
         <Route path="/ajustes" element={<Ajustes />} />
-        <Route path="/cuota" element={<Cuota />} />
+        {/* "Mi cuota" está oculta mientras los datos no estén al día (src/lib/cuotaVisible.js). */}
+        <Route path="/cuota" element={MOSTRAR_MI_CUOTA ? <Cuota /> : <Navigate to="/" replace />} />
         <Route path="/compras" element={<Compras />} />
         {/* El tablero es de datos de ejemplo: con la base real no se muestra (la tesorería de verdad está en /tesoreria). */}
         <Route path="/tablero" element={esDemo ? <Tablero /> : <Navigate to="/tesoreria" replace />} />
