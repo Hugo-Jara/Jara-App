@@ -910,3 +910,7 @@ label.tes-imp-check { display: flex; align-items: center; gap: 10px; margin: 0; 
    src/lib/sinBotonNetlify.js lo saca si aparece después. Si Netlify lo apaga desde su
    ajuste (built_with_badge_enabled), esta regla queda sin efecto y no molesta. */
 #nl-badge, #nl-badge-frame, #nl-hud-frame { display: none !important; }
+
+/* Inicio: la tarjeta del próximo partido se toca entera para abrir el partido. */
+.card.tocable { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.tarjeta-enlace { color: inherit; text-decoration: none; }

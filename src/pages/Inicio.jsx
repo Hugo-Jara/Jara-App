@@ -3,7 +3,7 @@ import { ultimaEdicion } from '../lib/boletin.js';
 import { yaLeida, marcarLeida } from '../lib/boletinLeido.js';
 import { esDemo } from '../lib/supabase.js';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { useInicio } from '../lib/inicio.js';
 import { usePartidos, porEstado, sinResponder, tieneResultado } from '../lib/partidos.js';
@@ -24,14 +24,23 @@ const TEXTO_RESPUESTA = { voy: 'Confirmaste que vas.', duda: 'Quedaste en duda.'
 // Una tarjeta por cada partido que le toca: quien juega en dos planteles ve los dos.
 function ProximoPartido({ partido, destacado, responder }) {
   const [error, setError] = useState('');
+  const navegar = useNavigate();
   const rapido = async (respuesta) => {
     setError('');
     try { await responder(partido.id, respuesta); } catch (e) { setError(e.message); }
   };
+  // Toda la tarjeta abre el partido, como las listas. Los botones Voy / Duda /
+  // No voy y los enlaces de adentro siguen haciendo lo suyo sin abrirlo.
+  const abrir = (e) => {
+    if (e.target.closest('button, a, input, select, textarea')) return;
+    navegar(`/partidos/${partido.id}`);
+  };
   return (
-    <section className={`card accion ${destacado ? 'destacada' : ''}`}>
+    <section className={`card accion tocable ${destacado ? 'destacada' : ''}`} onClick={abrir}>
       <div className="sobretitulo">Tu próximo partido · {partido.equipo}</div>
-      <h2 className="accion-titulo display">vs {partido.rival}</h2>
+      <h2 className="accion-titulo display">
+        <Link to={`/partidos/${partido.id}`} className="tarjeta-enlace">vs {partido.rival}</Link>
+      </h2>
       <p className="accion-dato">{fechaLarga(partido.fecha)}{partido.citacion ? ` · citación ${partido.citacion}` : ''}{partido.horaInicio ? ` · parte ${partido.horaInicio}` : ''}</p>
       <p className="accion-dato tenue">{[partido.cancha, partido.tercerTiempo].filter(Boolean).join(' · ')}</p>
       {partido.miRespuesta ? (

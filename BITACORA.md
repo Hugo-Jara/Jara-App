@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-21 · Ocultar "Mi cuota" y abrir el partido desde Inicio
+
+- "Mi cuota" queda oculta para todos mientras las cuotas cargadas no estén al día: sale del menú Más y la dirección `/cuota` vuelve a Inicio. No se borra la pantalla ni los datos; Tesorería sigue igual para tesoreros, Hacienda y administradores. Para reactivarla basta poner `MOSTRAR_MI_CUOTA = true` en `src/lib/cuotaVisible.js`.
+- En Inicio, la tarjeta del próximo partido se toca entera para abrir el detalle del partido (como las listas). Los botones Voy / Duda / No voy y los enlaces "Cambiar" y "Ver la lista" siguen funcionando sin abrirlo. El nombre del rival es además un enlace, para teclado y lectores de pantalla.
+- Sin migración.
+
+**Comprobado:** `npm run build` pasa. En iPhone 13 y Pixel 7 emulados (modo demostración): tocar "Voy" no cambia de pantalla; tocar la fecha de la tarjeta abre `/partidos/p1`; Más ya no muestra "Mi cuota"; `/cuota` vuelve a Inicio; sin errores en consola.
+
+---
+
 ## 2026-11-19 · Como DT: Juntos, Jueves y Sábado
 
 - El cuerpo técnico que dirige dos planteles pidió ver sus números por separado para comparar qué equipo va mejor. En la ficha "Como DT" del perfil, si dirige más de un plantel, aparece un selector: Juntos · Sábado · Jueves (se sacan las palabras repetidas del nombre del plantel para que quepa).
