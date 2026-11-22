@@ -30,6 +30,7 @@ import Planteles from './pages/Planteles.jsx';
 import FotosDrive from './pages/FotosDrive.jsx';
 import Ajustes from './pages/Ajustes.jsx';
 import ConoceElClub from './pages/ConoceElClub.jsx';
+import Fiesta20 from './pages/Fiesta20.jsx';
 
 export default function App() {
   const { cargando, sesion, persona, sinConexion, esDemo, ofrecerClave } = useSesion();
@@ -89,6 +90,7 @@ export default function App() {
         <Route path="/perfil/:id" element={<Perfil />} />
         <Route path="/planteles" element={<Planteles />} />
         <Route path="/fotos-partidos" element={<FotosDrive />} />
+        <Route path="/fiesta-20" element={<Fiesta20 />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Marco>

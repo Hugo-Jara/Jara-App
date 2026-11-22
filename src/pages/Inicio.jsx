@@ -18,6 +18,32 @@ import Icono from '../components/Icono.jsx';
 import { useHonorariosPorPagar, desglose, nombreMes } from '../lib/fondo.js';
 import Bienvenida from '../components/Bienvenida.jsx';
 import { useApodos } from '../lib/apodos.js';
+import SubirFiesta from '../components/SubirFiesta.jsx';
+import { useFiesta, fiestaVisible } from '../lib/fiesta.js';
+import { Miniatura } from './Fiesta20.jsx';
+
+// Temporal: fotos y videos del carrete de los 20 años (se apaga en src/lib/fiesta.js).
+function Fiesta20() {
+  const { datos, recargar } = useFiesta();
+  const navegar = useNavigate();
+  const archivos = datos?.archivos ?? [];
+  return (
+    <section className="card accion fiesta-tarjeta">
+      <div className="sobretitulo">20 años del Jara</div>
+      <h2 className="accion-titulo display">Sube tus fotos del carrete</h2>
+      <p className="accion-dato tenue">Fotos y videos de la fiesta de los 20 años, para que todos los vean. Puedes elegir varios a la vez.</p>
+      {archivos.length > 0 && (
+        <div className="fiesta-tira">
+          {archivos.slice(0, 4).map((a) => <Miniatura key={a.id} a={a} abrir={() => navegar('/fiesta-20')} />)}
+        </div>
+      )}
+      <SubirFiesta listo={recargar} />
+      <Link to="/fiesta-20" className="ver-mas" style={{ marginTop: 14 }}>
+        {archivos.length ? `Ver la galería (${archivos.length})` : 'Ver la galería'} <Icono nombre="flecha" size={16} />
+      </Link>
+    </section>
+  );
+}
 
 const TEXTO_RESPUESTA = { voy: 'Confirmaste que vas.', duda: 'Quedaste en duda.', baja: 'Avisaste que no vas.' };
 
@@ -277,6 +303,7 @@ export default function Inicio() {
       <Bienvenida />
       {apruebaIngresos && <PasesPendientes />}
       <HonorariosPorPagar persona={persona} />
+      {fiestaVisible() && <Fiesta20 />}
       {!boletin.leida && <BoletinInicio b={boletin} />}
       {partidos.cargando
         ? <section className="card accion"><p className="vacio">Cargando tus partidos…</p></section>
