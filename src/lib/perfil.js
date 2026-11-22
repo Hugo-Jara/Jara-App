@@ -40,7 +40,10 @@ const PLANTELES_DEMO = [
     { id: 'd-Profe', nombre: 'Profe Inventado', posicion: 'dt',
       dirige: [{ id: 'e-jueves', nombre: 'Senior Jueves' }, { id: 'e-sabado', nombre: 'Senior Sábado' }] },
   ] },
-  { id: 'e-jueves', nombre: 'Senior Jueves', jugadores: [{ id: 'd4', nombre: 'Delantero Inventado', posicion: 'delantero', dorsal: 9 }] },
+  { id: 'e-jueves', nombre: 'Senior Jueves', jugadores: [
+    { id: 'd4', nombre: 'Delantero Inventado', posicion: 'delantero', dorsal: 9 },
+    { id: 'd5', nombre: 'Lateral Inventado Núñez', apodo: 'el Rápido', posicion: 'defensa', dorsal: 3 },
+  ] },
 ];
 
 export async function leerPerfil(id = null) {
