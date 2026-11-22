@@ -4,6 +4,18 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-22 · Fotos y videos del carrete de los 20 años (temporal)
+
+- En Inicio aparece la tarjeta "Sube tus fotos del carrete" con un botón para elegir varias fotos y videos a la vez; se suben de a uno con barra de avance y al final dice cuántos subieron y cuáles no (y por qué).
+- Página `/fiesta-20`: galería de todo lo subido (lo más nuevo primero, filtro Fotos/Videos, visor con anterior/siguiente, Guardar en el teléfono y Borrar lo propio; los administradores borran cualquier cosa).
+- Dónde se guarda: Supabase Storage, bucket privado `fiesta-20`. Las fotos se achican en el celular (2048 px, unos 300-600 KB) y llevan miniatura; los videos suben tal cual, máximo 50 MB cada uno (límite del plan gratis), con el primer cuadro como miniatura. Tope total de 600 MB para no llenar el 1 GB del plan. Solo socios con sesión suben y ven.
+- Se apaga solo: la subida se cierra el 30 de noviembre (base y app) y la tarjeta y la galería se esconden el 7 de diciembre. Para apagar antes: `MOSTRAR_FIESTA = false` en `src/lib/fiesta.js`.
+- Migración `0061_fiesta_20.sql` (bucket, políticas, tabla `fiesta_archivos`, `fiesta_guardar`, `fiesta_listar`, `fiesta_borrar`). Pruebas en `supabase/tests/fiesta.mjs` (32).
+
+**Comprobado:** `npm run test:db` y `npm run build` pasan. En iPhone 13 y Pixel 7 emulados (modo demostración): se suben 6 fotos y 1 video de una vez, un video de 55 MB queda fuera con aviso, la galería y el visor de foto y video funcionan.
+
+---
+
 ## 2026-11-21 · Ocultar "Mi cuota" y abrir el partido desde Inicio
 
 - "Mi cuota" queda oculta para todos mientras las cuotas cargadas no estén al día: sale del menú Más y la dirección `/cuota` vuelve a Inicio. No se borra la pantalla ni los datos; Tesorería sigue igual para tesoreros, Hacienda y administradores. Para reactivarla basta poner `MOSTRAR_MI_CUOTA = true` en `src/lib/cuotaVisible.js`.
