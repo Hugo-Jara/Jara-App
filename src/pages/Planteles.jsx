@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { leerPlanteles, urlsDeFotos, nombrePosicion } from '../lib/perfil.js';
 import FotoJugador from '../components/FotoJugador.jsx';
 import NombreConApodo from '../components/NombreConApodo.jsx';
+import BuscarJugador from '../components/BuscarJugador.jsx';
+import { personasDePlanteles } from '../lib/buscar.js';
 
 // Los jugadores de cada plantel con su foto, dorsal y posición. Tocando uno se
-// abre su perfil.
+// abre su perfil. Arriba, un buscador para encontrar a alguien de cualquier plantel.
 export default function Planteles() {
   const { persona } = useSesion();
   const [planteles, setPlanteles] = useState(null);
@@ -24,6 +26,7 @@ export default function Planteles() {
   }, [persona]);
 
   const plantel = planteles?.find((e) => e.id === elegido);
+  const personas = useMemo(() => personasDePlanteles(planteles ?? []), [planteles]);
   return (
     <>
       <Link to="/mas" className="volver">‹ Más</Link>
@@ -31,6 +34,7 @@ export default function Planteles() {
       <p className="subtitulo">Quién es quién en cada plantel del club.</p>
       {error && <p className="error" role="alert">{error}</p>}
       {!planteles && !error && <p className="vacio suelto">Cargando…</p>}
+      {personas.length > 0 && <BuscarJugador personas={personas} />}
       {planteles?.length > 1 && (
         <div className="chips" role="radiogroup" aria-label="Plantel">
           {planteles.map((e) => (

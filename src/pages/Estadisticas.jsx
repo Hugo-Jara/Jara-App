@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSesion } from '../lib/sesion.jsx';
 import { usePartidos, tablaEstadisticas, equiposDelClub } from '../lib/partidos.js';
 import NombreConApodo from '../components/NombreConApodo.jsx';
+import BuscarJugador from '../components/BuscarJugador.jsx';
+import { personasDePlanteles } from '../lib/buscar.js';
+import { leerPlanteles } from '../lib/perfil.js';
 import { hoyIso } from '../lib/fechas.js';
 import { conteoMvp } from '../lib/charla.js';
 
@@ -33,6 +36,7 @@ export default function Estadisticas() {
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState('');
   const [mvps, setMvps] = useState({});
+  const [planteles, setPlanteles] = useState([]);
 
   // Cambia solo cuando cambia algún resultado: así la tabla se recarga después de anotar.
   const huella = todos.map((p) => `${p.id}:${p.golesFavor}:${(p.jugaron ?? []).join()}:${(p.estadisticas ?? []).map((g) => `${g.personaId}.${g.goles}.${g.asistencias}.${g.amarillas}.${g.rojas}`).join()}`).join('|');
@@ -42,6 +46,8 @@ export default function Estadisticas() {
 
   // Los planteles del club, para filtrar.
   useEffect(() => { equiposDelClub().then(setEquipos, () => {}); }, []);
+  // Para el buscador: todos los de los planteles, más quien jugó y ya no está en uno.
+  useEffect(() => { leerPlanteles().then(setPlanteles, () => {}); }, []);
 
   useEffect(() => {
     let vigente = true;
@@ -67,10 +73,25 @@ export default function Estadisticas() {
   const mostrados = verTodos ? lista : lista.slice(0, PRIMEROS);
   const yo = lista.findIndex((g) => g.personaId === persona.id);
 
+  const cifras = useMemo(() => Object.fromEntries((datos ?? []).map((g) => [g.personaId, g])), [datos]);
+  const personas = useMemo(() => {
+    const l = personasDePlanteles(planteles);
+    const ya = new Set(l.map((p) => p.id));
+    (datos ?? []).forEach((g) => { if (!ya.has(g.personaId)) l.push({ id: g.personaId, nombre: g.nombre, planteles: [] }); });
+    return l;
+  }, [planteles, datos]);
+  // Bajo el nombre: sus planteles y lo que lleva en el periodo elegido.
+  const detalle = (p) => {
+    const g = cifras[p.id];
+    const numeros = g ? [`${g.pj} PJ`, `${g.goles} ${g.goles === 1 ? 'gol' : 'goles'}`, g.asistencias ? `${g.asistencias} asist.` : ''].filter(Boolean).join(' · ') : '';
+    return [(p.planteles ?? []).join(' · '), numeros].filter(Boolean).join(' — ') || 'Socio del club';
+  };
+
   return (
     <>
       <h1 className="titulo display">Jugadores</h1>
       <p className="subtitulo">Partidos jugados, goles, asistencias y tarjetas de todo el club, con lo que se anota en cada partido.</p>
+      {personas.length > 0 && <BuscarJugador personas={personas} detalle={detalle} />}
       <h2 className="seccion">Estadísticas</h2>
 
       <div className="segmentos dos" role="radiogroup" aria-label="Periodo">
