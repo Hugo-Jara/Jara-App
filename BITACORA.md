@@ -4,15 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
-## 2026-11-22 · Buscador de jugadores en Jugadores y Planteles
+## 2026-11-22 · Buscador de jugadores y foto de perfil en grande
 
 - Pedido del club después del lanzamiento: encontrar rápido a una persona sin recorrer la lista. Arriba de Jugadores y de Planteles hay una caja "Busca por nombre, apellido o apodo" que va sugiriendo personas mientras se escribe (hasta 6, con foto y plantel). Tocar una abre su perfil; con teclado funcionan flechas, Enter y Escape.
 - Compara sin tildes ni mayúsculas ("nunez" encuentra "Núñez"), por nombre, apellido paterno o apodo, con varias palabras en cualquier orden ("pab mor") y, desde tres letras, también en medio de una palabra. Primero salen quienes empiezan con lo escrito.
 - En Planteles busca en todos los planteles, no solo en el elegido. En Jugadores suma a quien jugó y ya no está en un plantel, y bajo el nombre muestra sus PJ, goles y asistencias del periodo elegido.
 - `src/lib/buscar.js` (búsqueda) y `src/components/BuscarJugador.jsx` (la caja). Usa `planteles_fichas`, que ya trae nombre y apodo: sin migración. El apellido materno no está en esa función, así que no se busca por él.
 - Pruebas: `npm run test:buscar` (7).
+- En el perfil, tocar la foto la abre en grande a pantalla completa (se cierra con ✕, tocando fuera o con Escape). `src/components/VerFoto.jsx`. La foto guardada es de 600 px, así que se ve nítida hasta ese tamaño.
 
-**Comprobado:** `npm run build` y `npm run test:buscar` pasan. En iPhone 13 y Pixel 7 emulados (modo demostración): "nunez" sugiere al de Núñez, "mur" al del apodo "el Muro", tocar la sugerencia y Enter abren el perfil, aviso cuando no hay nadie, sin desborde horizontal ni errores en consola.
+**Comprobado:** `npm run build` y `npm run test:buscar` pasan. En iPhone 13 y Pixel 7 emulados (modo demostración): "nunez" sugiere al de Núñez, "mur" al del apodo "el Muro", tocar la sugerencia y Enter abren el perfil, aviso cuando no hay nadie, sin desborde horizontal ni errores en consola. Foto en grande: se abre al tocarla y se cierra con ✕ y con Escape.
 
 ---
 

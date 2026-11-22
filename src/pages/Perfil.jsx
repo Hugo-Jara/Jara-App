@@ -6,6 +6,7 @@ import {
   leerPerfil, guardarPerfil, urlsDeFotos, subirMiFoto, quitarMiFoto,
 } from '../lib/perfil.js';
 import FotoJugador from '../components/FotoJugador.jsx';
+import VerFoto from '../components/VerFoto.jsx';
 import EncuadrarFoto from '../components/EncuadrarFoto.jsx';
 import MisFotos from '../components/MisFotos.jsx';
 import FotosDelJugador from '../components/FotosDelJugador.jsx';
@@ -23,6 +24,7 @@ export default function Perfil() {
   const location = useLocation();
   const [perfil, setPerfil] = useState(null);
   const [foto, setFoto] = useState(null);
+  const [verFoto, setVerFoto] = useState(false);
   const [error, setError] = useState('');
   const [editando, setEditando] = useState(false);
   const pedirFoto = useRef(null);
@@ -93,7 +95,11 @@ export default function Perfil() {
     <>
       {volver}
       <div className="perfil-cabeza">
-        <FotoJugador nombre={perfil.nombre} url={foto} tamano={112} />
+        {foto ? (
+          <button type="button" className="perfil-foto-ver" onClick={() => setVerFoto(true)} aria-label={`Ver la foto de ${perfil.nombre} en grande`}>
+            <FotoJugador nombre={perfil.nombre} url={foto} tamano={112} />
+          </button>
+        ) : <FotoJugador nombre={perfil.nombre} url={foto} tamano={112} />}
         <h1 className="titulo display perfil-nombre">{perfil.nombre}</h1>
         {perfil.apodo && <p className="apodo perfil-apodo">{perfil.apodo}</p>}
         {etiquetas.length > 0 && (
@@ -112,6 +118,7 @@ export default function Perfil() {
         )}
         {fotoEstado.error && <p className="error" role="alert">{fotoEstado.error}</p>}
       </div>
+      {verFoto && foto && <VerFoto url={foto} nombre={perfil.nombre} apodo={perfil.apodo} onCerrar={() => setVerFoto(false)} />}
       {porEncuadrar && <EncuadrarFoto archivo={porEncuadrar} onListo={subirEncuadrada} onCancelar={() => setPorEncuadrar(null)} />}
 
       {!editando && (
