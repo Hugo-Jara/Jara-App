@@ -27,6 +27,14 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-23 · Los arqueros van en una sola fila de "Voy"
+
+- Pedido del club: los arqueros salían con su propio número (4 y 5) y parecía que contaban como dos aunque el título dijera 7. Ahora van juntos en una sola fila numerada al final de "Voy", con el guante y "2 arqueros, cuentan como uno" (o "arquero" si va uno). El último número de la lista coincide con el total. Sin migración.
+
+**Comprobado:** `npm run build` pasa. En iPhone 13 y Pixel 7 emulados (modo demostración): 6 jugadores y 2 arqueros muestran "Voy 7" y la lista termina en el 7.
+
+---
+
 ## 2026-11-23 · Convocados sin cuerpo técnico y un solo arquero
 
 - Pedido del club: el número de los que van no era real. El DT, el ayudante y quien está en el plantel sin jugar ya no cuentan aunque pongan "voy", y si van dos o más arqueros cuentan como uno.
