@@ -1,3 +1,4 @@
+import Icono from '../components/Icono.jsx';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
@@ -387,7 +388,7 @@ function Grupo({ titulo, clase, lista, cuenta, nota }) {
         {lista.map((r) => (
           <li key={r.personaId ?? r.id}>
             <span className="nombre"><NombreConApodo id={r.personaId} nombre={r.nombre} enlace /></span>
-            {r.arquero && !r.tecnico && <span className="marca">arquero</span>}
+            {r.arquero && !r.tecnico && <span className="marca con-icono"><Icono nombre="guantes" size={14} />arquero</span>}
             {r.asado && <span className="marca">tercer tiempo</span>}
             {r.nota && <span className="comentario">{r.nota}</span>}
           </li>

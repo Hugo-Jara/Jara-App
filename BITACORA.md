@@ -7,7 +7,7 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 ## 2026-11-23 · Convocados sin cuerpo técnico y un solo arquero
 
 - Pedido del club: el número de los que van no era real. El DT, el ayudante y quien está en el plantel sin jugar ya no cuentan aunque pongan "voy", y si van dos o más arqueros cuentan como uno.
-- Siguen en la lista: en el detalle del partido, "Voy" muestra a los jugadores (los arqueros con la marca "arquero" y un aviso si van dos) y abajo un grupo "Cuerpo técnico" que van pero no cuentan. El número cambia en Partidos, Inicio, el detalle y el recordatorio por WhatsApp (`convocados()` y `cuantosVan()` en `src/lib/partidos.js`).
+- Siguen en la lista: en el detalle del partido, "Voy" muestra a los jugadores (los arqueros con la marca "arquero" con un guante dibujado, `guantes` en `Icono.jsx`, y un aviso si van dos) y abajo un grupo "Cuerpo técnico" que van pero no cuentan. El número cambia en Partidos, Inicio, el detalle y el recordatorio por WhatsApp (`convocados()` y `cuantosVan()` en `src/lib/partidos.js`).
 - Al anotar el resultado, la lista de "quiénes jugaron" ya no parte con el cuerpo técnico marcado.
 - Migración 0062: `personas.no_juega` (en el plantel sin jugar, sin permisos; se prende por SQL) y `partido_json` agrega a cada respuesta `tecnico` (cuerpo_tecnico, no_juega o DT/Ayudante en el perfil) y `arquero` (Arquero en el perfil). Sin la 0062 la app cuenta como antes.
 - Pruebas: 5 nuevas en `npm run test:dt`.
