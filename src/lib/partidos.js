@@ -22,6 +22,8 @@ const desdeFila = (f) => ({
   esMio: f.es_mio, puedoEditar: f.puedo_editar, plantel: f.plantel,
   respuestas: f.respuestas.map((r) => ({
     personaId: r.persona_id, nombre: r.nombre, estado: r.estado, nota: r.nota, asado: r.tercer_tiempo,
+    // 0062: cuerpo técnico (o está en el plantel sin jugar) y arquero.
+    tecnico: !!r.tecnico, arquero: !!r.arquero,
   })),
 });
 
@@ -52,6 +54,11 @@ const base = {
   }),
   eliminar: (id) => llamar('partido_eliminar', { p_id: id }),
   equipos: () => llamar('equipos_del_club'),
+  // Planteles que puedo programar y partidos que puedo corregir (0063). Si la
+  // base todavía no la tiene, nadie suma permisos y la app sigue como antes.
+  programables: async () => {
+    try { return await llamar('partidos_programables'); } catch { return { equipos: null, partidos: [] }; }
+  },
   arquero: (personaId, anio) => llamar('arquero_cifras', { p_persona: personaId, p_anio: anio ?? null }),
   arco: async (partidoId) => {
     const r = await llamar('partido_arco', { p_partido: partidoId });
@@ -67,13 +74,20 @@ const base = {
 
 // --- Modo demostración: lo mismo, en memoria ------------------------------
 const gente = (...nombres) => nombres.map((n) => ({ id: n === 'Seba' ? 'demo' : `d-${n}`, nombre: n }));
-const va = (nombre, estado, asado, nota) => ({ personaId: nombre === 'Seba' ? 'demo' : `d-${nombre}`, nombre, estado, asado: !!asado, nota });
+// En demostración: el cuerpo técnico y los arqueros (para el conteo de los que van).
+const TECNICO_DEMO = ['Profe', 'Ayudante'];
+const ARQUERO_DEMO = ['Nico', 'Rorro'];
+const va = (nombre, estado, asado, nota) => ({
+  personaId: nombre === 'Seba' ? 'demo' : `d-${nombre}`, nombre, estado, asado: !!asado, nota,
+  tecnico: TECNICO_DEMO.includes(nombre), arquero: ARQUERO_DEMO.includes(nombre),
+});
 let demo = [{
   id: 'p1', equipoId: 'e-sabado', equipo: 'Senior Sábado', torneo: 'Liga de ejemplo · 2ª fecha Clausura',
   rival: 'Rival de ejemplo', fecha: proximoDia(6), citacion: '08:15', horaInicio: '09:00', cancha: 'Cancha 1',
   tercerTiempo: 'Asado después del partido', esMio: true, puedoEditar: true, puedoAnotar: true,
-  plantel: gente('Pancho', 'Lalo', 'Tito', 'Nico', 'Rorro', 'Chino', 'Beto', 'Mauro', 'Javi', 'Leo', 'Fede', 'Koke', 'Dani', 'Rafa', 'Seba'),
+  plantel: gente('Pancho', 'Lalo', 'Tito', 'Nico', 'Rorro', 'Chino', 'Beto', 'Mauro', 'Javi', 'Leo', 'Fede', 'Koke', 'Dani', 'Rafa', 'Seba', 'Profe', 'Ayudante'),
   respuestas: [
+    va('Profe', 'voy', true), va('Ayudante', 'voy', false),
     va('Pancho', 'voy', true, 'llevo carne'), va('Lalo', 'voy', true, 'llevo bebidas'), va('Tito', 'voy', false, 'solo partido'),
     va('Nico', 'voy', true), va('Rorro', 'voy', true, 'llevo pan'), va('Chino', 'voy', false), va('Beto', 'voy', true),
     va('Mauro', 'voy', true, 'llevo carbón'), va('Javi', 'duda', false, 'intentando cambiar el turno'),
@@ -147,6 +161,7 @@ const bancaDemo = {};
 const EQUIPOS_DEMO = [{ id: 'e-jueves', nombre: 'Senior Jueves' }, { id: 'e-sabado', nombre: 'Senior Sábado' }, { id: 'e-junior', nombre: 'Junior Sábado' }];
 const enDemo = {
   cargar: async () => demo,
+  programables: async () => ({ equipos: EQUIPOS_DEMO, partidos: [] }),
   responder: async (id, yo, r) => {
     demo = demo.map((p) => (p.id !== id ? p : {
       ...p,
@@ -233,12 +248,28 @@ const enDemo = {
 
 const origen = esDemo ? enDemo : base;
 const almacen = crearAlmacen(origen.cargar);
-export const vaciarPartidos = almacen.vaciar;
+// Quién programa partidos además del capitán: el cuerpo técnico en sus
+// planteles y Comunicaciones en todos (0063).
+const almacenProgramar = crearAlmacen(origen.programables);
+export const vaciarPartidos = () => { almacen.vaciar(); almacenProgramar.vaciar(); };
+
+// { cargando, equipos: [{id, nombre}] que puedo programar, puedoCambiar(partido) }
+// Sin la migración 0063 en la base, quedan los planteles donde es encargado.
+export function useProgramar(yo) {
+  const { cargando, datos } = almacenProgramar.usar();
+  const propios = new Set(datos?.partidos ?? []);
+  return {
+    cargando,
+    equipos: datos?.equipos ?? (yo?.equipos ?? []).filter((e) => e.encargado).map(({ id, nombre }) => ({ id, nombre })),
+    puedoCambiar: (p) => !!p && (p.puedoEditar || propios.has(p.id)),
+  };
+}
 
 export function usePartidos(yo) {
   const { cargando, error, datos } = almacen.usar();
   const partidos = (datos ?? []).map((p) => ({ ...p, miRespuesta: p.respuestas.find((r) => r.personaId === yo.id) ?? null }));
   const y = (accion) => async (...a) => { await accion(...a); await almacen.recargar(); };
+  const yProgramar = (accion) => async (...a) => { await accion(...a); await Promise.all([almacen.recargar(), almacenProgramar.recargar()]); };
   const hoy = hoyIso();
   // Un partido sigue "próximo" hasta dos horas después de su hora de inicio (o
   // hasta que termina su día, si no tiene hora). Con el resultado anotado pasa
@@ -259,8 +290,8 @@ export function usePartidos(yo) {
     mios: proximos.filter((p) => p.esMio),
     anotarResultado: y(origen.resultado),
     responder: y((id, respuesta) => origen.responder(id, yo, respuesta)),
-    guardar: y(origen.guardar),
-    eliminar: y(origen.eliminar),
+    guardar: yProgramar(origen.guardar),
+    eliminar: yProgramar(origen.eliminar),
   };
 }
 
@@ -294,6 +325,18 @@ export const textoResultado = (p) =>
 
 export const porEstado = (partido, e) => partido.respuestas.filter((r) => r.estado === e);
 
+// Los que van, como los cuenta el club: sin el cuerpo técnico (DT, ayudante y
+// quien está en el plantel sin jugar), y los arqueros cuentan como uno aunque
+// vayan dos. Todos siguen en la lista; esto es solo el número.
+export function convocados(partido) {
+  const voy = porEstado(partido, 'voy');
+  const tecnicos = voy.filter((r) => r.tecnico);
+  const arqueros = voy.filter((r) => !r.tecnico && r.arquero);
+  const campo = voy.filter((r) => !r.tecnico && !r.arquero);
+  return { total: campo.length + (arqueros.length ? 1 : 0), jugadores: voy.filter((r) => !r.tecnico), arqueros, tecnicos };
+}
+export const cuantosVan = (partido) => convocados(partido).total;
+
 export const sinResponder = (partido) =>
   partido.plantel.filter((j) => !partido.respuestas.some((r) => r.personaId === j.id));
 
@@ -305,7 +348,7 @@ export function recordatorioPartido(p, url) {
     `⚽ ¿Ya confirmaste para el partido?\n` +
     `${p.equipo} vs ${p.rival} · ${fechaLarga(p.fecha)}` +
     (p.citacion ? `, citación ${p.citacion}` : '') + (p.horaInicio ? `, parte ${p.horaInicio}` : '') + (p.cancha ? `, ${p.cancha}` : '') + `.\n` +
-    `Van ${porEstado(p, 'voy').length} y hay ${porEstado(p, 'duda').length} en duda.` +
+    `Van ${cuantosVan(p)} y hay ${porEstado(p, 'duda').length} en duda.` +
     (faltan ? ` Faltan ${faltan} por responder.` : ' Ya respondieron todos.') +
     `\nConfirma acá 👉 ${url}`
   );

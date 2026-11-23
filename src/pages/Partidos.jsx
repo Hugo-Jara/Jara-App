@@ -4,8 +4,9 @@ import FechasLiga from '../components/FechasLiga.jsx';
 import { revisarLiga, actualizarLiga, useFechasLiga } from '../lib/liga.js';
 import { useTablas } from '../lib/tabla.js';
 import Tabla from './Tabla.jsx';
+import { useProgramar } from '../lib/partidos.js';
 import { useSesion } from '../lib/sesion.jsx';
-import { usePartidos, porEstado, sinResponder, tieneResultado, textoResultado, signo } from '../lib/partidos.js';
+import { usePartidos, porEstado, cuantosVan, sinResponder, tieneResultado, textoResultado, signo } from '../lib/partidos.js';
 import { fechaLarga, cuando } from '../lib/fechas.js';
 import Icono from '../components/Icono.jsx';
 import Racha from '../components/Racha.jsx';
@@ -25,7 +26,7 @@ function Tarjeta({ p }) {
           </span>
         )}
         {p.esMio && ' · '}
-        {porEstado(p, 'voy').length} van, {porEstado(p, 'duda').length} en duda, {sinResponder(p).length} sin responder
+        {cuantosVan(p)} van, {porEstado(p, 'duda').length} en duda, {sinResponder(p).length} sin responder
       </p>
       <span className="ver-mas">Ver la lista <Icono nombre="flecha" size={16} /></span>
     </Link>
@@ -91,6 +92,7 @@ function ColumnaPlantel({ nombre, lista, verTodos }) {
 function NuestrosPartidos() {
   const { persona } = useSesion();
   const { cargando, error, partidos, mios, jugados } = usePartidos(persona);
+  const programar = useProgramar(persona);
   const otros = partidos.filter((p) => !p.esMio);
 
   // Ya jugados: se filtra por plantel y se muestran de a pocos. Si la persona está
@@ -110,7 +112,7 @@ function NuestrosPartidos() {
   return (
     <>
       <p className="subtitulo">Los del Jara que vienen y los que ya se jugaron. Respondes en los de tu plantel.</p>
-      {persona.esEncargado && <Link to="/partidos/nuevo" className="btn secundario" style={{ marginBottom: 14 }}>Programar un partido</Link>}
+      {(persona.esEncargado || programar.equipos.length > 0) && <Link to="/partidos/nuevo" className="btn secundario" style={{ marginBottom: 14 }}>Programar un partido</Link>}
       {error && <p className="error" role="alert">{error}</p>}
       {cargando ? <p className="vacio suelto">Cargando…</p> : (
         <>

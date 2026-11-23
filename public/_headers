@@ -1,0 +1,17 @@
+# Encabezados de hugojara.cl (los leen Cloudflare Pages y Netlify).
+# El service worker y la página principal se revisan siempre, para que una
+# versión nueva llegue al tiro a los teléfonos.
+/sw.js
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache
+
+# Los archivos de /assets llevan su huella en el nombre: nunca cambian.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY

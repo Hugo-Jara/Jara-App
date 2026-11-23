@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { useInicio } from '../lib/inicio.js';
-import { usePartidos, porEstado, sinResponder, tieneResultado } from '../lib/partidos.js';
+import { usePartidos, porEstado, cuantosVan, sinResponder, tieneResultado } from '../lib/partidos.js';
 import { revisarLiga } from '../lib/liga.js';
 import { useEntrenamiento, horario } from '../lib/entrenamiento.js';
 import { useSolicitudes, usePuedeAprobarIngresos } from '../lib/ingreso.js';
@@ -84,7 +84,7 @@ function ProximoPartido({ partido, destacado, responder }) {
       )}
       {error && <p className="error" role="alert">{error}</p>}
       <p className="conteo">
-        {porEstado(partido, 'voy').length} van, {porEstado(partido, 'duda').length} en duda, {sinResponder(partido).length} sin responder.{' '}
+        {cuantosVan(partido)} van, {porEstado(partido, 'duda').length} en duda, {sinResponder(partido).length} sin responder.{' '}
         <Link className="enlace" to={`/partidos/${partido.id}`}>Ver la lista</Link>
       </p>
     </section>
