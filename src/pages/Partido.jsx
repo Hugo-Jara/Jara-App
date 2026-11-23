@@ -377,23 +377,33 @@ function DespuesDelPartido({ partido, yo }) {
   );
 }
 
-// cuenta: el número que va al lado del título, si no es el largo de la lista
-// (en "Voy" el cuerpo técnico no cuenta y los arqueros cuentan como uno).
-function Grupo({ titulo, clase, lista, cuenta, nota }) {
-  if (!lista.length) return null;
+function Fila({ r }) {
+  return (
+    <>
+      <span className="nombre"><NombreConApodo id={r.personaId} nombre={r.nombre} enlace /></span>
+      {r.asado && <span className="marca">tercer tiempo</span>}
+      {r.nota && <span className="comentario">{r.nota}</span>}
+    </>
+  );
+}
+
+// arqueros: en "Voy" van juntos en una sola fila numerada, con el guante,
+// porque cuentan como uno aunque vayan dos. Así el último número de la lista
+// coincide con el total del título (el cuerpo técnico va en su propio grupo).
+function Grupo({ titulo, clase, lista, arqueros = [], nota }) {
+  if (!lista.length && !arqueros.length) return null;
   return (
     <section className="grupo">
-      <h3 className={`grupo-titulo ${clase}`}>{titulo} <span>{cuenta ?? lista.length}</span></h3>
+      <h3 className={`grupo-titulo ${clase}`}>{titulo} <span>{lista.length + (arqueros.length ? 1 : 0)}</span></h3>
       {nota && <p className="ayuda">{nota}</p>}
       <ol className="nombres">
-        {lista.map((r) => (
-          <li key={r.personaId ?? r.id}>
-            <span className="nombre"><NombreConApodo id={r.personaId} nombre={r.nombre} enlace /></span>
-            {r.arquero && !r.tecnico && <span className="marca con-icono"><Icono nombre="guantes" size={14} />arquero</span>}
-            {r.asado && <span className="marca">tercer tiempo</span>}
-            {r.nota && <span className="comentario">{r.nota}</span>}
+        {lista.map((r) => <li key={r.personaId ?? r.id}><Fila r={r} /></li>)}
+        {arqueros.length > 0 && (
+          <li className="arqueros">
+            <span className="marca con-icono"><Icono nombre="guantes" size={14} />{arqueros.length > 1 ? `${arqueros.length} arqueros, cuentan como uno` : 'arquero'}</span>
+            {arqueros.map((r) => <span key={r.personaId} className="arquero-fila"><Fila r={r} /></span>)}
           </li>
-        ))}
+        )}
       </ol>
     </section>
   );
@@ -475,8 +485,8 @@ export default function Partido() {
       {/* Un partido ya jugado al que nadie respondió no deja una tarjeta vacía. */}
       {(!jugado || voy.length + porEstado(partido, 'duda').length + porEstado(partido, 'baja').length > 0) && (
       <div className="card">
-        <Grupo titulo={jugado ? 'Dijeron que iban' : 'Voy'} clase="voy" lista={van.jugadores} cuenta={van.total}
-               nota={van.arqueros.length > 1 ? `Van ${van.arqueros.length} arqueros: cuentan como uno.` : null} />
+        <Grupo titulo={jugado ? 'Dijeron que iban' : 'Voy'} clase="voy"
+               lista={van.jugadores.filter((r) => !r.arquero)} arqueros={van.arqueros} />
         <Grupo titulo="Cuerpo técnico" clase="voy" lista={van.tecnicos} nota="Van, pero no cuentan como convocados." />
         <Grupo titulo="Dudas" clase="duda" lista={porEstado(partido, 'duda')} />
         <Grupo titulo="Bajas" clase="baja" lista={porEstado(partido, 'baja')} />
