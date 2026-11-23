@@ -2,6 +2,10 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // www.hugojara.cl lleva a hugojara.cl (Google y Supabase solo aceptan hugojara.cl).
+      if (location.hostname === 'www.hugojara.cl') location.replace('https://hugojara.cl' + location.pathname + location.search + location.hash);
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#120E0D" />
     <meta name="description" content="La app del Club Deportivo Hugo Jara" />

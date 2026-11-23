@@ -14,6 +14,8 @@ const TRAZOS = {
   campana: <><path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9z" /><path d="M10 20a2 2 0 0 0 4 0" /></>,
   salir: <><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" /><path d="M10 16l-4-4 4-4M6 12h10" /></>,
   flecha: <path d="M9 6l6 6-6 6" />,
+  // Guante de arquero: la mano abierta con el puño abajo.
+  guantes: <><path d="M7.5 17V8.5a1.25 1.25 0 0 1 2.5 0V5a1.25 1.25 0 0 1 2.5 0V4.5a1.25 1.25 0 0 1 2.5 0V6a1.25 1.25 0 0 1 2.5 0v7.5L16 17" /><path d="M10 8.5V12M12.5 5v7M15 4.5V12" /><path d="M7.5 13.5l-2.3-2.3a1.3 1.3 0 0 0-1.9 1.8L7.5 17" /><rect x="6.5" y="17" width="10.5" height="4.5" rx="1.2" /></>,
 };
 
 export default function Icono({ nombre, size = 22 }) {

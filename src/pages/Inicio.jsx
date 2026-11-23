@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
 import { useInicio } from '../lib/inicio.js';
-import { usePartidos, porEstado, sinResponder, tieneResultado } from '../lib/partidos.js';
+import { usePartidos, porEstado, cuantosVan, sinResponder, tieneResultado } from '../lib/partidos.js';
 import { revisarLiga } from '../lib/liga.js';
 import { useEntrenamiento, horario } from '../lib/entrenamiento.js';
 import { useSolicitudes, usePuedeAprobarIngresos } from '../lib/ingreso.js';
@@ -19,6 +19,7 @@ import { useHonorariosPorPagar, desglose, nombreMes } from '../lib/fondo.js';
 import Bienvenida from '../components/Bienvenida.jsx';
 import { useApodos } from '../lib/apodos.js';
 import SubirFiesta from '../components/SubirFiesta.jsx';
+import BotonDocumental from '../components/BotonDocumental.jsx';
 import { useFiesta, fiestaVisible } from '../lib/fiesta.js';
 import { Miniatura } from './Fiesta20.jsx';
 
@@ -38,6 +39,7 @@ function Fiesta20() {
         </div>
       )}
       <SubirFiesta listo={recargar} />
+      <BotonDocumental />
       <Link to="/fiesta-20" className="ver-mas" style={{ marginTop: 14 }}>
         {archivos.length ? `Ver la galería (${archivos.length})` : 'Ver la galería'} <Icono nombre="flecha" size={16} />
       </Link>
@@ -82,7 +84,7 @@ function ProximoPartido({ partido, destacado, responder }) {
       )}
       {error && <p className="error" role="alert">{error}</p>}
       <p className="conteo">
-        {porEstado(partido, 'voy').length} van, {porEstado(partido, 'duda').length} en duda, {sinResponder(partido).length} sin responder.{' '}
+        {cuantosVan(partido)} van, {porEstado(partido, 'duda').length} en duda, {sinResponder(partido).length} sin responder.{' '}
         <Link className="enlace" to={`/partidos/${partido.id}`}>Ver la lista</Link>
       </p>
     </section>

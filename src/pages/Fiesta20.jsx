@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import SubirFiesta from '../components/SubirFiesta.jsx';
+import BotonDocumental from '../components/BotonDocumental.jsx';
 import { useFiesta, fiestaVisible, urlGrande, urlDescarga, borrar, megas } from '../lib/fiesta.js';
 import { plural } from '../lib/texto.js';
 
@@ -99,6 +100,7 @@ export default function Fiesta20() {
         {lleno
           ? <p className="error" style={{ textAlign: 'left', marginTop: 0 }}>Se llenó el espacio de la galería. Avísale a un administrador.</p>
           : <SubirFiesta listo={recargar} />}
+        <BotonDocumental />
         <p className="nota" style={{ textAlign: 'left' }}>
           Las fotos se achican solas para que suban rápido. Videos de hasta 50 MB: un video corto del celular, o uno que ya pasó por WhatsApp.
           Solo las ve la gente del club con sesión.

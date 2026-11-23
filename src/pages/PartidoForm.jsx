@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
-import { usePartidos, equiposDelClub } from '../lib/partidos.js';
+import { usePartidos, useProgramar } from '../lib/partidos.js';
 import { complejoDe } from '../lib/complejos.js';
 import { CampoFecha, CampoHora } from '../components/CamposFechaHora.jsx';
 import { fechaLarga, fechaCorta, hoyIso, proximoDia, correrDias } from '../lib/fechas.js';
@@ -25,25 +25,21 @@ const normalizarHora = (texto) => {
   return `${m[1].padStart(2, '0')}:${m[2]}`;
 };
 
-// Programar o corregir un partido. Lo usa el encargado del plantel; un
-// administrador puede hacerlo para cualquier plantel.
+// Programar o corregir un partido. Lo usa el encargado del plantel (un
+// administrador, en cualquiera), el cuerpo técnico en sus planteles y
+// Comunicaciones en todos (0063). Estos dos últimos corrigen solo lo suyo.
 export default function PartidoForm() {
   const { id } = useParams();
   const ir = useNavigate();
   const { persona } = useSesion();
   const { cargando, todos, guardar, eliminar } = usePartidos(persona);
   const actual = id ? todos.find((p) => p.id === id) : null;
-  const [equipos, setEquipos] = useState([]);
+  const programar = useProgramar(persona);
+  const equipos = programar.equipos;
   const [d, setD] = useState(null);
   const [error, setError] = useState('');
   const [ocupado, setOcupado] = useState(false);
   const [borrando, setBorrando] = useState(false);
-
-  // Los planteles que puede elegir: todos si es administrador, si no los suyos como encargado.
-  useEffect(() => {
-    if (persona.esAdmin) equiposDelClub().then(setEquipos, () => {});
-    else setEquipos(persona.equipos.filter((e) => e.encargado));
-  }, [persona]);
 
   useEffect(() => {
     if (d || cargando || (id && !actual)) return;
@@ -53,11 +49,15 @@ export default function PartidoForm() {
       : { equipoId: '', rival: '', fecha: '', citacion: '', horaInicio: '', cancha: '', torneo: '', tercerTiempo: '' });
   }, [d, cargando, id, actual]);
 
-  if (!persona.esEncargado) return <><Link to="/partidos" className="volver">‹ Partidos</Link><p className="vacio suelto">Los partidos los programa el encargado de cada plantel.</p></>;
-  if (cargando || !d) {
+  if (cargando || programar.cargando || !d) {
     return id && !cargando && !actual
       ? <p className="vacio suelto">Ese partido ya no existe. <Link className="enlace" to="/partidos">Volver</Link></p>
       : <p className="vacio suelto">Cargando…</p>;
+  }
+  if (actual ? !programar.puedoCambiar(actual) : !equipos.length) {
+    return <><Link to="/partidos" className="volver">‹ Partidos</Link><p className="vacio suelto">
+      {actual ? 'Este partido lo corrige el capitán del plantel o quien lo programó.'
+        : 'Los partidos los programan el capitán de cada plantel, el cuerpo técnico y Comunicaciones.'}</p></>;
   }
   const set = (campo) => (e) => setD({ ...d, [campo]: e.target.value });
   const equipoId = d.equipoId || (equipos.length === 1 ? equipos[0].id : '');

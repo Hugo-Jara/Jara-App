@@ -167,9 +167,9 @@ const manana = await dia(1), ayer = await dia(-1), hoy = await dia(0);
 const guardarPartido = (quien, equipo, rival, fecha, id = null, asado = 'Asado') =>
   como(quien, `select partido_guardar($1, $2, $3, $4, '08:15', 'Cancha 1', 'Liga', $5) as id`, [id, equipo, rival, fecha, asado]);
 r = await guardarPartido('doble', EQ.jueves, 'Rival', manana);
-ok('Un jugador no programa partidos', /Solo el encargado/.test(r.error ?? ''), r.error);
+ok('Un jugador no programa partidos', /Solo el capitán/.test(r.error ?? ''), r.error);
 r = await guardarPartido('capi', EQ.sabado, 'Rival', manana);
-ok('El encargado del Jueves no programa los del Sábado', /Solo el encargado/.test(r.error ?? ''), r.error);
+ok('El encargado del Jueves no programa los del Sábado', /Solo el capitán/.test(r.error ?? ''), r.error);
 r = await guardarPartido('capi', EQ.jueves, 'Los del Jueves', manana);
 const pJueves = r.rows[0]?.id;
 ok('El encargado programa un partido de su plantel', !!pJueves, r.error);
@@ -208,9 +208,9 @@ ok('Se puede quitar la respuesta', !r.error && x.respuestas.length === 0);
 r = await guardarPartido('capi', EQ.jueves, 'Rival corregido', manana, pJueves);
 ok('El encargado corrige su partido', !r.error && (await uno('capi', 'select partidos_proximos()')).some((p) => p.rival === 'Rival corregido'), r.error);
 r = await como('doble', 'select partido_eliminar($1)', [pJueves]);
-ok('Un jugador no elimina partidos', /Solo el encargado/.test(r.error ?? ''), r.error);
+ok('Un jugador no elimina partidos', /lo elimina el capitán/.test(r.error ?? ''), r.error);
 r = await como('capi', 'select partido_eliminar($1)', [pSabado]);
-ok('Ni el encargado de otro plantel', /Solo el encargado/.test(r.error ?? ''), r.error);
+ok('Ni el encargado de otro plantel', /lo elimina el capitán/.test(r.error ?? ''), r.error);
 r = await como('intruso', 'select partidos_proximos()');
 ok('Una cuenta rechazada no ve nada', /no está en la nómina/.test(r.error ?? ''), r.error);
 r = await como('doble', 'select count(*) from partido_respuestas');
@@ -410,7 +410,7 @@ r = await como('admin', `select partido_guardar($1, $2, 'Rival con hora', $3, '2
 x = (await uno('admin', 'select partidos_proximos()')).find((p) => p.id === conHora);
 ok('Sin indicarla, la hora de inicio queda vacía (la app anterior sigue funcionando)', !r.error && x?.hora_inicio === null, r.error);
 r = await como('doble', `select partido_guardar($1, $2, 'Rival con hora', $3, null, null, null, null, '21:00')`, [conHora, EQ.jueves, diaInicio]);
-ok('Un jugador no cambia la hora de inicio', /Solo el encargado/.test(r.error ?? ''), r.error);
+ok('Un jugador no cambia la hora de inicio', /Solo el capitán/.test(r.error ?? ''), r.error);
 
 // --- Resultado y estadísticas (0012) -------------------------------------------
 const viejo = (await db.query(`select id from partidos where rival = 'Partido viejo'`)).rows[0].id;
@@ -556,7 +556,7 @@ r = await guardarPartido('doble', EQ.jueves, 'Rival del Jueves', await dia(7));
 x = await guardarPartido('doble', EQ.junior, 'Rival del Junior', await dia(7));
 ok('Un encargado de dos planteles programa partidos en los dos', !r.error && !x.error, r.error || x.error);
 r = await guardarPartido('doble', EQ.sabado, 'Rival del Sábado', await dia(7));
-ok('…pero no en un tercero', /Solo el encargado/.test(r.error ?? ''), r.error);
+ok('…pero no en un tercero', /Solo el capitán/.test(r.error ?? ''), r.error);
 r = await como('doble', 'select partido_eliminar($1)', [x.rows[0].id]);
 ok('…y elimina los de sus planteles', !r.error, r.error);
 r = await como('nuevo4', `select ingreso_solicitar(null, 'Tercer Doble Inventado', $1::uuid[])`, [[EQ.jueves, EQ.junior]]);
@@ -685,7 +685,7 @@ r = await como('teso', 'select ingreso_resolver($1, true)', [(await uno('teso', 
 x = await uno('nuevo7', 'select mi_persona()');
 ok('Tesorería aprueba y la persona queda en los dos planteles que pidió', !r.error && x?.equipos.length === 2, r.error || JSON.stringify(x?.equipos));
 r = await guardarPartido('teso', EQ.jueves, 'Rival', await dia(9));
-ok('El permiso no da nada más: no programa partidos', /Solo el encargado/.test(r.error ?? ''), r.error);
+ok('El permiso no da nada más: no programa partidos', /Solo el capitán/.test(r.error ?? ''), r.error);
 r = await como('teso', 'select apruebo_ingresos()');
 ok('La función interna no se llama desde la app', /permission denied/.test(r.error ?? ''), r.error);
 r = await como('nuevo8', `select ingreso_solicitar(null, 'Octavo Nuevo Inventado', $1::uuid[])`, [[EQ.sabado]]);
