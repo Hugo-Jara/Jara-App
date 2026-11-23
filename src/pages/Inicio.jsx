@@ -19,6 +19,7 @@ import { useHonorariosPorPagar, desglose, nombreMes } from '../lib/fondo.js';
 import Bienvenida from '../components/Bienvenida.jsx';
 import { useApodos } from '../lib/apodos.js';
 import SubirFiesta from '../components/SubirFiesta.jsx';
+import BotonDocumental from '../components/BotonDocumental.jsx';
 import { useFiesta, fiestaVisible } from '../lib/fiesta.js';
 import { Miniatura } from './Fiesta20.jsx';
 
@@ -38,6 +39,7 @@ function Fiesta20() {
         </div>
       )}
       <SubirFiesta listo={recargar} />
+      <BotonDocumental />
       <Link to="/fiesta-20" className="ver-mas" style={{ marginTop: 14 }}>
         {archivos.length ? `Ver la galería (${archivos.length})` : 'Ver la galería'} <Icono nombre="flecha" size={16} />
       </Link>

@@ -4,6 +4,17 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-23 · Botón "Ver documental" en la tarjeta de la fiesta
+
+- Pedido del club: en la tarjeta de los 20 años de Inicio y en la página `/fiesta-20` hay ahora dos botones: "Subir fotos y videos" (lo de antes) y "Ver documental".
+- El documental vive en YouTube como video **no listado** (gratis, sin tope de tamaño, no gasta Supabase ni el hosting de la app). La app lo muestra incrustado en `/documental` (con youtube-nocookie) y deja un enlace "Ábrelo en YouTube" por si no carga.
+- Para ponerlo o cambiarlo: pegar el enlace en `DOCUMENTAL_ENLACE` de `src/lib/documental.js` (sirve youtu.be, watch?v= y shorts). Mientras esté vacío, el botón dice "Documental: muy pronto" y no hace nada. La página `/documental` no se apaga con la fiesta.
+- Sin migración. Pruebas: `npm run test:documental` (2).
+
+**Comprobado:** `npm run build` y `npm run test:documental` pasan. En iPhone 13 y Pixel 7 emulados (modo demostración): los dos botones en Inicio y en la galería, "muy pronto" sin enlace, página del documental sin desborde horizontal ni errores en consola. El video incrustado no se pudo ver en el entorno de pruebas (sin salida a YouTube).
+
+---
+
 ## 2026-11-22 · Buscador de jugadores y foto de perfil en grande
 
 - Pedido del club después del lanzamiento: encontrar rápido a una persona sin recorrer la lista. Arriba de Jugadores y de Planteles hay una caja "Busca por nombre, apellido o apodo" que va sugiriendo personas mientras se escribe (hasta 6, con foto y plantel). Tocar una abre su perfil; con teclado funcionan flechas, Enter y Escape.
