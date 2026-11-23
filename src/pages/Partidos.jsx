@@ -6,7 +6,7 @@ import { useTablas } from '../lib/tabla.js';
 import Tabla from './Tabla.jsx';
 import { useProgramar } from '../lib/partidos.js';
 import { useSesion } from '../lib/sesion.jsx';
-import { usePartidos, porEstado, sinResponder, tieneResultado, textoResultado, signo } from '../lib/partidos.js';
+import { usePartidos, porEstado, cuantosVan, sinResponder, tieneResultado, textoResultado, signo } from '../lib/partidos.js';
 import { fechaLarga, cuando } from '../lib/fechas.js';
 import Icono from '../components/Icono.jsx';
 import Racha from '../components/Racha.jsx';
@@ -26,7 +26,7 @@ function Tarjeta({ p }) {
           </span>
         )}
         {p.esMio && ' · '}
-        {porEstado(p, 'voy').length} van, {porEstado(p, 'duda').length} en duda, {sinResponder(p).length} sin responder
+        {cuantosVan(p)} van, {porEstado(p, 'duda').length} en duda, {sinResponder(p).length} sin responder
       </p>
       <span className="ver-mas">Ver la lista <Icono nombre="flecha" size={16} /></span>
     </Link>
