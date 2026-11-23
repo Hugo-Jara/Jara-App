@@ -141,6 +141,23 @@ r = await banca('enc', P.p3, []);
 x = await cifras('b', PER.dt);
 ok('Al desmarcar todo vuelve a contar el cuerpo técnico del plantel', !r.error && x.pj === 3, r.error ?? JSON.stringify(x));
 
+console.log('\nConvocados: quién es cuerpo técnico y quién arquero (0062)');
+await db.exec(`
+  insert into perfiles (persona_id, posicion) values ('${PER.b}', 'arquero')
+    on conflict (persona_id) do update set posicion = 'arquero';
+  update personas set no_juega = true where id = '${PER.enc}';
+  insert into partido_respuestas (partido_id, persona_id, estado) values
+    ('${P.sin}', '${PER.a}', 'voy'), ('${P.sin}', '${PER.b}', 'voy'), ('${P.sin}', '${PER.dt}', 'voy'),
+    ('${P.sin}', '${PER.ayu}', 'voy'), ('${P.sin}', '${PER.enc}', 'voy');
+`);
+r = await como('a', 'select j from jsonb_array_elements(partidos_proximos()) j where j->>\'id\' = $1', [P.sin]);
+x = Object.fromEntries((r.rows[0]?.j.respuestas ?? []).map((q) => [q.persona_id, q]));
+ok('El jugador no es técnico ni arquero', x[PER.a] && !x[PER.a].tecnico && !x[PER.a].arquero, r.error ?? JSON.stringify(x[PER.a]));
+ok('El arquero viene marcado', x[PER.b]?.arquero === true && !x[PER.b].tecnico);
+ok('Cuerpo técnico (marcado por SQL) no cuenta', x[PER.dt]?.tecnico === true);
+ok('Ayudante en su perfil no cuenta', x[PER.ayu]?.tecnico === true);
+ok('Quien está en el plantel sin jugar no cuenta', x[PER.enc]?.tecnico === true);
+
 r = await como('a', 'select * from partido_tecnicos');
 ok('La tabla no se lee desde el navegador', !!r.error);
 r = await como('a', 'select es_tecnico_de($1, $2)', [PER.dt, PLANTEL]);
