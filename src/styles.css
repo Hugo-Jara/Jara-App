@@ -225,6 +225,7 @@ textarea { resize: vertical; line-height: 1.45; }
 .nombre { font-weight: 600; }
 .comentario { color: var(--text-dim); font-size: 13.5px; }
 .marca { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 100px; border: 1px solid var(--gold-dim); color: var(--gold); }
+.marca.con-icono { display: inline-flex; align-items: center; gap: 4px; }
 .pago { margin-left: auto; font-size: 12.5px; font-weight: 600; }
 .pago.si { color: var(--green); }
 .pago.no { color: var(--rose); }
