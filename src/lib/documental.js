@@ -2,7 +2,7 @@
 // espacio del club ni de Supabase). Para ponerlo o cambiarlo, pega aquí el
 // enlace tal como lo copia YouTube (sirven youtu.be/..., youtube.com/watch?v=...
 // y youtube.com/shorts/...). Vacío = el botón dice "Muy pronto".
-export const DOCUMENTAL_ENLACE = '';
+export const DOCUMENTAL_ENLACE = 'https://youtu.be/LAMRc0GQoF8';
 
 // Saca el código del video del enlace. null si no se entiende.
 export function codigoYoutube(enlace) {
