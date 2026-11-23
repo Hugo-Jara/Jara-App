@@ -4,6 +4,18 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-23 · El cuerpo técnico y Comunicaciones programan partidos
+
+- Pedido del club: además del capitán (encargado), pueden programar un partido que no viene de la liga (amistoso, cambio de fecha) el cuerpo técnico, solo en sus planteles, y Comunicaciones, en todos.
+- Quien entra por esta puerta nueva corrige o elimina solo los partidos que programó; los de la liga y los del capitán siguen siendo del capitán. El capitán puede corregir los que programó el cuerpo técnico.
+- El permiso lo da el administrador (`personas.cuerpo_tecnico` o `edita_comunicaciones`); elegir "DT" o "Ayudante" en el perfil no lo da. Las cuentas de prueba no programan por esta puerta.
+- Migración `0063_programar_partidos_cuerpo_tecnico.sql`: `puedo_programar`, `puedo_cambiar_partido`, `partidos_programables` y `partido_guardar`/`partido_eliminar` con esas reglas. No toca `partido_json` (lo cambia 0062): la app suma lo de `partidos_programables`. Si la base aún no tiene 0063, la app sigue como antes.
+- App: `useProgramar()` en `src/lib/partidos.js`; botón "Programar un partido", formulario y "Editar el partido" lo usan. Pruebas en `supabase/tests/programar.mjs` (20).
+
+**Comprobado:** `npm run test:db` y `npm run build` pasan (también con 0062 aplicada antes). En iPhone 13 y Pixel 7 emulados (modo demostración, como alguien del cuerpo técnico sin ser capitán): ve el botón, elige entre sus dos planteles, guarda, ve "Editar el partido" en el suyo y no en uno de la liga.
+
+---
+
 ## 2026-11-22 · Buscador de jugadores y foto de perfil en grande
 
 - Pedido del club después del lanzamiento: encontrar rápido a una persona sin recorrer la lista. Arriba de Jugadores y de Planteles hay una caja "Busca por nombre, apellido o apodo" que va sugiriendo personas mientras se escribe (hasta 6, con foto y plantel). Tocar una abre su perfil; con teclado funcionan flechas, Enter y Escape.

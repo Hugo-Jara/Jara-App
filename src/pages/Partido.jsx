@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useSesion } from '../lib/sesion.jsx';
+import { useProgramar } from '../lib/partidos.js';
 import { usePartidos, porEstado, sinResponder, recordatorioPartido, tieneResultado, textoResultado, leerArco, guardarArco, leerBanca, guardarBanca } from '../lib/partidos.js';
 import { fechaLarga, hoyIso } from '../lib/fechas.js';
 import RecordarPorWhatsApp from '../components/RecordarPorWhatsApp.jsx';
@@ -397,6 +398,7 @@ export default function Partido() {
   const { id } = useParams();
   const { persona } = useSesion();
   const { cargando, error, recargar, todos, responder, anotarResultado } = usePartidos(persona);
+  const programar = useProgramar(persona);
   const partido = todos.find((p) => p.id === id);
   const jugado = partido ? partido.fecha < hoyIso() : false;
 
@@ -477,7 +479,7 @@ export default function Partido() {
         )}
       </div>
       )}
-      {partido.puedoEditar && (
+      {programar.puedoCambiar(partido) && (
         <>
           {!jugado && <RecordarPorWhatsApp mensaje={(url) => recordatorioPartido(partido, url)} />}
           <Link to={`/partidos/${partido.id}/editar`} className="btn secundario" style={{ marginTop: 10 }}>Editar el partido</Link>

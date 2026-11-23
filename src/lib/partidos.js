@@ -52,6 +52,11 @@ const base = {
   }),
   eliminar: (id) => llamar('partido_eliminar', { p_id: id }),
   equipos: () => llamar('equipos_del_club'),
+  // Planteles que puedo programar y partidos que puedo corregir (0063). Si la
+  // base todavía no la tiene, nadie suma permisos y la app sigue como antes.
+  programables: async () => {
+    try { return await llamar('partidos_programables'); } catch { return { equipos: null, partidos: [] }; }
+  },
   arquero: (personaId, anio) => llamar('arquero_cifras', { p_persona: personaId, p_anio: anio ?? null }),
   arco: async (partidoId) => {
     const r = await llamar('partido_arco', { p_partido: partidoId });
@@ -147,6 +152,7 @@ const bancaDemo = {};
 const EQUIPOS_DEMO = [{ id: 'e-jueves', nombre: 'Senior Jueves' }, { id: 'e-sabado', nombre: 'Senior Sábado' }, { id: 'e-junior', nombre: 'Junior Sábado' }];
 const enDemo = {
   cargar: async () => demo,
+  programables: async () => ({ equipos: EQUIPOS_DEMO, partidos: [] }),
   responder: async (id, yo, r) => {
     demo = demo.map((p) => (p.id !== id ? p : {
       ...p,
@@ -233,12 +239,28 @@ const enDemo = {
 
 const origen = esDemo ? enDemo : base;
 const almacen = crearAlmacen(origen.cargar);
-export const vaciarPartidos = almacen.vaciar;
+// Quién programa partidos además del capitán: el cuerpo técnico en sus
+// planteles y Comunicaciones en todos (0063).
+const almacenProgramar = crearAlmacen(origen.programables);
+export const vaciarPartidos = () => { almacen.vaciar(); almacenProgramar.vaciar(); };
+
+// { cargando, equipos: [{id, nombre}] que puedo programar, puedoCambiar(partido) }
+// Sin la migración 0063 en la base, quedan los planteles donde es encargado.
+export function useProgramar(yo) {
+  const { cargando, datos } = almacenProgramar.usar();
+  const propios = new Set(datos?.partidos ?? []);
+  return {
+    cargando,
+    equipos: datos?.equipos ?? (yo?.equipos ?? []).filter((e) => e.encargado).map(({ id, nombre }) => ({ id, nombre })),
+    puedoCambiar: (p) => !!p && (p.puedoEditar || propios.has(p.id)),
+  };
+}
 
 export function usePartidos(yo) {
   const { cargando, error, datos } = almacen.usar();
   const partidos = (datos ?? []).map((p) => ({ ...p, miRespuesta: p.respuestas.find((r) => r.personaId === yo.id) ?? null }));
   const y = (accion) => async (...a) => { await accion(...a); await almacen.recargar(); };
+  const yProgramar = (accion) => async (...a) => { await accion(...a); await Promise.all([almacen.recargar(), almacenProgramar.recargar()]); };
   const hoy = hoyIso();
   // Un partido sigue "próximo" hasta dos horas después de su hora de inicio (o
   // hasta que termina su día, si no tiene hora). Con el resultado anotado pasa
@@ -259,8 +281,8 @@ export function usePartidos(yo) {
     mios: proximos.filter((p) => p.esMio),
     anotarResultado: y(origen.resultado),
     responder: y((id, respuesta) => origen.responder(id, yo, respuesta)),
-    guardar: y(origen.guardar),
-    eliminar: y(origen.eliminar),
+    guardar: yProgramar(origen.guardar),
+    eliminar: yProgramar(origen.eliminar),
   };
 }
 
