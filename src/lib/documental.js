@@ -14,7 +14,7 @@ export function codigoYoutube(enlace) {
     const host = u.hostname.replace(/^www\.|^m\./, '');
     let codigo = null;
     if (host === 'youtu.be') codigo = u.pathname.slice(1).split('/')[0];
-    else if (host.endsWith('youtube.com') || host.endsWith('youtube-nocookie.com')) {
+    else if (['youtube.com', 'music.youtube.com', 'youtube-nocookie.com'].includes(host)) {
       codigo = u.searchParams.get('v') ?? u.pathname.match(/^\/(?:embed|shorts|live)\/([\w-]+)/)?.[1] ?? null;
     }
     return codigo && /^[\w-]{11}$/.test(codigo) ? codigo : null;

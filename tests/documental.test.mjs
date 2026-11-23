@@ -12,6 +12,6 @@ test('entiende los enlaces de YouTube que se copian desde el celular y el comput
 });
 
 test('lo que no es YouTube queda vacío', () => {
-  for (const e of ['', null, 'hola', 'https://drive.google.com/file/d/xyz/view', 'https://youtu.be/', 'https://evil.com/watch?v=dQw4w9WgXcQ'])
+  for (const e of ['', null, 'hola', 'https://drive.google.com/file/d/xyz/view', 'https://youtu.be/', 'https://evil.com/watch?v=dQw4w9WgXcQ', 'https://evilyoutube.com/watch?v=dQw4w9WgXcQ'])
     assert.equal(codigoYoutube(e), null, String(e));
 });
