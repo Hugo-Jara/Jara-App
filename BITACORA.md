@@ -4,6 +4,16 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-25 · Corregir y eliminar cualquier partido del plantel
+
+- Pedido del club: quien puede crear partidos también corrige y elimina cualquiera de ese plantel, no solo los que creó (en 0063 era solo lo propio). Capitán en su plantel, cuerpo técnico en los suyos y Comunicaciones en todos. Las cuentas de prueba siguen sin poder.
+- Migración `0065_editar_y_eliminar_partidos.sql`: cambia `puedo_cambiar_partido` y `partidos_programables`. `partido_guardar` y `partido_eliminar` ya las usan; la app no cambia (no hace falta publicar).
+- Pruebas: `supabase/tests/programar.mjs` (23).
+
+**Comprobado:** `npm run test:db` pasa.
+
+---
+
 ## 2026-11-25 · Historial de entrenamientos
 
 - Pedido de quien lleva Entrenamiento: que quede registro de quiénes fueron a cada entrenamiento. Las listas pasadas ya quedaban guardadas en la base (desde 0015 no se pueden eliminar una vez que pasan); la app solo mostraba la próxima.
