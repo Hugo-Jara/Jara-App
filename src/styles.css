@@ -957,3 +957,17 @@ label.tes-imp-check { display: flex; align-items: center; gap: 10px; margin: 0; 
 .perfil-foto-ver { background: none; border: none; padding: 0; border-radius: 50%; cursor: zoom-in; }
 .ver-foto-centro { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
 .ver-foto-img { max-width: 100%; max-height: 100%; width: min(100%, 600px); aspect-ratio: 1; object-fit: contain; border-radius: 14px; }
+
+/* Historial de entrenamientos (EntrenamientosHistorial.jsx). */
+.col-historial { flex: none; min-width: 64px; text-align: right; font-size: 14px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.col-historial strong { color: var(--text); font-size: 16px; }
+.fila-tabla.cabeza .col-historial { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.comentario-historial { display: block; font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.sesion-historial { margin-top: 12px; }
+.sesion-historial summary { cursor: pointer; list-style: none; display: flex; flex-direction: column; gap: 2px; min-height: 44px; justify-content: center; }
+.sesion-historial summary::-webkit-details-marker { display: none; }
+.sesion-historial summary::after { content: 'Ver quiénes fueron ›'; font-size: 13px; color: var(--gold); margin-top: 4px; }
+.sesion-historial[open] summary::after { content: 'Ocultar'; }
+.sesion-fecha { font-weight: 700; font-size: 16px; }
+.sesion-resumen { font-size: 13.5px; color: var(--text-dim); overflow-wrap: anywhere; }
+.sesion-historial .nombres { margin-top: 10px; }

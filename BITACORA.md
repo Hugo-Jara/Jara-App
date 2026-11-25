@@ -4,6 +4,17 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-25 · Historial de entrenamientos
+
+- Pedido de quien lleva Entrenamiento: que quede registro de quiénes fueron a cada entrenamiento. Las listas pasadas ya quedaban guardadas en la base (desde 0015 no se pueden eliminar una vez que pasan); la app solo mostraba la próxima.
+- Pantalla nueva `/entrenar/historial` (botón "Historial de entrenamientos" en Entrenar, solo para quien administra los entrenamientos): período (último mes, 3 meses, este año, todo), cuántos entrenamientos y promedio por día, y dos vistas: "Por jugador" (cuántas veces fue cada uno, de cuántos, y la última vez) y "Por entrenamiento" (cada día, tocar para ver quiénes fueron, invitados y quienes se bajaron el mismo día).
+- "Fue" = quedó inscrito en la lista. No hay marca de "no vino" todavía.
+- Migración `0064_historial_entrenamientos.sql`: una función de solo lectura, `entrenamientos_historial()`, para administradores y quien tiene `administra_entrenamientos`. No trae montos ni pagos (la plata de entrenamientos es un paso posterior). Pruebas en `supabase/tests/historial_entrenamientos.mjs` (8).
+
+**Comprobado:** `npm run test:db` y `npm run build` pasan. En iPhone 13 y Pixel 7 emulados (modo demostración): botón en Entrenar, las dos vistas y los períodos, sin desborde horizontal ni errores en consola.
+
+---
+
 ## 2026-11-23 · Botón "Ver documental" en la tarjeta de la fiesta
 
 - Pedido del club: en la tarjeta de los 20 años de Inicio y en la página `/fiesta-20` hay ahora dos botones: "Subir fotos y videos" (lo de antes) y "Ver documental".
