@@ -100,11 +100,11 @@ console.log('\nCorregir y eliminar');
 r = await corregir('dt', delDT, PLANTEL, 'Amistoso Corregido');
 ok('El cuerpo técnico corrige el partido que programó', !r.error, r.error);
 r = await corregir('dt', LIGA, PLANTEL, 'Cambiado');
-ok('…pero no uno de la liga', /lo corrige el capitán/.test(r.error ?? ''), r.error);
+ok('…y también uno de la liga (0065)', !r.error, r.error);
 r = await corregir('dt', delCapitan, PLANTEL, 'Cambiado');
-ok('…ni uno que programó el capitán', /lo corrige el capitán/.test(r.error ?? ''), r.error);
-r = await borrar('dt', LIGA);
-ok('El cuerpo técnico no elimina uno de la liga', /lo elimina el capitán/.test(r.error ?? ''), r.error);
+ok('…y uno que programó el capitán (0065)', !r.error, r.error);
+r = await corregir('jug', LIGA, PLANTEL, 'Cambiado');
+ok('Un jugador no corrige uno de la liga', /Solo el capitán|lo corrige/.test(r.error ?? ''), r.error);
 r = await corregir('cap', delDT, PLANTEL, 'El capitán también lo corrige');
 ok('El capitán corrige el que programó el cuerpo técnico', !r.error, r.error);
 r = await corregir('com', deCom, OTRO, 'Comunicaciones corrige');
@@ -114,10 +114,10 @@ ok('Un jugador no elimina partidos', /lo elimina el capitán/.test(r.error ?? ''
 
 console.log('\nLo que ve la app');
 x = await programables('dt');
-ok('Al cuerpo técnico le salen su plantel y su partido',
-   x.equipos.length === 1 && x.equipos[0].id === PLANTEL && x.partidos.length === 1 && x.partidos[0] === delDT, JSON.stringify(x));
+ok('Al cuerpo técnico le salen su plantel y todos sus partidos (0065)',
+   x.equipos.length === 1 && x.equipos[0].id === PLANTEL && [LIGA, delCapitan, delDT].every((i) => x.partidos.includes(i)) && !x.partidos.includes(deCom), JSON.stringify(x));
 x = await programables('com');
-ok('A Comunicaciones le salen todos los planteles', x.equipos.length === 2 && x.partidos[0] === deCom, JSON.stringify(x));
+ok('A Comunicaciones le salen todos los planteles y todos los partidos', x.equipos.length === 2 && x.partidos.length === 4, JSON.stringify(x));
 x = await programables('jug');
 ok('A un jugador no le sale nada', x.equipos.length === 0 && x.partidos.length === 0, JSON.stringify(x));
 r = await como('jug', 'select puedo_programar($1)', [PLANTEL]);
@@ -125,9 +125,16 @@ ok('La función interna no se llama desde afuera', /permission denied/.test(r.er
 
 r = await borrar('dt', delDT);
 ok('El cuerpo técnico elimina el que programó', !r.error, r.error);
+r = await borrar('dt', delCapitan);
+ok('El cuerpo técnico elimina uno del capitán (0065)', !r.error, r.error);
+r = await borrar('com', LIGA);
+ok('Comunicaciones elimina uno de la liga (0065)', !r.error, r.error);
+r = await borrar('cap', deCom);
+ok('El capitán no elimina uno de otro plantel', /lo elimina el capitán/.test(r.error ?? ''), r.error);
+r = await crear('dt', PLANTEL);
 await db.exec(`update personas set cuerpo_tecnico = false where id = '${PER.dt}'`);
-r = await borrar('com', delCapitan);
-ok('Comunicaciones no elimina el del capitán', /lo elimina el capitán/.test(r.error ?? ''), r.error);
+r = await borrar('dt', r.rows[0]?.id);
+ok('Sin el permiso de cuerpo técnico ya no elimina ni lo suyo', /lo elimina el capitán/.test(r.error ?? ''), r.error);
 
 console.log(`\n${pass} pasaron, ${fail} fallaron.`);
 if (fail) process.exit(1);
