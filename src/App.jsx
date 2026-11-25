@@ -16,6 +16,7 @@ import Cuota from './pages/Cuota.jsx';
 import { MOSTRAR_MI_CUOTA } from './lib/cuotaVisible.js';
 import Compras from './pages/Compras.jsx';
 import Entrenar from './pages/Entrenar.jsx';
+import EntrenamientosHistorial from './pages/EntrenamientosHistorial.jsx';
 import Noticias from './pages/Noticias.jsx';
 import Mas from './pages/Mas.jsx';
 import Publicacion from './pages/Publicacion.jsx';
@@ -72,6 +73,7 @@ export default function App() {
         <Route path="/estadisticas" element={<Navigate to="/jugadores" replace />} />
         <Route path="/entrenar" element={<Entrenar />} />
         <Route path="/entrenar/lista" element={<EntrenamientoForm />} />
+        <Route path="/entrenar/historial" element={<EntrenamientosHistorial />} />
         <Route path="/ingresos" element={<Ingresos />} />
         <Route path="/noticias" element={<Noticias />} />
         <Route path="/noticias/nueva" element={<Publicar />} />

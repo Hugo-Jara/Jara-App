@@ -62,6 +62,7 @@ export default function Entrenar() {
           ? <><p className="error" role="alert">{t.error}</p><button className="btn secundario" onClick={t.recargar}>Reintentar</button></>
           : <p className="vacio suelto">No hay entrenamientos abiertos por ahora.</p>}
         {t.puedoAdministrar && <Link to="/entrenar/lista" className="btn">Abrir una lista</Link>}
+        {t.puedoAdministrar && <Link to="/entrenar/historial" className="btn secundario" style={{ marginTop: 10 }}>Historial de entrenamientos</Link>}
         {error && <p className="error" role="alert">{error}</p>}
         {deben}
       </>
@@ -161,6 +162,7 @@ export default function Entrenar() {
         <>
           <RecordarPorWhatsApp mensaje={(url) => recordatorioEntrenamiento(e, url)} />
           <Link to="/entrenar/lista" className="btn secundario" style={{ marginTop: 10 }}>Editar la lista</Link>
+          <Link to="/entrenar/historial" className="btn secundario" style={{ marginTop: 10 }}>Historial de entrenamientos</Link>
         </>
       )}
     </>
