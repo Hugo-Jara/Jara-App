@@ -971,3 +971,59 @@ label.tes-imp-check { display: flex; align-items: center; gap: 10px; margin: 0; 
 .sesion-fecha { font-weight: 700; font-size: 16px; }
 .sesion-resumen { font-size: 13.5px; color: var(--text-dim); overflow-wrap: anywhere; }
 .sesion-historial .nombres { margin-top: 10px; }
+
+/* Avisos de Comunicaciones */
+.avisos-inicio { margin: 0 0 16px; }
+.avisos-encabezado, .avisos-navegacion, .aviso-registro-superior {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.avisos-encabezado { margin-bottom: 6px; min-height: 38px; }
+.avisos-encabezado h2 { margin: 0; font-size: 16px; }
+.avisos-navegacion { color: var(--text-dim); font-size: 13px; white-space: nowrap; }
+.avisos-navegacion button {
+  display: grid; place-items: center; min-width: 38px; min-height: 38px;
+  border: 1px solid var(--border); border-radius: 50%; background: var(--bg-card); color: var(--text);
+  cursor: pointer;
+}
+.avisos-navegacion button:disabled { opacity: .45; cursor: default; }
+.avisos-anterior svg { transform: rotate(180deg); }
+.avisos-carrusel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.avisos-carrusel::-webkit-scrollbar { display: none; }
+.aviso-tarjeta {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px;
+  width: 100%; padding: 12px 14px; color: var(--text); text-align: left; cursor: pointer;
+}
+.aviso-tarjeta > :is(.aviso-etiqueta, .aviso-meta, .pub-titulo) { grid-column: 1; }
+.aviso-tarjeta > svg { grid-column: 2; grid-row: 1 / 4; align-self: center; color: var(--gold); }
+.aviso-tarjeta:focus-visible { outline-offset: -3px; }
+.aviso-tarjeta .pub-titulo {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere;
+}
+.avisos-carrusel .aviso-tarjeta { flex: 0 0 100%; min-width: 0; margin: 0; scroll-snap-align: start; }
+.aviso-etiqueta { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+.aviso-informativo { color: var(--text-dim); }
+.aviso-suspension { color: var(--rose); }
+.aviso-horario { color: #789cce; }
+.aviso-recordatorio { color: #78a689; }
+.aviso-importante { color: var(--gold); }
+.aviso-meta { display: grid; gap: 4px; font-size: 13px; color: var(--text-dim); }
+.aviso-mensaje { line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.aviso-dialogo { width: min(420px, calc(100% - 32px)); margin: auto; color: var(--text); max-height: 85dvh; }
+.aviso-dialogo::backdrop { background: rgba(0, 0, 0, .68); }
+.aviso-dialogo h2, .aviso-editor h2, .aviso-registro h3 { overflow-wrap: anywhere; }
+.aviso-dialogo h2, .aviso-registro h3, .aviso-editor .aviso-etiqueta + h2 { margin: 8px 0; }
+.aviso-gestionar, .aviso-nuevo, .aviso-filtro { margin-bottom: 16px; }
+.aviso-editor { min-width: 0; }
+.aviso-editor input[type="datetime-local"] { min-width: 0; max-width: 100%; }
+.aviso-vigencia { margin: 14px 0 8px; }
+.aviso-editor .casilla { margin-top: 12px; }
+.aviso-acciones { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.aviso-acciones .btn:not(.chico) { flex: 1 1 125px; width: auto; }
+.aviso-registro .aviso-mensaje { margin: 0 0 12px; }
+.aviso-registro-datos { margin: 0; color: var(--text-dim); font-size: 13px; }
+.aviso-registro-datos div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-top: 4px; }
+.aviso-registro-datos dt { font-weight: 600; }
+.aviso-registro-datos dd { margin: 0; overflow-wrap: anywhere; }
+.aviso-estado { flex: none; font-size: 12px; font-weight: 700; color: var(--text-dim); }
+.aviso-estado-vigente { color: #78a689; }
+.aviso-estado-retirado { color: var(--rose); }

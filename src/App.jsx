@@ -18,6 +18,8 @@ import Compras from './pages/Compras.jsx';
 import Entrenar from './pages/Entrenar.jsx';
 import EntrenamientosHistorial from './pages/EntrenamientosHistorial.jsx';
 import Noticias from './pages/Noticias.jsx';
+import GestionarAvisos from './pages/GestionarAvisos.jsx';
+import { ProveedorAvisos } from './components/avisos/Avisos.jsx';
 import Mas from './pages/Mas.jsx';
 import Publicacion from './pages/Publicacion.jsx';
 import Publicar from './pages/Publicar.jsx';
@@ -61,42 +63,45 @@ export default function App() {
   if (!persona) return <div className="cargando">Cargando…</div>;
 
   return (
-    <Marco>
-      <Routes>
-        <Route path="/" element={<Inicio />} />
-        <Route path="/partidos" element={<Partidos />} />
-        <Route path="/partidos/nuevo" element={<PartidoForm />} />
-        <Route path="/partidos/:id" element={<Partido />} />
-        <Route path="/partidos/:id/editar" element={<PartidoForm />} />
-        <Route path="/tabla" element={<Navigate to="/partidos?v=tabla" replace />} />
-        <Route path="/jugadores" element={<Estadisticas />} />
-        <Route path="/estadisticas" element={<Navigate to="/jugadores" replace />} />
-        <Route path="/entrenar" element={<Entrenar />} />
-        <Route path="/entrenar/lista" element={<EntrenamientoForm />} />
-        <Route path="/entrenar/historial" element={<EntrenamientosHistorial />} />
-        <Route path="/ingresos" element={<Ingresos />} />
-        <Route path="/noticias" element={<Noticias />} />
-        <Route path="/noticias/nueva" element={<Publicar />} />
-        <Route path="/noticias/:id" element={<Publicacion />} />
-        <Route path="/mas" element={<Mas />} />
-        <Route path="/ajustes" element={<Ajustes />} />
-        {/* "Mi cuota" está oculta mientras los datos no estén al día (src/lib/cuotaVisible.js). */}
-        <Route path="/cuota" element={MOSTRAR_MI_CUOTA ? <Cuota /> : <Navigate to="/" replace />} />
-        <Route path="/compras" element={<Compras />} />
-        {/* El tablero es de datos de ejemplo: con la base real no se muestra (la tesorería de verdad está en /tesoreria). */}
-        <Route path="/tablero" element={esDemo ? <Tablero /> : <Navigate to="/tesoreria" replace />} />
-        <Route path="/tesoreria" element={<Tesoreria />} />
-        <Route path="/fondo" element={<Fondo />} />
-        {/* La página del club (asambleas y ministerios) vuelve cuando esté lista: src/pages/Club.jsx. */}
-        <Route path="/club" element={<Navigate to="/mas" replace />} />
-        <Route path="/perfil" element={<Perfil />} />
-        <Route path="/perfil/:id" element={<Perfil />} />
-        <Route path="/planteles" element={<Planteles />} />
-        <Route path="/fotos-partidos" element={<FotosDrive />} />
-        <Route path="/fiesta-20" element={<Fiesta20 />} />
-        <Route path="/documental" element={<Documental />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Marco>
+    <ProveedorAvisos key={persona.id} activo={pathname === '/' || pathname.startsWith('/noticias')}>
+      <Marco>
+        <Routes>
+          <Route path="/" element={<Inicio />} />
+          <Route path="/partidos" element={<Partidos />} />
+          <Route path="/partidos/nuevo" element={<PartidoForm />} />
+          <Route path="/partidos/:id" element={<Partido />} />
+          <Route path="/partidos/:id/editar" element={<PartidoForm />} />
+          <Route path="/tabla" element={<Navigate to="/partidos?v=tabla" replace />} />
+          <Route path="/jugadores" element={<Estadisticas />} />
+          <Route path="/estadisticas" element={<Navigate to="/jugadores" replace />} />
+          <Route path="/entrenar" element={<Entrenar />} />
+          <Route path="/entrenar/lista" element={<EntrenamientoForm />} />
+          <Route path="/entrenar/historial" element={<EntrenamientosHistorial />} />
+          <Route path="/ingresos" element={<Ingresos />} />
+          <Route path="/noticias" element={<Noticias />} />
+          <Route path="/noticias/avisos/gestionar" element={<GestionarAvisos />} />
+          <Route path="/noticias/nueva" element={<Publicar />} />
+          <Route path="/noticias/:id" element={<Publicacion />} />
+          <Route path="/mas" element={<Mas />} />
+          <Route path="/ajustes" element={<Ajustes />} />
+          {/* "Mi cuota" está oculta mientras los datos no estén al día (src/lib/cuotaVisible.js). */}
+          <Route path="/cuota" element={MOSTRAR_MI_CUOTA ? <Cuota /> : <Navigate to="/" replace />} />
+          <Route path="/compras" element={<Compras />} />
+          {/* El tablero es de datos de ejemplo: con la base real no se muestra (la tesorería de verdad está en /tesoreria). */}
+          <Route path="/tablero" element={esDemo ? <Tablero /> : <Navigate to="/tesoreria" replace />} />
+          <Route path="/tesoreria" element={<Tesoreria />} />
+          <Route path="/fondo" element={<Fondo />} />
+          {/* La página del club (asambleas y ministerios) vuelve cuando esté lista: src/pages/Club.jsx. */}
+          <Route path="/club" element={<Navigate to="/mas" replace />} />
+          <Route path="/perfil" element={<Perfil />} />
+          <Route path="/perfil/:id" element={<Perfil />} />
+          <Route path="/planteles" element={<Planteles />} />
+          <Route path="/fotos-partidos" element={<FotosDrive />} />
+          <Route path="/fiesta-20" element={<Fiesta20 />} />
+          <Route path="/documental" element={<Documental />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Marco>
+    </ProveedorAvisos>
   );
 }

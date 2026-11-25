@@ -79,27 +79,6 @@ function FormEntrevista({ onPublicar }) {
   );
 }
 
-function FormAviso({ onPublicar }) {
-  const [d, setD] = useState({ titulo: '', texto: '', vence: '', fotos: [] });
-  const set = (campo) => (e) => setD({ ...d, [campo]: e.target.value });
-  const enviar = (e) => {
-    e.preventDefault();
-    onPublicar({ tipo: 'aviso', titulo: d.titulo, bajada: d.texto.split('\n')[0], texto: d.texto, vence: d.vence, fotos: d.fotos });
-  };
-  return (
-    <form onSubmit={enviar}>
-      <label htmlFor="titulo">Título</label>
-      <input id="titulo" required value={d.titulo} onChange={set('titulo')} placeholder="Qué se anuncia" />
-      <label htmlFor="texto">Texto</label>
-      <textarea id="texto" rows="4" required value={d.texto} onChange={set('texto')} />
-      <label htmlFor="vence">Plazo (opcional)</label>
-      <input id="vence" value={d.vence} onChange={set('vence')} placeholder="Hasta el 5 de octubre" />
-      <Fotos fotos={d.fotos} onChange={(f) => setD({ ...d, fotos: f })} etiqueta="Imagen o afiche" />
-      <button className="btn publicar">Publicar aviso</button>
-    </form>
-  );
-}
-
 export default function Publicar() {
   const { publicar, puedePublicar } = useNoticias();
   const [tipo, setTipo] = useState('boletin');
@@ -130,7 +109,7 @@ export default function Publicar() {
       <div className="card">
         {tipo === 'boletin' && <BoletinModulo administrar />}
         {tipo === 'entrevista' && <FormEntrevista onPublicar={alPublicar} />}
-        {tipo === 'aviso' && <FormAviso onPublicar={alPublicar} />}
+        {tipo === 'aviso' && <Link className="btn" to="/noticias/avisos/gestionar">Gestionar avisos</Link>}
       </div>
     </>
   );

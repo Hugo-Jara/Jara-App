@@ -42,16 +42,6 @@ export const PLANTILLA_ENTREVISTA = {
 // Contenido de ejemplo para el modo demostración (sin nombres ni datos reales).
 const EJEMPLOS = [
   {
-    id: 'aviso-fiesta',
-    tipo: 'aviso',
-    fecha: '1 de octubre',
-    titulo: 'Fiesta de los 20 años: paga tu entrada',
-    bajada: '21 de noviembre, 20:00 horas. Asado, barra libre y sorpresas.',
-    vence: 'Hasta el 5 de octubre',
-    texto: 'La entrada cuesta $20.000 e incluye música, barra libre y asado. Los datos de transferencia se los pides a tu tesorero.',
-    fotos: [{ demo: 1 }],
-  },
-  {
     id: 'cortita-2',
     tipo: 'entrevista',
     fecha: '20 de septiembre',
