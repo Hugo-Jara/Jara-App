@@ -1,3 +1,4 @@
+import { AvisosLeidos, AvisosNuevos } from '../components/avisos/Avisos.jsx';
 import { TarjetaReal } from '../components/boletin/BoletinReal.jsx';
 import { ultimaEdicion } from '../lib/boletin.js';
 import { yaLeida, marcarLeida } from '../lib/boletinLeido.js';
@@ -302,6 +303,7 @@ export default function Inicio() {
     <>
       <h1 className="titulo display">Hola, {nombre}</h1>
       <p className="subtitulo">Esto es lo que viene en el Jara.</p>
+      <AvisosNuevos />
       <Bienvenida />
       {apruebaIngresos && <PasesPendientes />}
       <HonorariosPorPagar persona={persona} />
@@ -321,6 +323,7 @@ export default function Inicio() {
       <UltimoPartido partido={ultimoPartido} />
       {boletin.leida && <BoletinInicio b={boletin} />}
       <Noticias noticias={noticias} />
+      <AvisosLeidos />
     </>
   );
 }

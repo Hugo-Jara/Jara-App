@@ -45,16 +45,6 @@ function Entrevista({ p }) {
   );
 }
 
-function Aviso({ p }) {
-  return (
-    <>
-      <Carrusel fotos={p.fotos} />
-      {p.vence && <p className="vence grande">{p.vence}</p>}
-      <p className="nota-texto">{p.texto}</p>
-    </>
-  );
-}
-
 export default function Publicacion() {
   const { id } = useParams();
   const { publicaciones } = useNoticias();
@@ -68,7 +58,7 @@ export default function Publicacion() {
       </>
     );
   }
-  const Cuerpo = { boletin: Boletin, entrevista: Entrevista, aviso: Aviso }[p.tipo];
+  const Cuerpo = { boletin: Boletin, entrevista: Entrevista }[p.tipo];
   return (
     <>
       <Link to="/noticias" className="volver">← Noticias</Link>

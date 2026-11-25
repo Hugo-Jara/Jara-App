@@ -4,6 +4,17 @@ Registro de lo hecho, fase por fase. Lo más nuevo va arriba. Sin nombres, corre
 
 ---
 
+## 2026-11-25 · B3 — Avisos rápidos y segmentados
+
+- Comunicaciones publica, previsualiza, edita y retira avisos desde Noticias. El historial conserva las publicaciones vigentes, vencidas y retiradas. Se puede extender el vencimiento y volver a notificar de forma opcional.
+- Inicio muestra los avisos nuevos en un carrusel manual. Al abrir uno desde Inicio o Noticias queda leído para esa cuenta y aparece entre los avisos vigentes al final de Inicio.
+- Migración `0066_avisos_segmentados.sql`: tablas privadas de avisos y lecturas por cuenta y versión. Las RPC validan club, plantel y vigencia. El permiso existente `edita_comunicaciones` habilita la gestión y `soy_cuenta_de_prueba()` bloquea operaciones administrativas en cuentas de prueba.
+- El ejemplo de suspensión para Sénior Jueves está disponible en modo demostración, junto con un recordatorio general para probar el carrusel. El administrador de la app revisa el PR y aplica la migración antes del merge.
+
+**Comprobado:** `npm run build`, `npm run test:db` (incluye `test:avisos-db`), `npm run test:boletin` y `npm run test:pedidos`. `test:avisos:e2e` cubre el recorrido en iPhone 13 y Pixel 7 emulados con Chromium a 375 px, más lectura entre contextos aislados con RPC simuladas. Las capturas están en `docs/capturas-b3/`. Queda pendiente la prueba en teléfonos físicos.
+
+---
+
 ## 2026-11-25 · Corregir y eliminar cualquier partido del plantel
 
 - Pedido del club: quien puede crear partidos también corrige y elimina cualquiera de ese plantel, no solo los que creó (en 0063 era solo lo propio). Capitán en su plantel, cuerpo técnico en los suyos y Comunicaciones en todos. Las cuentas de prueba siguen sin poder.

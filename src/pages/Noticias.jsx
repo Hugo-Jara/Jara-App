@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AvisosNoticias } from '../components/avisos/Avisos.jsx';
 import BoletinModulo from '../components/boletin/BoletinModulo.jsx';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useNoticias, TIPOS, portada } from '../lib/noticias.js';
@@ -6,10 +7,10 @@ import { Foto } from '../components/Carrusel.jsx';
 
 export default function Noticias() {
   const { publicaciones, puedePublicar } = useNoticias();
-  const [filtro, setFiltro] = useState('boletin');
   const [params] = useSearchParams();
+  const [filtro, setFiltro] = useState(() => params.get('tab') === 'aviso' ? 'aviso' : 'boletin');
   if (params.has('editor') || params.has('edicion')) return <BoletinModulo />;
-  const visibles = publicaciones.filter((p) => p.tipo !== 'boletin' && (filtro === 'todo' || p.tipo === filtro));
+  const visibles = publicaciones.filter((p) => p.tipo !== 'boletin' && p.tipo !== 'aviso' && (filtro === 'todo' || p.tipo === filtro));
 
   return (
     <>
@@ -29,7 +30,9 @@ export default function Noticias() {
 
       {(filtro === 'todo' || filtro === 'boletin') && <BoletinModulo />}
 
-      {filtro !== 'boletin' && visibles.length === 0 && <p className="vacio suelto">Todavía no hay publicaciones acá.</p>}
+      {(filtro === 'todo' || filtro === 'aviso') && <AvisosNoticias soloAvisos={filtro === 'aviso'} />}
+
+      {filtro === 'entrevista' && visibles.length === 0 && <p className="vacio suelto">Todavía no hay publicaciones acá.</p>}
 
       {visibles.map((p) => {
         const foto = portada(p);
